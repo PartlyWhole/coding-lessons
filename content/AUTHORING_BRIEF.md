@@ -16,7 +16,7 @@ decisions, and repeats — culminating in a number-guessing game.* Each node has
 - **variables:** store a value in a named box and reuse it.
 - **input:** read what the user types, store it, and use it in a reply (a conversation bot).
 - **random:** get a random number.
-- **conditionals:** make the program choose a response based on a value (a Magic-8 Ball).
+- **conditionals:** make the program choose a response based on a value (a grade classifier).
 - **loops:** repeat until the user wins (the guessing game).
 
 ## P1 · Atom catalogue (→ Skill ids), grouped by the node that OWNS (teaches) them
@@ -77,7 +77,7 @@ Skill one-liners (use as `description`):
 - `mis.bool.is_for_eq` — `if x is 1:` used for value equality → **recognize** distractor / AST `Compare` with `Is`.
 - `mis.cond.no_colon` — missing `:` on the header → SyntaxError → **recall**/**recognize**.
 - `mis.cond.both_branches` — believes both `if` and `else` run → **predict** distractor.
-- `mis.elif.assign_in_elif` — `elif number = 2:` (the arc's bug) → SyntaxError → **recognize**.
+- `mis.elif.assign_in_elif` — `elif score = 80:` → SyntaxError → **recognize**.
 - `mis.elif.order_overlap` — overlapping conditions ordered so an earlier branch shadows a later one → behavioral `testFailure`.
 
 **loops**
@@ -93,8 +93,7 @@ variables         requires: string.literal(prereq), print_literal(utility)      
 input             requires: var.assign(prereq), string.concat(utility),          teaches: input.read, input.store, type.int_input
                             print_literal(utility)
 random  (ext)     requires: var.assign(track→variables), print_literal(utility)  teaches: random.randint
-conditionals      requires: var.use(prereq), bool.compare is taught HERE,        teaches: bool.compare, cond.if_else, cond.elif_chain
-                            print_literal(utility), random.randint(utility)
+conditionals      requires: var.use(prereq), print_literal(utility)              teaches: bool.compare, cond.if_else, cond.elif_chain
 loops             requires: cond.elif_chain(prereq), input.store(utility),       teaches: loop.while, loop.termination
                             type.int_input(utility), bool.compare(utility)
 ```
@@ -102,11 +101,16 @@ loops             requires: cond.elif_chain(prereq), input.store(utility),      
 Notes:
 - `minMastery` 0.6 for prerequisite/track, 0.5 for utility (convention for this bundle).
 - `random` is an `extension`: it MUST carry exactly one `kind: track` edge (to `var.assign`/variables).
+- `conditionals` does NOT require `skill.random.randint`. The source arc themed it as a Magic-8 Ball
+  (which used `random`), but a spine node must never require an extension's skill — the adopted
+  invariant is *extensions depend on the spine, never the reverse*. So the capstone was re-themed to a
+  deterministic **grade classifier** (`grade(score)`), keeping `random` a genuinely optional
+  extension. (Orchestrator decision, 2026-06-08.)
 - Each node's `cells[].certifies` ⊆ that node's `teaches`.
-- The capstone projects (Magic-8 Ball in `conditionals`, guessing game in `loops`) are the final
-  `build` cells that recompose the node's goal — keep the `pygame`-free, headless, stdin-scripted
-  grading in mind (input is read via stdin; for a graded build, drive it with `tests` cases that feed
-  `input` from stdin and assert stdout, per §6.2).
+- The capstone projects (grade classifier in `conditionals`, guessing game in `loops`) are the final
+  `build` cells that recompose the node's goal — keep the `pygame`-free, headless grading in mind.
+  `conditionals` grades a pure `grade(score)` via an `entrypoint`; `loops` reads input via stdin, so
+  drive its graded build with `tests` cases that feed `input` from stdin and assert stdout (per §6.2).
 
 ## Authoring conventions (all nodes)
 - Files: `content/nodes/<node>.yaml` and `content/skills/<node>.taxonomy.yaml`.
@@ -116,4 +120,4 @@ Notes:
 - Every misconception: `feedback` + 4-level `hintLadder` + `skillDeltas` + `triggers`/`notTriggers`
   fixtures. TRACE every fixture (a `notTriggers` that secretly fails a test case will wrongly fire).
 - Keep the playful voice of the source arc in `prompt`/`body` text (the computer "demands snacks",
-  Magic-8 Ball, etc.) — it motivates the learner.
+  a dramatic grade reveal, the guessing game, etc.) — it motivates the learner.

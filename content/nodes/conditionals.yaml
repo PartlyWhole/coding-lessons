@@ -1,16 +1,18 @@
 # content/nodes/conditionals.yaml
 # P4–P6 ascent for node.conditionals. Goal (P0): the learner can make a program CHOOSE a
-# response based on a value — culminating in a Magic-8 Ball that picks a random number and
-# prints the matching reply via an if/elif/else chain.
+# response based on a value — culminating in a grade classifier that maps a score to a
+# letter via an if/elif/else chain (checked top-down, first true wins).
 # Descent (P0–P3) is FIXED by content/AUTHORING_BRIEF.md — ids/requires/teaches/track copied verbatim.
 node:
   id: node.conditionals
-  title: "Making the program choose (a Magic-8 Ball)"
+  title: "Making the program choose (a grade classifier)"
   track: spine
   requires:
     - { skill: skill.var.use, minMastery: 0.6, kind: prerequisite }
     - { skill: skill.output.print_literal, minMastery: 0.5, kind: utility }
-    - { skill: skill.random.randint, minMastery: 0.5, kind: utility }
+    # INVARIANT (spine never requires an extension): conditionals no longer requires
+    # skill.random.randint (taught only by the `random` EXTENSION). The capstone was
+    # re-themed from a Magic-8 Ball to a grade classifier so `random` stays optional.
   teaches: [ skill.bool.compare, skill.cond.if_else, skill.cond.elif_chain ]
   cells:
 
@@ -220,7 +222,7 @@ node:
     # CELL 3 — cond.elif_chain: many branches, top-down, first true wins  (CAPSTONE)
     # ----------------------------------------------------------------------------
     - id: cell.conditionals.elif_chain
-      title: "Many answers (the Magic-8 Ball)"
+      title: "Many answers (a grade classifier)"
       certifies: [ skill.cond.elif_chain ]
       steps:
 
@@ -229,24 +231,28 @@ node:
           skills: [ skill.cond.elif_chain ]
           prompt: "if / elif / else"
           body: |
-            Two answers is not enough for a Magic-8 Ball — shake it and you get one of
-            many replies. Chain conditions with `elif` ("else if"):
+            Two answers is not enough when a score can earn many grades — A, B, C, or F.
+            Chain conditions with `elif` ("else if"):
 
-                if number == 1:
-                    print("It is certain")
-                elif number == 2:
-                    print("Ask again later")
+                if score >= 90:
+                    print("A")
+                elif score >= 80:
+                    print("B")
+                elif score >= 70:
+                    print("C")
                 else:
-                    print("My reply is no")
+                    print("F")
 
             The computer checks TOP-DOWN: first the `if`, then each `elif` in order. The
             FIRST condition that is True wins — its block runs and the rest are skipped.
             `else` is the catch-all fallback when nothing above matched.
 
-            Each `elif` line is a comparison too, so it uses `==`, never a single `=`.
+            Because 95 is `>= 90` AND `>= 80` AND `>= 70`, ORDER matters: test the highest
+            cutoff first so a top score lands on "A", not on a broader branch below. Each
+            `elif` line is a comparison too, so it uses an operator like `>=`, never a single `=`.
           carryContext: |
             `if` then `elif ...:` branches then optional `else:`. Checked top-down, first True wins,
-            rest skipped. `else` is the fallback. `elif` conditions compare with `==`.
+            rest skipped. `else` is the fallback. Test the highest / most-specific cutoff FIRST.
 
         - id: cell.conditionals.elif_chain#2
           kind: predict
@@ -273,60 +279,60 @@ node:
           kind: recognize
           skills: [ skill.cond.elif_chain ]
           prompt: |
-            This is the Magic-8 Ball arc's BUG. One of these `elif` lines crashes with a
-            SyntaxError. Which line is WRITTEN CORRECTLY?
+            One of these `elif` lines crashes with a SyntaxError. Which line is
+            WRITTEN CORRECTLY?
           choices:
-            - { id: a, label: "elif number == 2:" }
-            - { id: b, label: "elif number = 2:", misconception: mis.elif.assign_in_elif }
-            - { id: c, label: "elif number == 2", misconception: mis.cond.no_colon }
+            - { id: a, label: "elif score >= 80:" }
+            - { id: b, label: "elif score = 80:", misconception: mis.elif.assign_in_elif }
+            - { id: c, label: "elif score >= 80", misconception: mis.cond.no_colon }
           correctChoiceId: a
 
         - id: cell.conditionals.elif_chain#4
           kind: build
           language: python
           runtime: headless
-          skills: [ skill.cond.elif_chain, skill.bool.compare, skill.random.randint ]
+          skills: [ skill.cond.elif_chain, skill.bool.compare ]
           prompt: |
-            Build the Magic-8 Ball. Read a seed from input(), seed the RNG with it (so the
-            answer is reproducible for grading), pick a number 1–3 with
-            random.randint(1, 3), then use if / elif / else to print exactly ONE reply:
-              number 1 -> "It is certain"
-              number 2 -> "Ask again later"
-              anything else -> "My reply is no"
+            Build the grade classifier. Write `grade(score)` that returns exactly ONE
+            letter, using if / elif / else with comparisons:
+              score 90 or above  -> "A"
+              score 80 to 89     -> "B"
+              score 70 to 79     -> "C"
+              anything below 70  -> "F"
+            Remember: the checks run TOP-DOWN and the FIRST true one wins, so test the
+            highest cutoff first.
           starterCode: |
-            import random
-            seed = int(input())
-            random.seed(seed)
-            number = random.randint(1, 3)
-            # if / elif / else on `number` — print one reply
+            def grade(score):
+                # if / elif / else on `score` — return one letter
+                pass
           evaluator:
-            run: { timeoutMs: 2000, memoryMb: 256 }
+            run: { timeoutMs: 2000, memoryMb: 256, entrypoint: grade }
             tests:
               comparator: deep-equal
-              # seed -> randint(1,3): seed 1 -> 1, seed 0 -> 2, seed 5 -> 3 (traced on python 3.9).
               cases:
-                - { input: "1", expected: "It is certain\n" }
-                - { input: "0", expected: "Ask again later\n" }
-                - { input: "5", expected: "My reply is no\n" }
-                - { input: "42", expected: "My reply is no\n", hidden: true }
+                - { input: 95, expected: "A" }
+                - { input: 85, expected: "B" }
+                - { input: 75, expected: "C" }
+                - { input: 50, expected: "F" }
+                - { input: 90, expected: "A", hidden: true }   # boundary: >= is inclusive
+                - { input: 70, expected: "C", hidden: true }   # boundary
             ast:
               queries:
                 - { tag: has_elif, query: { node: If, within: { node: If } } }
             property:
-              # Oracle re-derives the expected reply from the same seed -> any correct
-              # if/elif/else (or dict, etc.) that maps 1/2/else to the right reply passes.
+              # Oracle maps any score to its letter -> any correctly-ordered if/elif/else
+              # (or equivalent) passes; a shadowed/reversed order is caught here and by tests.
               referenceImpl: |
-                import random
-                def sol(seed):
-                    random.seed(seed)
-                    number = random.randint(1, 3)
-                    if number == 1:
-                        return "It is certain\n"
-                    elif number == 2:
-                        return "Ask again later\n"
+                def sol(score):
+                    if score >= 90:
+                        return "A"
+                    elif score >= 80:
+                        return "B"
+                    elif score >= 70:
+                        return "C"
                     else:
-                        return "My reply is no\n"
-              generators: [ { param: seed, type: int, min: 0, max: 1000 } ]
+                        return "F"
+              generators: [ { param: score, type: int, min: 0, max: 100 } ]
               numCases: 50
               seed: 1234
               comparator: deep-equal

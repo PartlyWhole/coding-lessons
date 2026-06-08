@@ -67,13 +67,16 @@ If a stream escalates that the seam (`@trellis/schema`) must change: decide it w
 a design choice, make the change ONCE on `main` (test-first, keep the module graph acyclic — see §8),
 then have every stream rebase. Never let a stream fork a divergent copy of a shared type.
 
-## 6. OPEN cross-stream decisions (user's call — do not resolve unilaterally)
-- **`conditionals → random.randint`**: `node.conditionals` (spine) requires a skill taught by the
-  `random` *extension*, violating the adopted invariant *"the spine never requires an extension."*
-  M1's lint flags it. Resolution — drop the requirement so `random` is genuinely optional, OR promote
-  `random` to spine if it's truly core — is a curriculum-intent call. Raise it with the user.
-- **Proving-slice gating specifics**: which `random` prerequisite pair the M2 gating-diff test uses —
-  finalize against the content's actual `minMastery` values (inspect; don't guess).
+## 6. Cross-stream decisions — both RESOLVED (2026-06-08)
+- **`conditionals → random.randint`**: **RESOLVED — re-themed.** `node.conditionals` no longer requires
+  `skill.random.randint`; its capstone is now a deterministic **grade classifier** (not a Magic-8 Ball),
+  so `random` is a genuinely optional extension and the spine-never-requires-an-extension invariant holds
+  corpus-wide. Files touched: `content/nodes/conditionals.yaml`, `content/skills/conditionals.taxonomy.yaml`
+  (`mis.elif.assign_in_elif` + `mis.elif.order_overlap` re-authored), `content/AUTHORING_BRIEF.md`.
+  Green: `validate.py` + `verify/harness.py` (gates 1–6). See `PARALLEL-STREAMS.md` §6.
+- **Proving-slice gating pair**: **RESOLVED — determined by content.** M2 gating-diff test pair =
+  `skill.var.assign` @ 0.6 (track) + `skill.output.print_literal` @ 0.5 (utility); toggle `var.assign`
+  across 0.6 to flip `random` locked↔available. Single producers each; unambiguous.
 
 ## 7. Downstream chain (you write + run these after M1/M2/(M3a) integrate)
 `M3b` build ladder (`evaluate`: Run→Test→AST→Property; the REAL TS detector — **differential-test it

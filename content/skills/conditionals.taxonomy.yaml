@@ -132,50 +132,50 @@ skill:
     - id: mis.elif.assign_in_elif
       skill: skill.cond.elif_chain
       title: "Uses `=` (assignment) inside an `elif` condition"
-      # The Magic-8 arc's bug. `elif number = 2:` is a SyntaxError -> caught at recognize.
+      # `elif score = 80:` is a SyntaxError -> caught at recognize (choice), not build AST.
       signature: { choice: b }
       feedback: |
-        This is the Magic-8 Ball arc's bug. An `elif` condition is a COMPARISON, so it
-        needs `==`, not a single `=`. `elif number = 2:` tries to ASSIGN inside the
-        condition, which Python rejects as a SyntaxError. Write `elif number == 2:`.
+        An `elif` condition is a COMPARISON, so it needs an operator like `>=` or `==`,
+        not a single `=`. `elif score = 80:` tries to ASSIGN inside the condition, which
+        Python rejects as a SyntaxError. Write `elif score >= 80:`.
       hintLadder:
         - { level: 1, body: "An `elif` asks a question. Is a single `=` a question or a command?" }
-        - { level: 2, body: "Just like `if`, an `elif` condition compares — it needs `==`, not `=`." }
-        - { level: 3, body: "Fix the assignment to a comparison: `elif number == 2:`." }
-        - { level: 4, body: "Solution:", revealCode: "elif number == 2:" }
+        - { level: 2, body: "Just like `if`, an `elif` condition compares — it needs `>=` / `==`, not `=`." }
+        - { level: 3, body: "Fix the assignment to a comparison: `elif score >= 80:`." }
+        - { level: 4, body: "Solution:", revealCode: "elif score >= 80:" }
       skillDeltas:
         - { skill: skill.cond.elif_chain, kind: misconception, weight: 0.4 }
         - { skill: skill.bool.compare, kind: misconception, weight: 0.2 }
       triggers:
-        - { stepKind: recognize, choice: b }     # "elif number = 2:"
+        - { stepKind: recognize, choice: b }     # "elif score = 80:"
       notTriggers:
-        - { stepKind: recognize, choice: a }     # "elif number == 2:" (correct)
-        - { stepKind: recognize, choice: c }     # "elif number == 2" (sibling: no_colon)
+        - { stepKind: recognize, choice: a }     # "elif score >= 80:" (correct)
+        - { stepKind: recognize, choice: c }     # "elif score >= 80" (sibling: no_colon)
 
     # --- Overlapping conditions ordered so an earlier branch shadows a later one: testFailure ---
     - id: mis.elif.order_overlap
       skill: skill.cond.elif_chain
       title: "Orders overlapping conditions so an earlier branch shadows a later one"
-      # Behavioral. On the Magic-8 build a too-broad earlier branch (e.g. `number >= 1`)
-      # swallows the cases meant for later branches. Detected by test failure; the elif AST
-      # tag corroborates (and ranks the diagnosis above a bare mismatch). caseIndex 1 = seed "0".
-      signature: { all: [ { astTag: has_elif }, { testFailure: { caseIndex: 1 } } ] }
+      # Behavioral. On the grade build a too-broad earlier branch (`score >= 70` first)
+      # swallows the higher grades, so they never reach their branch. Detected by test
+      # failure; the elif AST tag corroborates (ranks the diagnosis above a bare mismatch).
+      # caseIndex 0 = input 95 (expected "A"): the shadowing order returns "C" there.
+      signature: { all: [ { astTag: has_elif }, { testFailure: { caseIndex: 0 } } ] }
       feedback: |
         The computer checks branches TOP-DOWN and the FIRST True one wins — the rest are
         skipped. A condition that is too broad (or placed too early) will swallow values
-        meant for a later branch, so that later branch never runs. Order branches from the
-        most specific/narrow to the most general, and use `==` so the Magic-8 numbers don't
-        overlap.
+        meant for a later branch, so that later branch never runs. With `>=` cutoffs, test
+        the HIGHEST cutoff first: `>= 90`, then `>= 80`, then `>= 70`, then `else`.
       hintLadder:
-        - { level: 1, body: "Seed 0 gives number 2, but you printed the first reply. Which branch caught it?" }
+        - { level: 1, body: "A 95 should be an \"A\", but you returned \"C\". Which branch caught it first?" }
         - { level: 2, body: "An earlier, too-broad condition fires first and skips the rest. Check branch ORDER and breadth." }
-        - { level: 3, body: "Match each number exactly with `==`: `if number == 1:` / `elif number == 2:` / `else:`." }
-        - { level: 4, body: "Solution:", revealCode: "if number == 1:\n    print(\"It is certain\")\nelif number == 2:\n    print(\"Ask again later\")\nelse:\n    print(\"My reply is no\")" }
+        - { level: 3, body: "Test the highest cutoff first: `if score >= 90:` / `elif score >= 80:` / `elif score >= 70:` / `else:`." }
+        - { level: 4, body: "Solution:", revealCode: "if score >= 90:\n    return \"A\"\nelif score >= 80:\n    return \"B\"\nelif score >= 70:\n    return \"C\"\nelse:\n    return \"F\"" }
       skillDeltas:
         - { skill: skill.cond.elif_chain, kind: misconception, weight: 0.4 }
       triggers:
-        # `if number >= 1:` shadows numbers 2 and 3 -> seed "0" (case 1) and "5" (case 2) fail.
-        - { stepKind: build, code: "import random\nseed = int(input())\nrandom.seed(seed)\nnumber = random.randint(1, 3)\nif number >= 1:\n    print(\"It is certain\")\nelif number == 2:\n    print(\"Ask again later\")\nelse:\n    print(\"My reply is no\")" }
+        # `score >= 70` placed FIRST shadows the 80s and 90s -> input 95 (case 0) returns "C".
+        - { stepKind: build, code: "def grade(score):\n    if score >= 70:\n        return \"C\"\n    elif score >= 80:\n        return \"B\"\n    elif score >= 90:\n        return \"A\"\n    else:\n        return \"F\"" }
       notTriggers:
-        # Correct Magic-8 Ball passes every seed case -> no testFailure.
-        - { stepKind: build, code: "import random\nseed = int(input())\nrandom.seed(seed)\nnumber = random.randint(1, 3)\nif number == 1:\n    print(\"It is certain\")\nelif number == 2:\n    print(\"Ask again later\")\nelse:\n    print(\"My reply is no\")" }
+        # Correct ordering (highest cutoff first) passes every case -> no testFailure.
+        - { stepKind: build, code: "def grade(score):\n    if score >= 90:\n        return \"A\"\n    elif score >= 80:\n        return \"B\"\n    elif score >= 70:\n        return \"C\"\n    else:\n        return \"F\"" }

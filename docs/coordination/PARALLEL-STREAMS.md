@@ -86,13 +86,23 @@ main (M0 ✅ + frozen contract) ──┬─► A: M1 authoring ──┐
 - **Engine purity (M2):** `@trellis/engine` must not import react/idb/pyodide/fetch (ESLint enforces).
 - Done = green: `pnpm --filter <pkg> typecheck && lint && test && build` + your milestone's plan gate.
 
-## 6. Open cross-stream decisions (user's call — do not resolve unilaterally)
+## 6. Cross-stream decisions
 
-- **`conditionals → random.randint`** (spine→extension) violates the "spine never requires an extension"
-  invariant (see the spec's §1 realignment note). Resolution (drop the edge vs promote `random` to spine)
-  is a curriculum-intent call. M1 *flags* it via lint; it is not silently rewritten.
-- **Proving-slice gating specifics** (which `random` prerequisite pair the M2 gating-diff test uses) are
-  finalized against the content's actual `minMastery` values during M1/M2 — inspect, don't guess.
+Both prior open decisions are now **RESOLVED** (orchestrator + user, 2026-06-08):
+
+- **`conditionals → random.randint`** (spine→extension invariant violation) — **RESOLVED: re-themed.**
+  `node.conditionals` no longer requires `skill.random.randint`; its capstone was re-themed from a
+  Magic-8 Ball to a deterministic **grade classifier** (`grade(score)` via `if/elif/else`), so the
+  `random` extension is now genuinely optional and the invariant holds corpus-wide. Verified green:
+  `python3 content/validate.py` (gates 1–4) + `content/verify/harness.py` (gate 5 fixtures incl.
+  re-authored `mis.elif.order_overlap`, gate 6 oracle). M1's invariant lint should now find zero
+  spine→extension `requires` edges. Side benefit: removed a version-fragile `random.seed→randint`
+  trace and an unrequired `input()` dependency from the old capstone.
+- **Proving-slice gating pair (M2 gating-diff test)** — **RESOLVED: determined by content.** `node.random`
+  has exactly two requirements — `skill.var.assign` @ **0.6** (track, producer `node.variables`) and
+  `skill.output.print_literal` @ **0.5** (utility, producer `node.output`). M2's diff test: hold
+  `print_literal ≥ 0.5` met and toggle `var.assign` across 0.6 → `random` flips `locked`↔`available`
+  (`var.assign` is the deciding gate). Both skills have single producers; the pair is unambiguous.
 
 ## 7. Status board (orchestrator updates this — streams report, don't edit)
 
