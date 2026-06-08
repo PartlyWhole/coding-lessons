@@ -326,6 +326,16 @@ export const Json = Type.Recursive((This) =>
   ]),
 );
 export type Json = Static<typeof Json>;
+
+// §3.5 — a skill mastery delta. A leaf type depending only on SkillId, defined HERE
+// (not in content.ts) so that content↔runtime stay a clean DAG with no ESM init cycle.
+// (See the build-output ESM note in Task 7.)
+export const SkillDelta = Type.Object({
+  skill: SkillId,
+  kind: Type.Union([Type.Literal("pass"), Type.Literal("fail"), Type.Literal("misconception")]),
+  weight: Type.Number(),
+});
+export type SkillDelta = Static<typeof SkillDelta>;
 ```
 
 > **Recursive-schema typing rule (applies to `Json` here and to `AstQuery`/`GenSpec` in Task 5 and `Signature` in Task 7):** never annotate a `Type.Recursive(...)` const as `: TSchema`. `TSchema['static']` is `unknown`, so the annotation makes the exported `Static<typeof X>` type collapse to `unknown`, defeating the package's purpose. Let TypeScript infer the `TRecursive<...>` type and drop the now-unused `TSchema` import. In the rare case `tsc` reports "Type instantiation is excessively deep and possibly infinite" when the recursive schema is embedded in another `Type.Object`, apply a localized `as TSchema` cast **at the embedding site only** (e.g. `query: AstQuery as unknown as TSchema`) rather than annotating the const — that keeps the exported type intact. (Verified during M0 execution: the un-annotated form compiles cleanly for all four recursive types.)
@@ -810,17 +820,12 @@ import {
   MisconId,
   RichText,
   MasteryThreshold,
+  SkillDelta,
 } from "./ids.js";
 import { EvaluatorConfig } from "./evaluator.js";
 import { Signature } from "./runtime.js";
 
-// §3.5
-export const SkillDelta = Type.Object({
-  skill: SkillId,
-  kind: Type.Union([Type.Literal("pass"), Type.Literal("fail"), Type.Literal("misconception")]),
-  weight: Type.Number(),
-});
-export type SkillDelta = Static<typeof SkillDelta>;
+// SkillDelta now lives in ids.ts (a leaf module) to keep content↔runtime acyclic.
 
 export const Hint = Type.Object({
   level: Type.Union([Type.Literal(1), Type.Literal(2), Type.Literal(3), Type.Literal(4)]),
@@ -951,7 +956,7 @@ export type Cell = Static<typeof Cell>;
 Run: `pnpm --filter @trellis/schema test content`
 Expected: PASS. (This depends on `Signature` from `runtime.ts`, written in Task 7. If Task 7 is not yet done, this test fails to import `Signature` — do Task 7 first or together. The plan orders `runtime.ts` after because runtime types are larger; if executing strictly in order, temporarily comment the `signature` field. Prefer doing Task 7 Step 3's `Signature` export before running this.)
 
-> **Executor note:** `content.ts` imports `Signature` from `runtime.ts`. Implement Task 7's `runtime.ts` (which defines and exports `Signature`) before running this step, then return here. The two files are mutually ordered by this single dependency; there is no cycle (runtime does not import content).
+> **Executor note:** `content.ts` imports `Signature` from `runtime.ts`, so implement Task 7's `runtime.ts` (which exports `Signature`) before running this step, then return here. This is a one-directional dependency (`content → runtime`); both also import the leaf module `ids.ts`. `SkillDelta` lives in `ids.ts` (Task 3), so `runtime.ts` does NOT import `content.ts` — the module graph is an acyclic DAG. Do not move `SkillDelta` back into `content.ts`: a `content↔runtime` cycle compiles and passes under Vitest but deadlocks (`Cannot access … before initialization`) when the tsc-built ESM is imported by native Node.
 
 - [ ] **Step 5: Commit**
 
@@ -1065,8 +1070,8 @@ import {
   Attribution,
   SignalType,
   Json,
+  SkillDelta,
 } from "./ids.js";
-import { SkillDelta } from "./content.js";
 
 // §7 — a misconception signature: a boolean predicate over RawSignals.
 export const Signature = Type.Recursive((Self) =>
@@ -1162,7 +1167,7 @@ export const BehavioralEvent = Type.Object({
 export type BehavioralEvent = Static<typeof BehavioralEvent>;
 ```
 
-> **Cross-file note:** `runtime.ts` imports `SkillDelta` from `content.ts`, and `content.ts` imports `Signature` from `runtime.ts`. This is a TypeScript *type-and-value* import cycle across two ES modules. It resolves cleanly because each symbol is only *referenced inside a function passed to `Type.Recursive`/`Type.Object`* or as a property value evaluated at module-eval time in an order Node/Vitest handles (the schemas are plain objects, not classes with inheritance). If you hit a "Cannot access before initialization" error at import time, break the cycle by moving `SkillDelta` into `ids.ts` (it depends only on `SkillId`) and importing it from there in both files. Prefer that move if any runtime ReferenceError appears.
+> **Cross-file note (build-output ESM safety):** `runtime.ts` imports `SkillDelta` from `ids.ts` (NOT from `content.ts`), and `content.ts` imports `Signature` from `runtime.ts`. This keeps the graph acyclic. An earlier draft put `SkillDelta` in `content.ts`, creating a `content↔runtime` cycle — that passes under Vitest (Vite's CJS-compatible runner tolerates cycles) but **deadlocks native-ESM imports of the tsc build output** with `Cannot access 'SkillDelta' before initialization`. Verified during M0 execution. Keep `SkillDelta` in `ids.ts`.
 
 - [ ] **Step 4: Run the runtime test to verify it passes**
 
@@ -1356,7 +1361,23 @@ This unblocks **M1 (content compiler)** and **M2 (engine core)**, which both dep
 ## Self-review notes (addressed in this plan)
 
 - **Spec coverage (M0 row of the implementation spec §4):** workspace + Turbo (Task 1), `@trellis/schema` with all §3 types as TypeBox → TS + JSON Schema (Tasks 3–8), Vitest + CI (Tasks 2, 10), engine-purity import-lint (Task 9), and the round-trip validation gate (Tasks 4–8 + DoD). ✓
-- **Type consistency:** `Signature` is defined in `runtime.ts` and consumed by `content.ts`'s `Misconception`; `SkillDelta` is defined in `content.ts` and consumed by `runtime.ts`'s `Diagnosis`. The one cross-file ordering hazard (build the `runtime.ts` `Signature` before running the `content.ts` test) is called out in Task 6 Step 4 and Task 7, with the `SkillDelta`→`ids.ts` escape hatch if a load-order ReferenceError appears. ✓
+- **Type consistency:** `Signature` is defined in `runtime.ts` and consumed by `content.ts`'s `Misconception`; `SkillDelta` is defined in `ids.ts` (a leaf module) and consumed by both `content.ts`'s `Misconception` and `runtime.ts`'s `Diagnosis`. The module graph is an acyclic DAG (`content → runtime`, `content → ids`, `runtime → ids`); the only ordering requirement is to implement `runtime.ts` before running `content.ts`'s test (so `Signature` resolves). See the build-output ESM note in Task 7. ✓
 - **No placeholders:** every code step contains complete, runnable content; no TBD/TODO. ✓
 - **Library APIs:** TypeBox pinned to `@sinclair/typebox@^0.34` with its verified stable surface (`Type.*`, `Static`, `Value.Check`, `Value.Errors`). ✓
 ```
+
+---
+
+## Execution amendments (applied during M0, from code review)
+
+These refinements were applied on top of the task bodies above and are reflected in the committed code. Listed here so the plan record matches the repository.
+
+1. **Recursive schemas are NOT annotated `: TSchema`** (`Json`, `AstQuery`, `GenSpec`, `Signature`). Annotating collapses `Static<typeof X>` to `unknown`. Inferred form compiles cleanly; verified with a `@ts-expect-error` type probe. (Already inlined into Tasks 3/5/7 above.)
+2. **`SkillDelta` lives in `ids.ts`, not `content.ts`** — see the build-output ESM note in Task 7. Prevents a `content↔runtime` cycle that deadlocks native-ESM imports of the build output.
+3. **`tsconfig.json` has no `rootDir`** and **`vitest.config.ts` sets `passWithNoTests: true`** (Task 2) — `rootDir: "src"` would reject the `test/**` files with `TS6059`.
+4. **Tightened numeric constraints** so the M1 content gate / persistence layer reject nonsense:
+   - `evaluator.ts`: `RunConfig.timeoutMs`/`memoryMb` → `Type.Integer({minimum:1})`; `AstQuery.count.n` → `Type.Integer({minimum:0})`; `PropertyConfig.numCases` → `Type.Integer({minimum:1})`, `seed` → `Type.Integer()`.
+   - `runtime.ts`: `SkillState.attempts`/`passes` → `Type.Integer({minimum:0})`; `BehavioralEvent.seq` → `Type.Integer({minimum:0})`; `RawSignals.wallMs` → `Type.Number({minimum:0})`; `RawSignals.tests.passed`/`failed`/`failures[].caseIndex` → `Type.Integer({minimum:0})`.
+5. **`export type` companions** added for every exported schema const in `evaluator.ts` (`RunConfig`/`TestConfig`/`AstConfig`/`PropertyConfig`) and `content.ts` (`Hint`/`Requirement`/`Choice`/`AcceptedAnswer`/`LineRange` and the five Step variants).
+6. **Extra tests** beyond the task bodies: evaluator negatives (invalid `count.op`, non-integer `count.n`, unknown `GenSpec.type`); runtime negatives (out-of-range `SkillState.mastery`, unknown `Diagnosis.attribution`); content positives for the `recognize` and `recall` step variants. **Final suite: 26 tests across 4 files.**
+7. **Deferred to M1 (not a v1 schema concern):** `GenSpec` cross-field validity (`type:"choice"` requires `choices`; `type:"list"` requires `elem`) is left to the M1 content lint / reference-impl gate, since enforcing it in TypeBox needs a per-`type` discriminated union the design deliberately avoided.
