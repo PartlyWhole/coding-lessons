@@ -1,0 +1,71 @@
+# content/nodes/<topic>.yaml — skeleton (fill after the descent P0–P3 produces atoms + DAG)
+node:
+  id: node.<topic>
+  title: "<learner-facing title>"
+  track: spine            # or: extension  (extension MUST have exactly one kind:track requirement)
+  requires:
+    # Every skill here MUST be taught by some node in the bundle (referential integrity, P3/§13.2.2).
+    - { skill: skill.<...>, minMastery: 0.6, kind: prerequisite }
+    # - { skill: skill.<...>, minMastery: 0.6, kind: utility }
+    # - { skill: skill.<...>, minMastery: 0.6, kind: track }      # extension → spine parent
+  teaches: [ skill.<...> ]                # certified when every cell completes
+  cells:
+    - id: cell.<topic>.<name>
+      title: "<cell title>"
+      certifies: [ skill.<...> ]          # subset of node.teaches
+      steps:
+
+        - id: cell.<topic>.<name>#1
+          kind: watch
+          skills: [ skill.<...> ]
+          prompt: "<short heading>"
+          body: |
+            <install the one idea this cell is about>
+          carryContext: |
+            <what must survive into later steps' peek-back>
+
+        - id: cell.<topic>.<name>#2
+          kind: predict
+          skills: [ skill.<...> ]
+          prompt: "What happens here?"
+          code: |
+            <snippet whose effect is hidden; tempting wrong answer = a known misconception>
+          choices:                        # optional; omit for free-text prediction
+            - { id: a, label: "<correct>" }
+            - { id: b, label: "<tempting wrong>", misconception: mis.<...> }
+          expected: { normalized: ["<correct>"] }
+          reveal: run-and-show
+
+        - id: cell.<topic>.<name>#3
+          kind: recognize                 # use recognize/recall to catch SYNTAX-shaped errors
+          skills: [ skill.<...> ]
+          prompt: "<which is correct?>"
+          choices:
+            - { id: a, label: "<correct>" }
+            - { id: b, label: "<wrong>", misconception: mis.<...> }
+          correctChoiceId: a
+
+        - id: cell.<topic>.<name>#4
+          kind: build
+          language: python
+          skills: [ skill.<...> ]
+          prompt: "<task that recomposes the P0 goal>"
+          starterCode: |
+            <starter>
+          evaluator:
+            run: { timeoutMs: 2000, memoryMb: 256, entrypoint: <fn or omit for stdout> }
+            tests:
+              comparator: deep-equal
+              cases:
+                - { input: <...>, expected: <...> }              # include BOUNDARY cases
+                - { input: <...>, expected: <...>, hidden: true }
+            ast:
+              queries:
+                - { tag: <tag>, query: { node: <...>, where: { <pred> } } }
+            property:                       # almost always include — the oracle for novel solutions
+              referenceImpl: |
+                def sol(<args>): ...
+              generators: [ { param: <arg>, type: int, min: 0, max: 999 } ]
+              numCases: 50
+              seed: 1234
+            # acceptedVariants: [ { astQuery: { node: Return, count: { op: ">=", n: 2 } } } ]

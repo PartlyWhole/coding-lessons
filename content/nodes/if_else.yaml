@@ -1,0 +1,274 @@
+# content/nodes/if_else.yaml
+# Lesson: Python if/else conditionals. Spine root for the conditionals topic.
+# Authored via the authoring-trellis-content phased method (P0–P7).
+node:
+  id: node.if_else
+  title: "Making decisions with if / else"
+  track: spine
+  # P3 referential-integrity: requires is empty. The function wrapper (def/return) is
+  # supplied as starterCode in the build steps, NOT certified here and NOT a dangling
+  # requirement. This node is the spine root for conditionals.
+  requires: []
+  teaches:
+    - skill.cond.compare
+    - skill.cond.if_block
+    - skill.cond.else_branch
+  cells:
+
+    # ── Cell 1 ────────────────────────────────────────────────────────────────
+    - id: cell.if_else.compare
+      title: "Asking a yes/no question"
+      certifies: [ skill.cond.compare ]
+      steps:
+
+        - id: cell.if_else.compare#1
+          kind: watch
+          skills: [ skill.cond.compare ]
+          prompt: "Comparisons produce True or False"
+          body: |
+            A *comparison* asks a yes/no question and answers with a boolean:
+            `True` or `False`.
+
+                7 >= 5      # True   ("is 7 greater than or equal to 5?")
+                3 == 3      # True   ("is 3 equal to 3?")
+                4 > 4       # False  ("is 4 strictly greater than 4?")
+
+            Note the two operators that trip people up:
+            - `>=` means "greater than OR EQUAL" — the boundary value counts.
+            - `>`  means "strictly greater" — the boundary value does NOT count.
+            - `==` (two equals) asks "are these equal?". A single `=` *assigns*; it is
+              not a question.
+          carryContext: |
+            `>=` includes the boundary; `>` excludes it. `==` compares, `=` assigns.
+
+        - id: cell.if_else.compare#2
+          kind: predict
+          skills: [ skill.cond.compare ]
+          prompt: "A score of exactly 60 should count as passing. What does this print?"
+          code: |
+            score = 60
+            print(score > 60)
+          choices:
+            - { id: a, label: "False — and that's a bug: 60 should pass, but > excludes it", }
+            - { id: b, label: "True — 60 is greater than 60", misconception: mis.cond.strict_gt_boundary }
+          expected: { normalized: ["false"] }
+          reveal: run-and-show
+
+        - id: cell.if_else.compare#3
+          kind: recognize
+          skills: [ skill.cond.compare ]
+          prompt: "Which line correctly asks 'is score equal to 60?'"
+          choices:
+            - { id: a, label: "score == 60" }
+            - { id: c, label: "score = 60", misconception: mis.cond.assign_in_condition }
+          correctChoiceId: a
+
+        - id: cell.if_else.compare#4
+          kind: build
+          language: python
+          skills: [ skill.cond.compare ]
+          prompt: |
+            Complete `passes(score)` so it returns the boolean answer to
+            "is this score a passing score?" — passing means 60 or above.
+          starterCode: |
+            def passes(score):
+                return ___  # replace ___ with a comparison
+          evaluator:
+            run: { timeoutMs: 2000, memoryMb: 256, entrypoint: passes }
+            tests:
+              comparator: deep-equal
+              cases:
+                - { input: 60, expected: true }            # case 0 = BOUNDARY
+                - { input: 59, expected: false }
+                - { input: 100, expected: true }
+                - { input: 0, expected: false, hidden: true }
+            ast:
+              queries:
+                - { tag: uses_compare, query: { node: Compare } }
+            property:
+              referenceImpl: |
+                def sol(score):
+                    return score >= 60
+              generators: [ { param: score, type: int, min: -50, max: 200 } ]
+              numCases: 60
+              seed: 1234
+
+    # ── Cell 2 ────────────────────────────────────────────────────────────────
+    - id: cell.if_else.block
+      title: "Acting on the answer: the if block"
+      certifies: [ skill.cond.if_block ]
+      steps:
+
+        - id: cell.if_else.block#1
+          kind: watch
+          skills: [ skill.cond.if_block ]
+          prompt: "if runs a block only when the answer is True"
+          body: |
+            An `if` statement runs a block of code *only when* its comparison is True:
+
+                if score >= 60:
+                    print("you passed")
+
+            Two pieces of punctuation are mandatory:
+            1. A colon `:` ends the `if` line.
+            2. The body is **indented** (4 spaces) underneath. The indentation is what
+               tells Python "this line belongs to the if".
+          carryContext: |
+            Every `if` header ends in a colon `:`; its body is indented beneath it.
+
+        - id: cell.if_else.block#2
+          kind: predict
+          skills: [ skill.cond.if_block ]
+          prompt: "Will the print run when score is 80? Predict, then run."
+          code: |
+            score = 80
+            if score >= 60:
+                print("passed")
+          expected: { normalized: ["passed"] }
+          reveal: run-and-show
+
+        - id: cell.if_else.block#3
+          kind: recognize
+          skills: [ skill.cond.if_block ]
+          prompt: "Which block is written correctly?"
+          choices:
+            - { id: a, label: "if score >= 60:\\n    print('ok')   (colon, body indented)" }
+            - { id: b, label: "if score >= 60:\\nprint('ok')   (colon, but body NOT indented)", misconception: mis.cond.no_indent }
+          correctChoiceId: a
+
+        - id: cell.if_else.block#4
+          kind: recall
+          skills: [ skill.cond.if_block ]
+          prompt: |
+            Type the FULL header line of an `if` that tests `score >= 60`,
+            exactly as Python requires it (include the punctuation).
+          accepted:
+            normalized: ["if score >= 60:"]
+            misconceptionMap:
+              "if score >= 60": mis.cond.missing_colon
+
+        - id: cell.if_else.block#5
+          kind: build
+          language: python
+          skills: [ skill.cond.if_block, skill.cond.compare ]
+          prompt: |
+            Complete `label(score)`. When the score is 60 or above, it should
+            return "pass". (Leave the fail case alone for now — the function
+            already returns "fail" by default.)
+          starterCode: |
+            def label(score):
+                if ___:        # fill in the condition and the colon
+                    return "pass"
+                return "fail"
+          evaluator:
+            run: { timeoutMs: 2000, memoryMb: 256, entrypoint: label }
+            tests:
+              comparator: deep-equal
+              cases:
+                - { input: 60, expected: "pass" }          # case 0 = BOUNDARY
+                - { input: 59, expected: "fail" }
+                - { input: 95, expected: "pass" }
+                - { input: 0, expected: "fail", hidden: true }
+            ast:
+              queries:
+                - { tag: has_if, query: { node: If } }
+            property:
+              referenceImpl: |
+                def sol(score):
+                    if score >= 60:
+                        return "pass"
+                    return "fail"
+              generators: [ { param: score, type: int, min: -50, max: 200 } ]
+              numCases: 60
+              seed: 2345
+
+    # ── Cell 3 ────────────────────────────────────────────────────────────────
+    - id: cell.if_else.else
+      title: "The other case: else"
+      certifies: [ skill.cond.else_branch ]
+      steps:
+
+        - id: cell.if_else.else#1
+          kind: watch
+          skills: [ skill.cond.else_branch ]
+          prompt: "else handles every remaining case"
+          body: |
+            `else` attaches to an `if` and runs when the `if` condition was False:
+
+                if score >= 60:
+                    return "pass"
+                else:
+                    return "fail"
+
+            Key facts:
+            - `else` takes **no condition** — it is just `else:`. It already means
+              "in every other case".
+            - Use `else`, not a second separate `if`. A second `if` is independent and
+              can leave gaps or overlap; `else` is guaranteed to cover exactly the
+              cases the `if` did not.
+          carryContext: |
+            `else:` is bare (no condition) and covers every case the `if` missed.
+
+        - id: cell.if_else.else#2
+          kind: predict
+          skills: [ skill.cond.else_branch ]
+          prompt: "score is 40. Which branch runs? Predict the printed line, then run."
+          code: |
+            score = 40
+            if score >= 60:
+                print("pass")
+            else:
+                print("fail")
+          expected: { normalized: ["fail"] }
+          reveal: run-and-show
+
+        - id: cell.if_else.else#3
+          kind: recognize
+          skills: [ skill.cond.else_branch ]
+          prompt: "Which is the correct way to write the 'otherwise' branch?"
+          choices:
+            - { id: a, label: "else:" }
+            - { id: b, label: "else score < 60:", misconception: mis.cond.else_with_condition }
+          correctChoiceId: a
+
+        - id: cell.if_else.else#4
+          kind: build
+          language: python
+          skills: [ skill.cond.else_branch, skill.cond.if_block, skill.cond.compare ]
+          prompt: |
+            Write `grade(score)`: return "pass" when the score is 60 or above,
+            and "fail" otherwise. Use an if/else.
+          starterCode: |
+            def grade(score):
+                # write an if / else that returns "pass" or "fail"
+                ___
+          evaluator:
+            run: { timeoutMs: 2000, memoryMb: 256, entrypoint: grade }
+            tests:
+              comparator: deep-equal
+              cases:
+                - { input: 60, expected: "pass" }          # case 0 = BOUNDARY
+                - { input: 59, expected: "fail" }
+                - { input: 100, expected: "pass" }
+                - { input: 0, expected: "fail", hidden: true }
+            ast:
+              queries:
+                # The correct if/else and the blessed guard-clause both contain exactly ONE
+                # `If` node; using a second independent `if` instead of `else` produces >=2.
+                # (Verified against real ast.walk: correct=1 If, two-ifs=2 Ifs.) The bare
+                # count is the pinned, non-guessed discriminator.
+                - { tag: two_ifs_no_else,
+                    query: { node: If, count: { op: ">=", n: 2 } } }
+            property:
+              referenceImpl: |
+                def sol(score):
+                    if score >= 60:
+                        return "pass"
+                    else:
+                        return "fail"
+              generators: [ { param: score, type: int, min: -50, max: 200 } ]
+              numCases: 80
+              seed: 3456
+            # Bless the guard-clause form (if + bare return, no literal else) so it is never flagged.
+            acceptedVariants:
+              - { astQuery: { node: Return, count: { op: ">=", n: 2 } } }

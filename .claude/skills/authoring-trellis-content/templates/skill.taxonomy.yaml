@@ -1,0 +1,33 @@
+# content/skills/<topic>.taxonomy.yaml — skeleton (one topic per file; may hold several skills)
+skill:
+  id: skill.<...>
+  title: "<author-facing>"
+  description: "<one sentence>"
+  upstream: [ ]                 # skills that, if weak, explain failure here (root-cause targeting)
+  misconceptions:
+
+    - id: mis.<...>
+      skill: skill.<...>
+      title: "<what the learner wrongly believes>"
+      # Signature MUST be deterministically detectable. SyntaxError-shaped mistakes cannot be
+      # AST-attributed — detect those at a recognize/recall step (choice / recallEquals).
+      signature: { any: [ { astTag: <tag> }, { runError: runtime } ] }
+      feedback: "<pre-authored explanation; selected, never generated>"
+      hintLadder:
+        - { level: 1, body: "<nudge — ask a question>" }
+        - { level: 2, body: "<sharper>" }
+        - { level: 3, body: "<worked example>" }
+        - { level: 4, body: "Solution:", revealCode: "<full solution>" }
+      skillDeltas:
+        - { skill: skill.<...>, kind: misconception, weight: 0.3 }
+      # REQUIRED (§13.2.5): the detector replays these. >=1 trigger, >=1 notTrigger.
+      triggers:
+        - { stepKind: build,     code: "<submission that should fire this>" }
+        # - { stepKind: recognize, choice: b }
+        # - { stepKind: recall,    input: ";" }
+      notTriggers:
+        - { stepKind: build,     code: "<correct submission — must NOT fire>" }
+        # - { stepKind: recognize, choice: a }
+
+# To add another skill in the same topic file, repeat a top-level `skill:` document
+# separated by `---`.
