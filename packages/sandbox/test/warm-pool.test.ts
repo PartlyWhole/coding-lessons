@@ -64,4 +64,17 @@ describe("WarmPool", () => {
     expect(workers.length).toBe(2); // original + replacement
     expect(pool.status().ready).toBe(1);
   });
+
+  it("drain terminates all hosts and empties the pool", async () => {
+    const clock = new FakeClock();
+    const { factory, workers } = makeMockFactory();
+    const pool = new WarmPool(factory, cfg(clock, 2));
+    pool.start();
+    await pool.warmup();
+    await flush();
+    pool.drain();
+    expect(pool.status().total).toBe(0);
+    expect(pool.status().ready).toBe(0);
+    expect(workers.every((w) => w.terminated)).toBe(true);
+  });
 });

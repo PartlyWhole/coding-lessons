@@ -85,20 +85,17 @@ export class WarmPool {
     if (this.available.length > 0) return;
     const h = await this.acquire();
     this.available.push(h); // put it back; warmup only observes readiness
-    // de-dupe if a waiter race left it absent
-    if (this.available.indexOf(h) !== this.available.lastIndexOf(h)) this.available.pop();
   }
 
   status(): PoolStatus {
     let warming = 0;
-    let ready = 0;
     let running = 0;
     for (const h of this.all) {
       if (h.state === "warming") warming++;
       else if (h.state === "running") running++;
-      else if (h.state === "ready") ready++;
     }
-    // `ready` counts ready hosts; only those in `available` are acquirable.
+    // Only hosts in `available` are acquirable; a "ready" host handed to a waiter
+    // is checked out and is intentionally not counted as available.
     return { warming, ready: this.available.length, running, total: this.all.size };
   }
 
