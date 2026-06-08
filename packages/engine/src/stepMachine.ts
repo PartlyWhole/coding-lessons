@@ -41,11 +41,12 @@ export function step(kind: StepKind, state: MachineState, event: StepEvent): Mac
       return fail();
 
     case "ACTIVE":
-      if (event.type === "hint") return state; // phase-preserving (ladder is M4)
       if (kind === "watch") {
+        // watch steps are passive: only advance (no submit, no hint ladder — §5.1).
         if (event.type === "advance") return { phase: "RELEASED", lastCorrect: null };
-        return fail(); // watch cannot submit
+        return fail();
       }
+      if (event.type === "hint") return state; // phase-preserving (ladder is M4)
       if (event.type === "submit") return { phase: "EVALUATING", lastCorrect: null };
       return fail();
 
@@ -55,7 +56,7 @@ export function step(kind: StepKind, state: MachineState, event: StepEvent): Mac
 
     case "FEEDBACK":
       if (event.type === "hint") return state; // phase-preserving
-      if (event.type === "retry") return { phase: "ACTIVE", lastCorrect: state.lastCorrect };
+      if (event.type === "retry") return { phase: "ACTIVE", lastCorrect: null };
       if (event.type === "advance") {
         if (state.lastCorrect === true || event.allowSkip === true) {
           return { phase: "RELEASED", lastCorrect: state.lastCorrect };
