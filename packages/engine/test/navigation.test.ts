@@ -47,4 +47,16 @@ describe("availabilityDiff", () => {
     expect(diff.newlyAvailable).toContain("node.random");
     expect(diff.newlyDone).toEqual([]);
   });
+
+  it("reports a node that transitioned to done in newlyDone", () => {
+    const before = resolveAvailability(model({}), graph);
+    // node.output teaches print_literal + string.literal; lift both above the 0.8
+    // completion threshold so node.output flips to "done".
+    const after = resolveAvailability(
+      model({ "skill.output.print_literal": 0.9, "skill.string.literal": 0.9 }),
+      graph,
+    );
+    const diff = availabilityDiff(before, after);
+    expect(diff.newlyDone).toContain("node.output");
+  });
 });

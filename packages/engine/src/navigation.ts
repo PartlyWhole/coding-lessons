@@ -37,7 +37,7 @@ export function spineOrder(graph: Graph): string[] {
   while (queue.length > 0) {
     const id = queue.shift()!;
     order.push(id);
-    for (const m of adj[id]!.slice().sort()) {
+    for (const m of adj[id]!) {
       indeg[m]!--;
       if (indeg[m] === 0) {
         queue.push(m);
