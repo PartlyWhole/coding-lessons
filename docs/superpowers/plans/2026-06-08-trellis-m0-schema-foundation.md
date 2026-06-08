@@ -1270,10 +1270,16 @@ module.exports = {
               { name: "pyodide", message: "engine must stay pure (§12): inject the sandbox instead." },
             ],
             patterns: [
+              // Catch subpath imports the bare `paths` entries miss (e.g. react-dom/client,
+              // react/jsx-runtime) — modern React is imported via these, not the bare package.
+              { group: ["react/*", "react-dom/*"], message: "engine must stay pure (§12): no React." },
               { group: ["*/persist", "@trellis/persist"], message: "engine must stay pure (§12): inject persist." },
             ],
           },
         ],
+        // NOTE: no-restricted-globals only catches a bare `fetch(...)`, not `globalThis.fetch`
+        // / `window.fetch`. Acceptable for a preventive M0 scaffold; revisit at M2 when
+        // packages/engine is built (and consider migrating to ESLint 9 flat config then).
         "no-restricted-globals": [
           "error",
           { name: "fetch", message: "engine must stay pure (§12): no network in engine." },
@@ -1313,6 +1319,11 @@ on:
   push:
     branches: [main]
   pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -1328,6 +1339,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm lint
+      - run: pnpm build   # catches native-ESM/emit issues source-first checks miss
       - run: pnpm test
 ```
 
