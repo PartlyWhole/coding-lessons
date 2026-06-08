@@ -21,6 +21,19 @@ importers:
         specifier: ^5.6.0
         version: 5.9.3
 
+  packages/sandbox:
+    dependencies:
+      '@sinclair/typebox':
+        specifier: ^0.34.0
+        version: 0.34.49
+      '@trellis/schema':
+        specifier: workspace:*
+        version: link:../schema
+    devDependencies:
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9
+
   packages/schema:
     dependencies:
       '@sinclair/typebox':
