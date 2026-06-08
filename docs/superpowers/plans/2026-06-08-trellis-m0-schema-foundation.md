@@ -194,12 +194,13 @@ Create `packages/schema/tsconfig.json`:
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src"
+    "outDir": "dist"
   },
   "include": ["src/**/*.ts", "test/**/*.ts"]
 }
 ```
+
+> Note: do **not** set `rootDir`. `include` pulls in both `src/` and `test/`; pinning `rootDir: "src"` would make TypeScript reject the test files with `TS6059` ("not under rootDir"). Letting TS infer the common root (the package dir) keeps `dist/index.js` emit unchanged.
 
 - [ ] **Step 3: Create the Vitest config**
 
@@ -211,6 +212,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     include: ["test/**/*.test.ts"],
+    passWithNoTests: true,
   },
 });
 ```
