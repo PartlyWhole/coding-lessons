@@ -122,12 +122,14 @@ async function runOne(id: number, req: WireRunRequest): Promise<void> {
   }
   const t0 = now();
   try {
-    // NOTE: pass `undefined`, NOT `null` — in pinned Pyodide (0.27+) JS `null` maps to
-    // the `pyodide.ffi.jsnull` sentinel, while JS `undefined` maps to Python `None`,
-    // which is what the harness's `is not None` / truthiness checks expect.
+    // NOTE: when absent these are `undefined`, NOT `null`. In pinned Pyodide (0.27+) JS
+    // `null` maps to the `pyodide.ffi.jsnull` sentinel, while JS `undefined` maps to
+    // Python `None` — which is what the harness's `is not None` / truthiness checks
+    // expect. `req.entrypoint`/`req.stdin` are already `string | undefined`, so pass them
+    // through directly; do not coerce to null.
     pyodide.globals.set("_code", req.code);
-    pyodide.globals.set("_entry", req.entrypoint ?? undefined);
-    pyodide.globals.set("_stdin", req.stdin ?? undefined);
+    pyodide.globals.set("_entry", req.entrypoint);
+    pyodide.globals.set("_stdin", req.stdin);
     const json = (await pyodide.runPythonAsync("__trellis_run(_code, _entry, _stdin)")) as string;
     const result = { ...(JSON.parse(json) as RunResultData), wallMs: now() - t0 };
     ctx.postMessage({ kind: "result", id, result });

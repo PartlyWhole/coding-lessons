@@ -100,6 +100,9 @@ export function createSandbox(config: SandboxConfig): ManagedSandbox {
 
   async function run(req: RunRequest): Promise<RunResult> {
     if (req.memoryMb > memoryMb) return runDedicated(req);
+    // acquire() only ever resolves a host in the "ready" state (the pool admits hosts
+    // via makeAvailable, which runs off host.ready()), so no host.ready() guard is needed
+    // here before raceRun → host.run().
     const host = await pool.acquire();
     const start = clock.now();
     const result = await raceRun(host, req, start, () => host.terminate());
