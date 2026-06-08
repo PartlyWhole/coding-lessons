@@ -22,6 +22,7 @@ describe("evalSignature — leaf forms", () => {
     expect(evalSignature({ choice: "b" }, { signals: noSignals, choiceId: "b" })).toBe(true);
     expect(evalSignature({ choice: "b" }, { signals: noSignals, choiceId: "a" })).toBe(false);
     expect(evalSignature({ recallEquals: "Use Random.randint" }, { signals: noSignals, recallText: "use random.randint" })).toBe(true);
+    expect(evalSignature({ recallEquals: "Use Random.randint" }, { signals: noSignals })).toBe(false);
   });
 
   it("timedOut matches signals.timedOut", () => {
@@ -34,6 +35,18 @@ describe("evalSignature — leaf forms", () => {
     const signals: RawSignals = { ran: true, wallMs: 1, tests: { passed: 1, failed: 1, failures: [{ caseIndex: 0, got: 57 }] } };
     expect(evalSignature(sig, { signals })).toBe(true);
     expect(evalSignature(sig, { signals: { ran: true, wallMs: 1, tests: { passed: 2, failed: 0, failures: [] } } })).toBe(false);
+  });
+
+  it("testFailure matches by gotEquals without caseIndex", () => {
+    const signals: RawSignals = { ran: true, wallMs: 1, tests: { passed: 1, failed: 1, failures: [{ caseIndex: 0, got: 57 }] } };
+    expect(evalSignature({ testFailure: { gotEquals: 57 } }, { signals })).toBe(true);
+    expect(evalSignature({ testFailure: { gotEquals: 99 } }, { signals })).toBe(false);
+  });
+
+  it("propertyFailed matches only when property.passed is false", () => {
+    expect(evalSignature({ propertyFailed: true }, { signals: { ran: true, wallMs: 1, property: { passed: false } } })).toBe(true);
+    expect(evalSignature({ propertyFailed: true }, { signals: { ran: true, wallMs: 1, property: { passed: true } } })).toBe(false);
+    expect(evalSignature({ propertyFailed: true }, { signals: noSignals })).toBe(false);
   });
 });
 
@@ -52,6 +65,8 @@ describe("specificityRank", () => {
     expect(specificityRank({ testFailure: {} })).toBe(1);
     expect(specificityRank({ runError: "runtime" })).toBe(2);
     expect(specificityRank({ any: [{ runError: "runtime" }, { choice: "b" }] })).toBe(0);
+    expect(specificityRank({ not: { runError: "runtime" } })).toBe(2);
+    expect(specificityRank({ not: { choice: "b" } })).toBe(0);
   });
 });
 
