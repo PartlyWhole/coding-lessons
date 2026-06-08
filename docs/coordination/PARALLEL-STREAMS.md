@@ -96,11 +96,13 @@ main (M0 ✅ + frozen contract) ──┬─► A: M1 authoring ──┐
 
 ## 7. Status board (orchestrator updates this — streams report, don't edit)
 
-| Stream | Status | Branch HEAD | Notes |
+Worktrees created off `main` (each has a `START-HERE.md` onboarding scaffold, git-excluded):
+
+| Stream | Status | Worktree / branch | Notes |
 |---|---|---|---|
-| A · M1 authoring | not started | — | plan to be written first (writing-plans) |
-| B · M2 engine | not started | — | plan to be written first (writing-plans) |
-| C · M3a sandbox | optional / network-blocked verify | — | hold unless network available |
+| A · M1 authoring | ready to start | `../trellis-m1` / `m1-authoring` | write plan first (writing-plans) |
+| B · M2 engine | ready to start | `../trellis-m2` / `m2-engine` | write plan first; builds on hand-authored Bundle fixtures (no dep on M1) |
+| C · M3a sandbox | ready to start (verify deferred) | `../trellis-m3a` / `m3a-sandbox` | **no network here → real-Pyodide verification deferred**; build host + mock-worker tests now |
 
 ## 8. Reference index
 
