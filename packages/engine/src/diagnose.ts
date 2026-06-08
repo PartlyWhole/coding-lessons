@@ -106,7 +106,11 @@ export function computeDeltas(
   if (mid !== undefined) {
     const m = bundle.misconceptions[mid];
     if (m?.skillDeltas && m.skillDeltas.length > 0) return m.skillDeltas;
-    return m ? [{ skill: m.skill, kind: "misconception", weight: cfg.defaultFailWeight }] : [];
+    if (m) return [{ skill: m.skill, kind: "misconception", weight: cfg.defaultFailWeight }];
+    // mid references a misconception absent from the bundle (a dangling ref in malformed
+    // content — referential integrity is M1's compiler gate). Never silently no-op: fall
+    // back to a generic fail delta per step skill so mastery still reflects the wrong answer.
+    return step.skills.map((sk) => ({ skill: sk, kind: "fail", weight: cfg.defaultFailWeight }));
   }
   return step.skills.map((sk) => ({ skill: sk, kind: "fail", weight: cfg.defaultFailWeight }));
 }
