@@ -6,6 +6,7 @@ import {
   isResultMessage,
   type WorkerFactory,
   type WorkerLike,
+  type WorkerToHost,
 } from "./protocol.js";
 
 export type HostState = "warming" | "ready" | "running" | "dead";
@@ -114,7 +115,7 @@ export class WorkerHost {
     }
   }
 
-  private onMessage(msg: import("./protocol.js").WorkerToHost): void {
+  private onMessage(msg: WorkerToHost): void {
     if (this.state_ === "dead") return;
     if (isReadyMessage(msg)) {
       this.clearWarmup();

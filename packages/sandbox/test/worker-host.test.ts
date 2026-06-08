@@ -75,4 +75,16 @@ describe("WorkerHost", () => {
     await expect(host.ready()).rejects.toThrow(/boom/);
     expect(host.state).toBe("dead");
   });
+
+  it("an onerror event fails an in-flight run and goes dead", async () => {
+    const clock = new FakeClock();
+    const { factory, workers } = makeMockFactory({ onRun: () => "hang" });
+    const host = new WorkerHost(factory, cfg(clock));
+    await host.ready();
+    const runP = host.run({ code: "boom", timeoutMs: 1000, memoryMb: 256 });
+    workers[0]?.onerror?.({ message: "segfault" });
+    await expect(runP).rejects.toThrow(/segfault/i);
+    expect(host.state).toBe("dead");
+    expect(workers[0]?.terminated).toBe(true);
+  });
 });
