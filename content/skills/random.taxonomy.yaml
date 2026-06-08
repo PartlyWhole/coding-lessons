@@ -60,9 +60,11 @@ skill:
       # form can never return (it returns 57). So the boundary test case fails. The
       # property oracle's in-range assertion is the backstop for shifted/clamped forms.
       # Keyed on the boundary test failure (caseIndex 0), per misconception-patterns.md.
+      # The off-by-one is a WRONG VALUE on a clean run (100 vs 57) — not a crash. Excluding
+      # runtime errors keeps it from stealing the no-import sibling's NameError (specificity).
       signature:
         any:
-          - { testFailure: { caseIndex: 0 } }
+          - { all: [ { testFailure: { caseIndex: 0 } }, { not: { runError: runtime } } ] }
           - { propertyFailed: true }
           - { choice: c }
       feedback: |

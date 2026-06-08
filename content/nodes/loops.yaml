@@ -238,11 +238,14 @@ node:
                     all:
                       - { node: While, where: { childMatches: { node: Constant, where: { attr: value, eq: true } } } }
                       - { not: { node: Break } }
-                # Corroborating: a non-constant while condition whose names are never reassigned in the body.
+                # Corroborating: a While exists, and no Assign occurs inside any While body
+                # (the loop variable is never updated). `not` is a query combinator, not an
+                # AstPred — so it wraps a node-query, never sits inside a `where`.
                 - tag: while_cond_no_update
                   query:
-                    node: While
-                    where: { not: { childMatches: { node: Assign } } }
+                    all:
+                      - { node: While }
+                      - { not: { node: Assign, within: { node: While } } }
             property:
               # Oracle: the transcript for any secret + guess sequence ending in the secret.
               # Generator varies the guess sequence; the program's own seed fixes secret=82,

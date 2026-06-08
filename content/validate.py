@@ -40,6 +40,11 @@ for nid, n in nodes.items():
         for sk in c.get("certifies", []):
             if sk not in n.get("teaches", []):
                 errs.append(f"{c['id']} certifies {sk} not in {nid}.teaches")
+    # every taught skill must actually be certified by some cell (≥1 certifying step)
+    certified = {sk for c in n.get("cells", []) for sk in c.get("certifies", [])}
+    for sk in n.get("teaches", []):
+        if sk not in certified:
+            errs.append(f"{nid} teaches {sk} but no cell certifies it")
 
 # Gate 2: referential integrity — every required skill has a producer
 for nid, n in nodes.items():
@@ -100,6 +105,22 @@ def visit(nid, stack):
 for nid in nodes:
     if color[nid] == 0:
         visit(nid, [])
+
+# Gate 3b: Skill.upstream graph must also be acyclic (§4.2, validated independently)
+ucolor = {sid: 0 for sid in skills}
+def uvisit(sid, stack):
+    ucolor[sid] = 1
+    for up in skills[sid].get("upstream", []):
+        if up not in skills:
+            errs.append(f"{sid}.upstream references undefined skill {up}"); continue
+        if ucolor[up] == 1:
+            errs.append(f"UPSTREAM CYCLE: {' -> '.join(stack+[sid,up])}")
+        elif ucolor[up] == 0:
+            uvisit(up, stack + [sid])
+    ucolor[sid] = 2
+for sid in skills:
+    if ucolor[sid] == 0:
+        uvisit(sid, [])
 
 print(f"nodes={len(nodes)} skills={len(skills)} misconceptions={len(miscons)}")
 for w in warns: print("WARN:", w)

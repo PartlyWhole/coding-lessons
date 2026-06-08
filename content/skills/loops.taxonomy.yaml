@@ -17,10 +17,11 @@ skill:
     - id: mis.loop.infinite_true
       skill: skill.loop.while
       title: "Thinks `while True:` stops on its own"
-      # while True with no break: the loop body contains a Constant-True test and there is no Break.
+      # while True with no break (build AST), OR the recognize distractor naming it.
       signature:
-        all:
+        any:
           - { astTag: infinite_true_no_break }
+          - { choice: b }
       feedback: |
         `while True:` means the condition is *literally always True*, so the loop never ends by
         itself — Python keeps re-running the body forever (here, demanding more input it never
@@ -88,11 +89,12 @@ skill:
     - id: mis.loop.no_update
       skill: skill.loop.termination
       title: "Loop variable in the condition is never updated in the body"
-      # While with a (non-constant) condition naming a variable, whose body never reassigns it.
-      # Detected as: a While that contains no Assign inside its body.
+      # A While whose body never reassigns the loop variable (build AST), OR the
+      # recognize distractor naming it.
       signature:
-        all:
+        any:
           - { astTag: while_cond_no_update }
+          - { choice: b }
       feedback: |
         The loop condition `while guess != number:` can only end when `guess` finally equals
         `number`. But if the body never changes `guess`, the condition stays the same on every
