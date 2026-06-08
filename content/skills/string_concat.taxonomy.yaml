@@ -1,0 +1,114 @@
+# content/skills/string_concat.taxonomy.yaml
+# Taxonomy for node.string_concat. Two skills, three misconceptions (P2 ids are FIXED).
+# Every fixture below was TRACED through python3 3.9 before being written.
+
+skill:
+  id: skill.string.concat
+  title: "Join string literals with +"
+  description: "join string literals with `+`; spacing must be inside the quotes."
+  upstream: [ skill.string.literal ]
+  misconceptions:
+
+    # ------------------------------------------------------------------ missing_space
+    - id: mis.concat.missing_space
+      skill: skill.string.concat
+      title: "Forgot the space — the words slam together (HiAlan)"
+      # AST tag fires only when a spaceless literal like "Hi" is used (correct uses "Hi ");
+      # paired with the behavioral testFailure so it is both diagnostic and self-proving.
+      signature: { all: [ { astTag: missing_space_literal }, { testFailure: {} } ] }
+      feedback: >
+        Close! The pieces joined, but the space went missing — you got something like
+        "HiAlan". The `+` does not add a space; the computer only prints spaces that live
+        INSIDE the quotes. Put the space inside the first piece: `"Hi "` instead of `"Hi"`.
+      hintLadder:
+        - { level: 1, body: "Read your output out loud. Where did the space between the words go?" }
+        - { level: 2, body: "The `+` is glue, not a space. The only spaces that print are the ones typed inside the quotes." }
+        - { level: 3, body: 'Compare `"Hi" + name` (gives HiAlan) with `"Hi " + name` (gives Hi Alan). The space belongs before the closing quote.' }
+        - { level: 4, body: "Solution:", revealCode: "def greet(name):\n    return \"Hi \" + name + \"!\"" }
+      skillDeltas:
+        - { skill: skill.string.concat, kind: misconception, weight: 0.3 }
+      triggers:
+        # No trailing space in "Hi" -> AST tag fires AND greet("Alan")="HiAlan!" != "Hi Alan!"
+        - { stepKind: build, code: "def greet(name):\n    return \"Hi\" + name + \"!\"" }
+      notTriggers:
+        # Correct: "Hi " has the space -> no "Hi" Constant, tests pass.
+        - { stepKind: build, code: "def greet(name):\n    return \"Hi \" + name + \"!\"" }
+        # Sibling's bug (plus-in-quotes): wrong output but NO "Hi" Constant -> astTag absent -> no fire.
+        - { stepKind: build, code: "def greet(name):\n    return \"Hi \" + name + \"+\" + \"!\"" }
+
+    # ------------------------------------------------------------------ plus_in_quotes
+    - id: mis.concat.plus_in_quotes
+      skill: skill.string.concat
+      title: "Put the + inside the quotes, so it became literal text"
+      # A literal "+" Constant only appears when the plus was typed inside quotes; the
+      # correct join keeps every + outside the quotes. Behavioral testFailure corroborates.
+      # The recognize distractor (choice c) carries the same belief, so add a choice branch.
+      signature: { any: [ { all: [ { astTag: plus_as_text }, { testFailure: {} } ] }, { choice: c } ] }
+      feedback: >
+        The `+` ended up INSIDE the quotes, so the computer treated it as a plus-sign
+        character to print rather than as glue. A `+` between two quoted pieces does the
+        joining; a `+` inside quotes is just text. Move the plus outside the quotes.
+      hintLadder:
+        - { level: 1, body: "Is the + you typed inside the quotes or outside them?" }
+        - { level: 2, body: "A `+` inside quotes is a literal character. The joining `+` must sit OUTSIDE the quotes, between two strings." }
+        - { level: 3, body: 'You wrote something like `"Hi " + "+" + name`, which prints a stray +. You only need the pieces of the message joined: `"Hi " + name + "!"`.' }
+        - { level: 4, body: "Solution:", revealCode: "def greet(name):\n    return \"Hi \" + name + \"!\"" }
+      skillDeltas:
+        - { skill: skill.string.concat, kind: misconception, weight: 0.3 }
+      triggers:
+        # Literal "+" Constant -> astTag fires AND greet("Alan")="Hi Alan+!" != "Hi Alan!"
+        - { stepKind: build, code: "def greet(name):\n    return \"Hi \" + name + \"+\" + \"!\"" }
+        # The recognize distractor 'c' picks the "all pluses inside quotes" idea.
+        - { stepKind: recognize, choice: c }
+      notTriggers:
+        # Correct solution: no "+" Constant, tests pass.
+        - { stepKind: build, code: "def greet(name):\n    return \"Hi \" + name + \"!\"" }
+        # Sibling's bug (missing space): no "+" Constant -> astTag absent -> no fire.
+        - { stepKind: build, code: "def greet(name):\n    return \"Hi\" + name + \"!\"" }
+        - { stepKind: recognize, choice: a }
+
+---
+
+skill:
+  id: skill.string.concat_str_num
+  title: "Join a string and a number"
+  description: "joining text and a number needs conversion (`str()` / f-string); `+` won't coerce."
+  upstream: [ skill.string.concat ]
+  misconceptions:
+
+    # ------------------------------------------------------------------ str_num (marquee)
+    - id: mis.concat.str_num
+      skill: skill.string.concat_str_num
+      title: "Glued text directly to a number — expected Python to auto-convert"
+      # The marquee fault-line. `"text" + number` raises TypeError at run time; correct
+      # str()/f-string solutions run clean, so runError is the workhorse signal. We deliberately
+      # do NOT key the signature on the build's `implicit_coerce` AST tag: that tag also matches
+      # the correct `"...: " + str(n)` solution (a BinOp whose child is the string Constant), so
+      # using it would wrongly fire on a passing answer. The tag stays in the build evaluator as
+      # harmless telemetry (AST tags never fail a passing run); detection here is run-error + the
+      # recognize distractor (choice a, the un-converted line).
+      signature: { any: [ { runError: runtime }, { choice: a } ] }
+      feedback: >
+        That's the big one! `"text" + number` crashes with a TypeError — Python will not
+        secretly turn a number into text. You have to convert it yourself: wrap the number in
+        `str(...)`, as in `"Your random number is: " + str(number)`, or use an f-string:
+        `f"Your random number is: {number}"`. Both turn the number into text first.
+      hintLadder:
+        - { level: 1, body: "Read the error. What two kinds of things did you try to glue together with +?" }
+        - { level: 2, body: "Text and numbers are different types. `+` can join text-to-text, but not text-to-number. You must convert the number to text first." }
+        - { level: 3, body: 'Two ways to convert: `"...: " + str(number)` turns the number into text, or an f-string `f"...: {number}"` drops it straight in.' }
+        - { level: 4, body: "Solution:", revealCode: "def announce(number):\n    return \"Your random number is: \" + str(number)" }
+      skillDeltas:
+        - { skill: skill.string.concat_str_num, kind: misconception, weight: 0.4 }
+        - { skill: skill.string.concat, kind: misconception, weight: 0.1 }
+      triggers:
+        # "text" + number with no conversion -> TypeError at run -> runError: runtime fires.
+        - { stepKind: build, code: "def announce(number):\n    return \"Your random number is: \" + number" }
+        # The recognize distractor 'a' is the un-converted line.
+        - { stepKind: recognize, choice: a }
+      notTriggers:
+        # str() conversion: runs clean, tests pass.
+        - { stepKind: build, code: "def announce(number):\n    return \"Your random number is: \" + str(number)" }
+        # f-string: runs clean, no BinOp at all.
+        - { stepKind: build, code: "def announce(number):\n    return f\"Your random number is: {number}\"" }
+        - { stepKind: recognize, choice: b }

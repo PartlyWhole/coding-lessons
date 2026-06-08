@@ -1,0 +1,94 @@
+# content/skills/random.taxonomy.yaml — taxonomy for the `random` topic (P6)
+# Owns skill.random.randint and its two misconceptions (FIXED ids, AUTHORING_BRIEF §P2):
+#   mis.random.no_import         — NameError, used random.randint without `import random`
+#   mis.random.range_off_by_one  — wrong inclusive bound (randint(1,99) for a 1–100 range),
+#                                  caught via the SEEDED property oracle / boundary test case.
+skill:
+  id: skill.random.randint
+  title: "Get a random integer"
+  description: "import random; random.randint(a, b) returns a random int in [a, b] inclusive."
+  # If these upstream skills are weak, failures here are better explained there:
+  # you must store the result (var.assign) and show it (print_literal).
+  upstream: [ skill.var.assign, skill.output.print_literal ]
+  misconceptions:
+
+    # ─────────────────────────────────────────────────────────────────────────
+    - id: mis.random.no_import
+      skill: skill.random.randint
+      title: "Used random.randint without importing random"
+      # Build path: NameError at runtime (random never bound). Corroborated by AST —
+      # the code uses the name `random` but there is no Import node. On the recognize
+      # step the import-less choice (b) carries this id. AST/choice rank above runError.
+      signature:
+        any:
+          - { all: [ { astTag: uses_random_name }, { not: { astTag: has_random_import } } ] }
+          - { runError: runtime }
+          - { choice: b }
+      feedback: |
+        Python doesn't know what `random` is until you open the toolbox. Without
+        `import random` at the top, `random.randint(...)` raises
+        `NameError: name 'random' is not defined`. The fix is one line at the very top:
+        `import random`.
+      hintLadder:
+        - { level: 1, body: "Read the error: `name 'random' is not defined`. Python has never heard of `random`. What step did we say always comes first?" }
+        - { level: 2, body: "Before you can use a toolbox you have to open it. The `random` tools live in a module you must bring in." }
+        - { level: 3, body: "Add `import random` as the very first line, above everything else. Then `random.randint(1, 100)` works." }
+        - { level: 4, body: "Solution:", revealCode: "import random\n\ndef get_random(a, b):\n    return random.randint(a, b)" }
+      skillDeltas:
+        - { skill: skill.random.randint, kind: misconception, weight: 0.4 }
+      # TRACED. build trigger: NameError at runtime AND (usesName random ∧ no Import).
+      # recognize trigger: choice b (the import-less program).
+      # notTriggers: the correct submission (imports random; runs clean, passes tests),
+      # and a DIFFERENT wrong answer owned by the sibling off-by-one (imports fine,
+      # so neither runError nor the no-import AST fires; it fails on the boundary case
+      # which is the sibling's signature, not this one).
+      triggers:
+        - { stepKind: build, code: "def get_random(a, b):\n    return random.randint(a, b)" }
+        - { stepKind: recognize, choice: b }
+      notTriggers:
+        - { stepKind: build, code: "import random\n\ndef get_random(a, b):\n    return random.randint(a, b)" }
+        - { stepKind: build, code: "import random\n\ndef get_random(a, b):\n    return random.randint(a, b - 1)" }
+        - { stepKind: recognize, choice: a }
+
+    # ─────────────────────────────────────────────────────────────────────────
+    - id: mis.random.range_off_by_one
+      skill: skill.random.randint
+      title: "Shaved the inclusive upper bound (randint(1, 99) for a 1–100 range)"
+      # randint(a, b) INCLUDES b. randint(1, 99) can never produce 100. Detected
+      # behaviorally via the SEEDED oracle: case 0 is [1, 100] under seed 1234, where
+      # the reference rolls 100 (the top boundary) — exactly the value the off-by-one
+      # form can never return (it returns 57). So the boundary test case fails. The
+      # property oracle's in-range assertion is the backstop for shifted/clamped forms.
+      # Keyed on the boundary test failure (caseIndex 0), per misconception-patterns.md.
+      signature:
+        any:
+          - { testFailure: { caseIndex: 0 } }
+          - { propertyFailed: true }
+          - { choice: c }
+      feedback: |
+        `random.randint(a, b)` **includes** both ends. For a 1–100 range you want
+        `random.randint(1, 100)` — write the actual top number you want. `randint(1, 99)`
+        quietly drops `100`: it can never roll the highest value, so a 1-in-100 result
+        goes missing every time.
+      hintLadder:
+        - { level: 1, body: "How many different numbers should a 1–100 roll be able to produce? Count the values `randint(1, 99)` can return." }
+        - { level: 2, body: "`randint(a, b)` includes BOTH a and b. So the second argument is the largest value you actually want — not one less." }
+        - { level: 3, body: "For the full range from a to b, pass b directly: `random.randint(a, b)`. Don't subtract 1 from the top." }
+        - { level: 4, body: "Solution:", revealCode: "import random\n\ndef get_random(a, b):\n    return random.randint(a, b)" }
+      skillDeltas:
+        - { skill: skill.random.randint, kind: misconception, weight: 0.4 }
+      # TRACED against python3 under seed 1234:
+      #   reference get_random(1,100) -> 100   (case 0 expected)
+      #   off-by-one  get_random(1,100) -> 57   => case 0 FAILS  => signature fires.
+      #   correct     get_random(1,100) -> 100  => case 0 passes => does NOT fire.
+      # recognize trigger: choice c (the randint(1,99) program).
+      # notTriggers: the correct submission (passes case 0); and the no-import sibling
+      # (raises NameError before any test runs, so testFailure/propertyFailed never
+      # evaluate — runtime error is the sibling's signature, not a test failure here).
+      triggers:
+        - { stepKind: build, code: "import random\n\ndef get_random(a, b):\n    return random.randint(a, b - 1)" }
+        - { stepKind: recognize, choice: c }
+      notTriggers:
+        - { stepKind: build, code: "import random\n\ndef get_random(a, b):\n    return random.randint(a, b)" }
+        - { stepKind: build, code: "def get_random(a, b):\n    return random.randint(a, b)" }
+        - { stepKind: recognize, choice: a }

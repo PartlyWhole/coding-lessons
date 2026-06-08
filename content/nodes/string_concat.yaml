@@ -1,0 +1,198 @@
+# content/nodes/string_concat.yaml
+# P4-P6 ascent for node.string_concat. Descent (P0-P3) is FIXED by content/AUTHORING_BRIEF.md.
+# Teaches: skill.string.concat, skill.string.concat_str_num.
+node:
+  id: node.string_concat
+  title: "Gluing text together"
+  track: spine
+  requires:
+    # string.literal is the true prereq (you must already wield "text in quotes").
+    - { skill: skill.string.literal, minMastery: 0.6, kind: prerequisite }
+    # print_literal is a utility taught upstream (node.output) — used to show results.
+    - { skill: skill.output.print_literal, minMastery: 0.5, kind: utility }
+  teaches: [ skill.string.concat, skill.string.concat_str_num ]
+  cells:
+
+    # ---------------------------------------------------------------------------
+    # CELL 1 — join string literals with + (skill.string.concat)
+    # ---------------------------------------------------------------------------
+    - id: cell.string_concat.join_text
+      title: "Tying strings together with +"
+      certifies: [ skill.string.concat ]
+      steps:
+
+        - id: cell.string_concat.join_text#1
+          kind: watch
+          skills: [ skill.string.concat ]
+          prompt: "The + that glues text"
+          body: |
+            You already know a string is text in quotes. Here is the trick: the same `+`
+            you'd use on numbers also **ties strings together** end to end.
+
+                print("This " + "is" + " cool!")
+
+            Run that and the computer prints:  `This is cool!`
+
+            The computer is greedy — it does NOT sprinkle in spaces for you. Every space you
+            want in the output has to live **inside the quotes**. Look closely: that's `"This "`
+            with a space tucked in before the closing quote, and `" cool!"` with a space right
+            after the opening quote. Leave them out and the words slam together.
+          carryContext: |
+            Joining text: `"a" + "b"` makes `"ab"`. Spaces only appear if they are INSIDE the
+            quotes. The + lives OUTSIDE the quotes — it is the glue, not a character.
+
+        - id: cell.string_concat.join_text#2
+          kind: predict
+          skills: [ skill.string.concat ]
+          prompt: "The computer is about to greet Alan. What gets printed?"
+          code: |
+            name = "Alan"
+            print("Hi" + name)
+          choices:
+            - { id: a, label: "Hi Alan" }
+            - { id: b, label: "HiAlan", misconception: mis.concat.missing_space }
+            - { id: c, label: "Hi name" }
+          expected: { normalized: ["HiAlan"] }
+          reveal: run-and-show
+
+        - id: cell.string_concat.join_text#3
+          kind: recognize
+          skills: [ skill.string.concat ]
+          prompt: >
+            You want the program to print exactly:  This + that
+            (with a real plus sign in the middle). Which line does that?
+          choices:
+            - { id: a, label: 'print("This " + "+" + " that")' }
+            - { id: b, label: 'print("This " "that")', }
+            - { id: c, label: 'print("This + that") joined with three pluses outside the quotes' }
+          correctChoiceId: a
+
+        - id: cell.string_concat.join_text#4
+          kind: build
+          language: python
+          skills: [ skill.string.concat ]
+          prompt: >
+            Write greet(name) so it returns a greeting like  Hi Alan!  — the word "Hi",
+            then a space, then the name, then an exclamation mark. Glue the pieces with +.
+          starterCode: |
+            def greet(name):
+                # join "Hi", a space, the name, and "!" into one string
+                return ""
+          evaluator:
+            run: { timeoutMs: 2000, memoryMb: 256, entrypoint: greet }
+            tests:
+              comparator: deep-equal
+              cases:
+                - { input: "Alan", expected: "Hi Alan!" }
+                - { input: "Bo", expected: "Hi Bo!" }
+                - { input: "", expected: "Hi !", hidden: true }
+            ast:
+              queries:
+                # Constant "Hi" (no trailing space) => spacing left outside the quotes.
+                - { tag: missing_space_literal,
+                    query: { node: Constant, where: { attr: value, eq: "Hi" } } }
+                # A literal "+" Constant => the plus was put inside the quotes as text.
+                - { tag: plus_as_text,
+                    query: { node: Constant, where: { attr: value, eq: "+" } } }
+            property:
+              referenceImpl: |
+                def sol(name):
+                    return "Hi " + name + "!"
+              generators:
+                - { param: name, type: str, min: 0, max: 8, alphabet: "abcdefghijklmnopqrstuvwxyz" }
+              numCases: 50
+              seed: 1234
+              comparator: deep-equal
+
+    # ---------------------------------------------------------------------------
+    # CELL 2 — join text + a number (skill.string.concat_str_num) — the marquee fault-line
+    # ---------------------------------------------------------------------------
+    - id: cell.string_concat.text_plus_number
+      title: "When text meets a number"
+      certifies: [ skill.string.concat_str_num ]
+      steps:
+
+        - id: cell.string_concat.text_plus_number#1
+          kind: watch
+          skills: [ skill.string.concat_str_num ]
+          prompt: "Text and numbers don't speak the same language"
+          body: |
+            Gluing text to text works great. But the moment you try to glue a piece of text
+            onto a **number**, the computer throws up its hands.
+
+            Python refuses to guess what you meant — it will NOT quietly turn a number into
+            text for you. You have to ask, in one of two ways:
+
+                str(number)            # turn the number INTO text, then glue:  "n: " + str(7)
+                f"...{number}..."       # an f-string drops the number straight in:  f"n: {7}"
+
+            Both print  `n: 7`. Pick whichever you like.
+          carryContext: |
+            `"text" + number` is an ERROR (TypeError) — Python won't auto-convert. Fix it with
+            `str(number)` or an f-string `f"...{number}..."`. Both turn the number into text first.
+
+        - id: cell.string_concat.text_plus_number#2
+          kind: predict
+          skills: [ skill.string.concat_str_num ]
+          prompt: >
+            The program just rolled a random number and wants to announce it. What happens
+            when you run this?
+          code: |
+            number = 7
+            print("Your random number is: " + number)
+          choices:
+            - { id: a, label: "It prints: Your random number is: 7" }
+            - { id: b, label: "It crashes with a TypeError — can't glue text to a number" }
+            - { id: c, label: "It prints: Your random number is: number" }
+          expected: { normalized: ["it crashes with a typeerror", "typeerror", "it crashes"] }
+          reveal: run-and-show
+
+        - id: cell.string_concat.text_plus_number#3
+          kind: recognize
+          skills: [ skill.string.concat_str_num ]
+          prompt: >
+            number is 7. You want to print exactly:  Your random number is: 7
+            Which line works WITHOUT crashing?
+          choices:
+            - { id: a, label: 'print("Your random number is: " + number)', misconception: mis.concat.str_num }
+            - { id: b, label: 'print("Your random number is: " + str(number))' }
+            - { id: c, label: 'print("Your random number is: " + "number")' }
+          correctChoiceId: b
+
+        - id: cell.string_concat.text_plus_number#4
+          kind: build
+          language: python
+          skills: [ skill.string.concat_str_num ]
+          prompt: >
+            Write announce(number) so it returns a line like  Your random number is: 7
+            — the label, then the number turned into text. Use str(...) or an f-string.
+          starterCode: |
+            def announce(number):
+                # join the label with the number (which is NOT text yet!)
+                return ""
+          evaluator:
+            run: { timeoutMs: 2000, memoryMb: 256, entrypoint: announce }
+            tests:
+              comparator: deep-equal
+              cases:
+                - { input: 7, expected: "Your random number is: 7" }
+                - { input: 0, expected: "Your random number is: 0" }
+                - { input: 100, expected: "Your random number is: 100", hidden: true }
+            ast:
+              queries:
+                # A BinOp that has a string Constant child => a "+" join involving text. On a
+                # FAILING (TypeError) run this corroborates the str+number cause; it never fails
+                # a passing str()/f-string solution.
+                - { tag: implicit_coerce,
+                    query: { node: BinOp,
+                             where: { childMatches: { node: Constant,
+                                                      where: { attr: value, eq: "Your random number is: " } } } } }
+            property:
+              referenceImpl: |
+                def sol(number):
+                    return "Your random number is: " + str(number)
+              generators:
+                - { param: number, type: int, min: 0, max: 999 }
+              numCases: 50
+              seed: 1234
+              comparator: deep-equal

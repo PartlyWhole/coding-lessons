@@ -1,0 +1,143 @@
+# content/skills/input.taxonomy.yaml
+# Skills owned by node.input: input.read, input.store, type.int_input.
+# Each skill owns ≥1 distinct, detectable fault-line (granularity rule, §3.2):
+#   - input.read       -> mis.input.hardcoded   (didn't ask at all; hardcoded the value)
+#   - input.store      -> mis.input.not_stored  (asked, but discarded the answer)
+#   - type.int_input   -> mis.type.int_input    (number-math/compare on input()'s string)
+# read vs store are genuinely separable: you can read (call input) yet fail to store,
+# and you can fail to read at all (hardcode) — two different fault-lines, so they split.
+#
+# Every fixture below was TRACED against real python3 (3.9.6): AST walks for the
+# structural tags, subprocess stdin runs for the runtime/behavioral ones.
+
+skill:
+  id: skill.input.read
+  title: "Read a line of input"
+  description: "input(\"prompt\") reads a line the user types."
+  upstream: [ skill.output.print_literal ]
+  misconceptions:
+    - id: mis.input.hardcoded
+      skill: skill.input.read
+      title: "Hardcoded the value instead of asking the user"
+      # The learner never calls input() — they just assign a fixed value. The program
+      # then ignores what the user types, so the scripted-stdin test fails. AST tag
+      # `no_input_call` (no Call to input anywhere) + the behavioral testFailure.
+      signature:
+        any:
+          - { all: [ { astTag: no_input_call }, { testFailure: {} } ] }
+          - { choice: d }
+      feedback: |
+        Your program decides the answer itself instead of *asking*. `name = "Alan"`
+        always says Alan, no matter who's there. To let the user answer, read it with
+        `input(...)`: `name = input("What's your name? ")`.
+      hintLadder:
+        - { level: 1, body: "Where does your program ask the user anything? Right now it already knows the answer before they type." }
+        - { level: 2, body: "A fixed value like `\"Alan\"` can't change. To get the *user's* answer you have to call `input(...)`." }
+        - { level: 3, body: "Replace the hardcoded value with a read:\n`name = input(\"What's your name? \")`" }
+        - { level: 4, body: "Solution:", revealCode: "name = input(\"What's your name? \")\nprint(\"Hi \" + name + \"!\")" }
+      skillDeltas:
+        - { skill: skill.input.read, kind: misconception, weight: 0.4 }
+      triggers:
+        # no input() call at all -> no_input_call fires + scripted stdin ("Zara") is ignored -> test fails
+        - { stepKind: build, code: "name = \"Alan\"\nprint(\"Hi \" + name + \"!\")" }
+        # recognize distractor: the hardcoded choice
+        - { stepKind: recognize, choice: d }
+      notTriggers:
+        # correct: actually reads with input() -> no_input_call does NOT fire, tests pass
+        - { stepKind: build, code: "name = input(\"What's your name? \")\nprint(\"Hi \" + name + \"!\")" }
+        # sibling fault (asked but didn't store) DOES call input -> no_input_call silent here
+        - { stepKind: build, code: "input(\"What's your name? \")\nprint(\"Hi there!\")" }
+        - { stepKind: recognize, choice: a }
+
+---
+
+skill:
+  id: skill.input.store
+  title: "Store what the user typed"
+  description: "Capture input()'s result in a variable so it can be reused."
+  upstream: [ skill.var.assign, skill.input.read ]
+  misconceptions:
+    - id: mis.input.not_stored
+      skill: skill.input.store
+      title: "Called input() but never kept the answer"
+      # AST: a Call to `input` sitting directly inside an Expr statement (a bare
+      # expression line) means its return value was thrown away. When stored, the
+      # Call is the `value` of an Assign, never wrapped in an Expr. Paired with the
+      # behavioral testFailure so a passing solution is never flagged.
+      signature:
+        any:
+          - { all: [ { astTag: input_not_stored }, { testFailure: {} } ] }
+          - { choice: b }
+          - { choice: c }
+      feedback: |
+        `input(...)` hands the typed line *back* to you, but nothing caught it — the
+        answer fell on the floor. Put a variable on the left so it gets kept:
+        `name = input("...")`. Then you can reuse `name` later.
+      hintLadder:
+        - { level: 1, body: "You asked the question — but where did the answer go? Right now nothing is holding onto what the user typed." }
+        - { level: 2, body: "`input(...)` *returns* the typed line. To keep it, you have to store it in a variable, the same `name = value` way you store anything." }
+        - { level: 3, body: "Put the variable on the left of `=` and `input(...)` on the right, then greet with it:\n`name = input(\"What's your name? \")`\n`print(\"Hi \" + name + \"!\")`" }
+        - { level: 4, body: "Solution:", revealCode: "name = input(\"What's your name? \")\nprint(\"Hi \" + name + \"!\")" }
+      skillDeltas:
+        - { skill: skill.input.store, kind: misconception, weight: 0.4 }
+      triggers:
+        # bare input() statement, greeting hardcoded -> AST fires + test fails (no name)
+        - { stepKind: build, code: "input(\"What's your name? \")\nprint(\"Hi there!\")" }
+        # bare input(), then an unrelated assignment -> AST fires + test fails
+        - { stepKind: build, code: "input(\"What's your name? \")\nname = \"friend\"\nprint(\"Hi \" + name + \"!\")" }
+        # recognize distractors that drop the store
+        - { stepKind: recognize, choice: b }
+        - { stepKind: recognize, choice: c }
+      notTriggers:
+        # correct: input() stored in an Assign (not an Expr) -> AST does not fire, tests pass
+        - { stepKind: build, code: "name = input(\"What's your name? \")\nprint(\"Hi \" + name + \"!\")" }
+        # the correct recognize choice
+        - { stepKind: recognize, choice: a }
+
+---
+
+skill:
+  id: skill.type.int_input
+  title: "Convert input() before number math"
+  description: "input() returns a string; convert with int() before number comparison/math."
+  upstream: [ skill.input.store, skill.string.concat ]
+  misconceptions:
+    - id: mis.type.int_input
+      skill: skill.type.int_input
+      title: "Did number-math or compared on input()'s string"
+      # Runtime TypeError: comparing or adding a string (from input()) against an int.
+      # This is a runtime fault (ast.parse succeeds), so detect via runError: runtime,
+      # corroborated at the recall step via recallEquals for the str()/blank answer.
+      signature:
+        any:
+          - { runError: runtime }
+          - { recallEquals: "str" }
+          - { recallEquals: "" }
+      feedback: |
+        `input(...)` always hands back *text*, even when the user types digits — so
+        `"5"` is the string "5", not the number 5, and Python won't do number-math or
+        number-comparisons on text. Convert it first: `int(input("..."))`.
+      hintLadder:
+        - { level: 1, body: "When the user types `5`, what kind of value does `input()` actually give you back — a number, or text that looks like a number?" }
+        - { level: 2, body: "`input()` always returns a *string*. `\"5\" + 1` (or `\"5\" < 10`) mixes text and a number, and Python refuses. You need the number 5, not the text \"5\"." }
+        - { level: 3, body: "Wrap the read in `int(...)` so the text becomes a real number before you use it:\n`snacks = int(input(\"How many snacks? \"))`\n`print(\"Double is \" + str(snacks * 2))`" }
+        - { level: 4, body: "Solution:", revealCode: "snacks = int(input(\"How many snacks? \"))\nprint(\"Double is \" + str(snacks * 2))" }
+      skillDeltas:
+        - { skill: skill.type.int_input, kind: misconception, weight: 0.4 }
+      triggers:
+        # add string input() to int -> TypeError (traced: can only concatenate str)
+        - { stepKind: build, code: "snacks = input(\"How many snacks? \")\nprint(snacks + 1)" }
+        # compare string input() to int -> TypeError (traced: '<' not supported)
+        - { stepKind: build, code: "guess = input(\"Guess: \")\nif guess < 50:\n    print(\"low\")\nelse:\n    print(\"high\")" }
+        # recall: wrong conversion / blank fill
+        - { stepKind: recall, input: "str" }
+        - { stepKind: recall, input: "" }
+      notTriggers:
+        # correct: int(input()) then math -> runs clean, tests pass
+        - { stepKind: build, code: "snacks = int(input(\"How many snacks? \"))\nprint(\"Double is \" + str(snacks * 2))" }
+        # correct: f-string variant -> runs clean
+        - { stepKind: build, code: "snacks = int(input(\"How many snacks? \"))\nprint(f\"Double is {snacks * 2}\")" }
+        # a pure-string program (no number math) -> no TypeError; sibling territory
+        - { stepKind: build, code: "name = input(\"What's your name? \")\nprint(\"Hi \" + name + \"!\")" }
+        # correct recall fill
+        - { stepKind: recall, input: "int" }

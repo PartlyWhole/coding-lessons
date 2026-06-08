@@ -1,0 +1,332 @@
+# content/nodes/conditionals.yaml
+# P4–P6 ascent for node.conditionals. Goal (P0): the learner can make a program CHOOSE a
+# response based on a value — culminating in a Magic-8 Ball that picks a random number and
+# prints the matching reply via an if/elif/else chain.
+# Descent (P0–P3) is FIXED by content/AUTHORING_BRIEF.md — ids/requires/teaches/track copied verbatim.
+node:
+  id: node.conditionals
+  title: "Making the program choose (a Magic-8 Ball)"
+  track: spine
+  requires:
+    - { skill: skill.var.use, minMastery: 0.6, kind: prerequisite }
+    - { skill: skill.output.print_literal, minMastery: 0.5, kind: utility }
+    - { skill: skill.random.randint, minMastery: 0.5, kind: utility }
+  teaches: [ skill.bool.compare, skill.cond.if_else, skill.cond.elif_chain ]
+  cells:
+
+    # ----------------------------------------------------------------------------
+    # CELL 1 — bool.compare: ask a yes/no question with ==, !=, <, >
+    # ----------------------------------------------------------------------------
+    - id: cell.conditionals.compare
+      title: "Asking a yes/no question"
+      certifies: [ skill.bool.compare ]
+      steps:
+
+        - id: cell.conditionals.compare#1
+          kind: watch
+          skills: [ skill.bool.compare ]
+          prompt: "True or False?"
+          body: |
+            Before the computer can choose, it has to ASK a question it can answer with
+            just True or False. You ask with a COMPARISON:
+
+                number = 1
+                number == 1   ->  True
+                number == 2   ->  False
+                number != 2   ->  True
+                number > 0    ->  True
+
+            Note the DOUBLE equals `==`. One `=` stores a value (`number = 1`); two `==`
+            *compares* two values and hands back True or False. They are different tools.
+          carryContext: |
+            `==` compares (gives True/False); a single `=` stores a value. `!=` is "not equal".
+
+        - id: cell.conditionals.compare#2
+          kind: predict
+          skills: [ skill.bool.compare ]
+          prompt: "number is 5. What does `number == 5` give back?"
+          code: |
+            number = 5
+            print(number == 5)
+            print(number == 6)
+            print(number != 6)
+          expected: { normalized: ["true\nfalse\ntrue"] }
+          reveal: run-and-show
+
+        - id: cell.conditionals.compare#3
+          kind: recognize
+          skills: [ skill.bool.compare ]
+          prompt: |
+            You want to ask "is number equal to 1?" so you get back True or False.
+            Which line asks that correctly?
+          choices:
+            - { id: a, label: "number == 1" }
+            - { id: b, label: "number = 1", misconception: mis.bool.assign_for_eq }
+            - { id: c, label: "number is 1", misconception: mis.bool.is_for_eq }
+          correctChoiceId: a
+
+        - id: cell.conditionals.compare#4
+          kind: recall
+          skills: [ skill.bool.compare ]
+          prompt: |
+            Type the operator that COMPARES two values for equality (the one that gives
+            back True or False), not the one that stores a value.
+          accepted:
+            normalized: ["=="]
+            misconceptionMap:
+              "=": mis.bool.assign_for_eq
+              "is": mis.bool.is_for_eq
+
+        - id: cell.conditionals.compare#5
+          kind: build
+          language: python
+          skills: [ skill.bool.compare ]
+          prompt: |
+            Write `is_one(n)` that returns the string "match" when n equals 1, and
+            "no match" otherwise. Use a comparison.
+          starterCode: |
+            def is_one(n):
+                # compare n to 1 and return "match" or "no match"
+                pass
+          evaluator:
+            run: { timeoutMs: 2000, memoryMb: 256, entrypoint: is_one }
+            tests:
+              comparator: deep-equal
+              cases:
+                - { input: 1, expected: "match" }
+                - { input: 0, expected: "no match" }
+                - { input: 2, expected: "no match", hidden: true }
+            ast:
+              queries:
+                - { tag: uses_compare, query: { node: Compare } }
+            property:
+              referenceImpl: |
+                def sol(n):
+                    if n == 1:
+                        return "match"
+                    return "no match"
+              generators: [ { param: n, type: int, min: -5, max: 5 } ]
+              numCases: 40
+              seed: 1234
+              comparator: deep-equal
+
+    # ----------------------------------------------------------------------------
+    # CELL 2 — cond.if_else: run exactly ONE of two blocks
+    # ----------------------------------------------------------------------------
+    - id: cell.conditionals.if_else
+      title: "Running one block or the other"
+      certifies: [ skill.cond.if_else ]
+      steps:
+
+        - id: cell.conditionals.if_else#1
+          kind: watch
+          skills: [ skill.cond.if_else ]
+          prompt: "if / else"
+          body: |
+            Now hand that True/False question to an `if`. The computer runs the indented
+            block ONLY when the question is True; otherwise it runs the `else` block.
+
+                number = 1
+                if number == 1:
+                    print("Your number is 1")
+                else:
+                    print("Your number is not 1")
+
+            Two things are non-negotiable:
+              * the COLON `:` at the end of the `if` / `else` line, and
+              * the INDENTATION of the block that belongs to it.
+            Exactly ONE of the two blocks runs — never both, never neither.
+          carryContext: |
+            `if condition:` then an indented block; optional `else:` block. Exactly one block runs.
+            Header line ends in a colon.
+
+        - id: cell.conditionals.if_else#2
+          kind: predict
+          skills: [ skill.cond.if_else ]
+          prompt: |
+            number is 1. The `if` is True. How many of these lines print — and which?
+            Pick what actually appears on screen.
+          code: |
+            number = 1
+            if number == 1:
+                print("Your number is 1")
+            else:
+                print("Your number is not 1")
+          choices:
+            - { id: a, label: "Your number is 1" }
+            - { id: b, label: "Your number is not 1" }
+            - { id: c, label: "Your number is 1\nYour number is not 1", misconception: mis.cond.both_branches }
+          expected: { normalized: ["your number is 1"] }
+          reveal: run-and-show
+
+        - id: cell.conditionals.if_else#3
+          kind: recall
+          skills: [ skill.cond.if_else ]
+          prompt: |
+            What single punctuation mark must end the `if number == 1` header line,
+            before the indented block? Type just that mark.
+          accepted:
+            normalized: [":"]
+            misconceptionMap:
+              "": mis.cond.no_colon
+              ";": mis.cond.no_colon
+
+        - id: cell.conditionals.if_else#4
+          kind: recognize
+          skills: [ skill.cond.if_else ]
+          prompt: |
+            Which header is written correctly (will not raise a SyntaxError)?
+          choices:
+            - { id: a, label: "if number == 1:" }
+            - { id: b, label: "if number == 1", misconception: mis.cond.no_colon }
+            - { id: c, label: "if number = 1:", misconception: mis.bool.assign_for_eq }
+          correctChoiceId: a
+
+        - id: cell.conditionals.if_else#5
+          kind: build
+          language: python
+          skills: [ skill.cond.if_else, skill.bool.compare ]
+          prompt: |
+            Write `check(number)` that returns "Your number is 1" when number equals 1,
+            and "Your number is not 1" otherwise. Use if / else.
+          starterCode: |
+            def check(number):
+                # if number is 1, return one message; else return the other
+                pass
+          evaluator:
+            run: { timeoutMs: 2000, memoryMb: 256, entrypoint: check }
+            tests:
+              comparator: deep-equal
+              cases:
+                - { input: 1, expected: "Your number is 1" }
+                - { input: 2, expected: "Your number is not 1" }
+                - { input: 0, expected: "Your number is not 1", hidden: true }
+            ast:
+              queries:
+                - { tag: has_if, query: { node: If } }
+            property:
+              referenceImpl: |
+                def sol(number):
+                    if number == 1:
+                        return "Your number is 1"
+                    else:
+                        return "Your number is not 1"
+              generators: [ { param: number, type: int, min: -3, max: 3 } ]
+              numCases: 40
+              seed: 1234
+              comparator: deep-equal
+
+    # ----------------------------------------------------------------------------
+    # CELL 3 — cond.elif_chain: many branches, top-down, first true wins  (CAPSTONE)
+    # ----------------------------------------------------------------------------
+    - id: cell.conditionals.elif_chain
+      title: "Many answers (the Magic-8 Ball)"
+      certifies: [ skill.cond.elif_chain ]
+      steps:
+
+        - id: cell.conditionals.elif_chain#1
+          kind: watch
+          skills: [ skill.cond.elif_chain ]
+          prompt: "if / elif / else"
+          body: |
+            Two answers is not enough for a Magic-8 Ball — shake it and you get one of
+            many replies. Chain conditions with `elif` ("else if"):
+
+                if number == 1:
+                    print("It is certain")
+                elif number == 2:
+                    print("Ask again later")
+                else:
+                    print("My reply is no")
+
+            The computer checks TOP-DOWN: first the `if`, then each `elif` in order. The
+            FIRST condition that is True wins — its block runs and the rest are skipped.
+            `else` is the catch-all fallback when nothing above matched.
+
+            Each `elif` line is a comparison too, so it uses `==`, never a single `=`.
+          carryContext: |
+            `if` then `elif ...:` branches then optional `else:`. Checked top-down, first True wins,
+            rest skipped. `else` is the fallback. `elif` conditions compare with `==`.
+
+        - id: cell.conditionals.elif_chain#2
+          kind: predict
+          skills: [ skill.cond.elif_chain ]
+          prompt: |
+            score is 95. Both `>= 80` and `>= 90` are True — but only ONE branch runs.
+            Which line prints? (Remember: top-down, first True wins.)
+          code: |
+            score = 95
+            if score >= 80:
+                print("B")
+            elif score >= 90:
+                print("A")
+            else:
+                print("C")
+          choices:
+            - { id: a, label: "B" }
+            - { id: b, label: "A" }
+            - { id: c, label: "B\nA", misconception: mis.cond.both_branches }
+          expected: { normalized: ["b"] }
+          reveal: run-and-show
+
+        - id: cell.conditionals.elif_chain#3
+          kind: recognize
+          skills: [ skill.cond.elif_chain ]
+          prompt: |
+            This is the Magic-8 Ball arc's BUG. One of these `elif` lines crashes with a
+            SyntaxError. Which line is WRITTEN CORRECTLY?
+          choices:
+            - { id: a, label: "elif number == 2:" }
+            - { id: b, label: "elif number = 2:", misconception: mis.elif.assign_in_elif }
+            - { id: c, label: "elif number == 2", misconception: mis.cond.no_colon }
+          correctChoiceId: a
+
+        - id: cell.conditionals.elif_chain#4
+          kind: build
+          language: python
+          runtime: headless
+          skills: [ skill.cond.elif_chain, skill.bool.compare, skill.random.randint ]
+          prompt: |
+            Build the Magic-8 Ball. Read a seed from input(), seed the RNG with it (so the
+            answer is reproducible for grading), pick a number 1–3 with
+            random.randint(1, 3), then use if / elif / else to print exactly ONE reply:
+              number 1 -> "It is certain"
+              number 2 -> "Ask again later"
+              anything else -> "My reply is no"
+          starterCode: |
+            import random
+            seed = int(input())
+            random.seed(seed)
+            number = random.randint(1, 3)
+            # if / elif / else on `number` — print one reply
+          evaluator:
+            run: { timeoutMs: 2000, memoryMb: 256 }
+            tests:
+              comparator: deep-equal
+              # seed -> randint(1,3): seed 1 -> 1, seed 0 -> 2, seed 5 -> 3 (traced on python 3.9).
+              cases:
+                - { input: "1", expected: "It is certain\n" }
+                - { input: "0", expected: "Ask again later\n" }
+                - { input: "5", expected: "My reply is no\n" }
+                - { input: "42", expected: "My reply is no\n", hidden: true }
+            ast:
+              queries:
+                - { tag: has_elif, query: { node: If, within: { node: If } } }
+            property:
+              # Oracle re-derives the expected reply from the same seed -> any correct
+              # if/elif/else (or dict, etc.) that maps 1/2/else to the right reply passes.
+              referenceImpl: |
+                import random
+                def sol(seed):
+                    random.seed(seed)
+                    number = random.randint(1, 3)
+                    if number == 1:
+                        return "It is certain\n"
+                    elif number == 2:
+                        return "Ask again later\n"
+                    else:
+                        return "My reply is no\n"
+              generators: [ { param: seed, type: int, min: 0, max: 1000 } ]
+              numCases: 50
+              seed: 1234
+              comparator: deep-equal

@@ -1,0 +1,132 @@
+# content/nodes/output.yaml
+# Node: output — the spine root. Goal (P0): the learner can print a line of text to
+# the screen with print("...") on a string literal.
+node:
+  id: node.output
+  title: "Let's make the computer talk to us"
+  track: spine                      # spine root
+  requires: []                      # the spine root — nothing comes before it
+  teaches:
+    - skill.output.print_literal
+    - skill.string.literal
+  cells:
+    - id: cell.output.hello
+      title: "Tell the computer to say something"
+      certifies:
+        - skill.output.print_literal
+        - skill.string.literal
+      steps:
+
+        # --- watch: install "a string is text in quotes" -----------------------
+        - id: cell.output.hello#1
+          kind: watch
+          skills: [ skill.string.literal ]
+          prompt: "Text lives inside quotes"
+          body: |
+            We're going to make the computer talk. But first: how do we hand it
+            words?
+
+            We wrap the words in **quotes**:
+
+                "Hello World!!! I'm ALIVE and I demand snacks!!"
+
+            That whole thing — quote to quote — is a **string**. Every character
+            between the quotes counts: the letters, the spaces, the exclamation
+            marks, even the apostrophe in "I'm". Spaces, dashes, and symbols are
+            all just characters. The quotes are the fence that says "this is text,
+            treat it literally, don't try to run it."
+          carryContext: |
+            A string is text inside quotes; spaces/dashes/symbols all count as
+            characters. The quotes mark it as literal text.
+
+        # --- watch: install print(...) -----------------------------------------
+        - id: cell.output.hello#2
+          kind: watch
+          skills: [ skill.output.print_literal ]
+          prompt: "print(...) puts it on the screen"
+          body: |
+            Now we make it talk. The command is `print`, and we hand it our
+            string inside the parentheses:
+
+                print("Hello World!!! I'm ALIVE and I demand snacks!!")
+
+            Run that and the computer says:
+
+                Hello World!!! I'm ALIVE and I demand snacks!!
+
+            Two pieces, both required: the **call** — the word `print` followed by
+            `( )` — and the **string** sitting inside the parentheses.
+          carryContext: |
+            print("...") = the call `print(...)` wrapped around a string literal.
+            Both the call and the quotes are required.
+
+        # --- predict: provoke mis.print.unquoted (forgot the quotes) -----------
+        - id: cell.output.hello#3
+          kind: predict
+          skills: [ skill.string.literal ]
+          prompt: "We forgot the quotes. What happens when this runs?"
+          code: |
+            print(snacks)
+          choices:
+            - { id: a, label: "It crashes with an error — `snacks` isn't defined." }
+            - { id: b, label: "It prints the word: snacks", misconception: mis.print.unquoted }
+          expected: { normalized: ["it crashes with an error", "error", "a"] }
+          reveal: run-and-show
+
+        # --- recognize: which line actually talks? -----------------------------
+        # Catches the two named misconceptions in a low-stakes setting:
+        #  - choosing the unquoted line  -> mis.print.unquoted
+        #  - choosing the no-print line  -> mis.print.no_call
+        - id: cell.output.hello#4
+          kind: recognize
+          skills: [ skill.output.print_literal, skill.string.literal ]
+          prompt: "Which line makes the computer SAY: I demand snacks!!  ?"
+          choices:
+            - { id: a, label: 'print("I demand snacks!!")' }
+            - { id: b, label: 'print(I demand snacks!!)', misconception: mis.print.unquoted }
+            - { id: c, label: '"I demand snacks!!"', misconception: mis.print.no_call }
+          correctChoiceId: a
+
+        # --- build: certify the P0 goal ----------------------------------------
+        - id: cell.output.hello#5
+          kind: build
+          language: python
+          runtime: headless
+          skills: [ skill.output.print_literal, skill.string.literal ]
+          prompt: |
+            Make the computer talk! Print this line exactly:
+
+                Hello World!!! I'm ALIVE and I demand snacks!!
+
+            Use print(...) with the text in quotes.
+          starterCode: |
+            # Make the computer say it. Remember: print(...) and quotes!
+          evaluator:
+            run: { timeoutMs: 2000, memoryMb: 256 }   # no entrypoint: graded on stdout
+            tests:
+              comparator: deep-equal
+              cases:
+                - input: null
+                  expected: "Hello World!!! I'm ALIVE and I demand snacks!!\n"
+                - input: null
+                  expected: "Hello World!!! I'm ALIVE and I demand snacks!!\n"
+                  hidden: true
+            ast:
+              queries:
+                # Fires (tag present) when the submission contains NO call to print.
+                # Consumed by mis.print.no_call. AST tags never fail a passing solution.
+                - tag: no_print_call
+                  query: { not: { node: Call, where: { calls: print } } }
+            property:
+              # Oracle: print exactly the string you are handed. Generators feed
+              # arbitrary printable strings so any correct print(literal) passes,
+              # not just the one example line.
+              referenceImpl: |
+                def sol(text):
+                    return text + "\n"
+              generators:
+                - { param: text, type: str, min: 0, max: 60,
+                    alphabet: "abcdefghijklmnopqrstuvwxyz ABC!?-_.0123456789" }
+              numCases: 40
+              seed: 1234
+              comparator: deep-equal

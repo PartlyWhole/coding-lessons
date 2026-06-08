@@ -1,0 +1,97 @@
+# content/skills/variables.taxonomy.yaml
+# P2/P6 taxonomy for node.variables. Skill ids + misconception ids FIXED by AUTHORING_BRIEF.md.
+# Every fixture below was TRACED against python3 3.9 before being written.
+skill:
+  id: skill.var.assign
+  title: "Assign a value to a variable"
+  description: "store a value in a named box: name = value (name left, value right)."
+  upstream: [ skill.string.literal ]
+  misconceptions:
+
+    - id: mis.var.assign_reversed
+      skill: skill.var.assign
+      title: "Writes the assignment backwards: value on the left"
+      # SyntaxError ("cannot assign to literal") — cannot be AST-attributed. Detected at the
+      # recognize step (cell.variables.box#3) via the chosen distractor, not via build AST.
+      signature: { choice: b }
+      feedback: |
+        `"Alan" = name` reads right-to-left in your head, but Python needs the BOX on the left
+        and the VALUE on the right: `name = "Alan"`. You can't put a label on a value — only a
+        value into a box. (Python even says "cannot assign to literal".)
+      hintLadder:
+        - { level: 1, body: "Which side of the `=` gets the name of the box, and which side gets the value?" }
+        - { level: 2, body: "The box name is always on the LEFT of `=`; the value goes on the RIGHT. You wrote them swapped." }
+        - { level: 3, body: 'To store the text Alan in a box called name, the box comes first: `name = "Alan"`.' }
+        - { level: 4, body: "Solution:", revealCode: 'name = "Alan"' }
+      skillDeltas:
+        - { skill: skill.var.assign, kind: misconception, weight: 0.4 }
+      triggers:
+        - { stepKind: recognize, choice: b }   # "Alan" = name  -> SyntaxError, the reversed form
+      notTriggers:
+        - { stepKind: recognize, choice: a }   # name = "Alan"  (correct)
+        - { stepKind: recognize, choice: c }   # name == "Alan" (a different wrong answer, not reversed)
+
+    - id: mis.var.undefined
+      skill: skill.var.assign
+      title: "Uses a name before anything was stored in it"
+      # NameError at runtime. Traced: `print(anotherName)` / `name = Alan` -> NameError.
+      signature: { runError: runtime }
+      feedback: |
+        Python crashed with a NameError: you asked for a box that was never filled. Either you
+        used the name before its `name = ...` line ran, or you wrote a value without quotes
+        (`name = Alan`) so Python looked for a box called `Alan` that doesn't exist. Assign the
+        box first; quote text values.
+      hintLadder:
+        - { level: 1, body: "Python says a name 'is not defined'. Was that box ever filled with a `=` line before you used it?" }
+        - { level: 2, body: "A name with no quotes makes Python look for ANOTHER box by that name. If you meant the text, it needs quotes." }
+        - { level: 3, body: 'Assign before you use, and quote text: `name = "Alan"` THEN `print(name)`.' }
+        - { level: 4, body: "Solution:", revealCode: "name = \"Alan\"\nprint(name)" }
+      skillDeltas:
+        - { skill: skill.var.assign, kind: misconception, weight: 0.3 }
+      triggers:
+        # greet uses anotherName but never assigns it -> NameError at runtime. Traced.
+        - { stepKind: build, code: "def greet(name):\n    return \"My name is \" + anotherName\n" }
+      notTriggers:
+        # correct: runs cleanly, no runtime error
+        - { stepKind: build, code: "def greet(name):\n    anotherName = name\n    return \"My name is \" + anotherName\n" }
+        # sibling's wrong answer (quoted var): runs fine, wrong output — NOT a runtime error
+        - { stepKind: build, code: "def greet(name):\n    return \"My name is \" + \"name\"\n" }
+
+---
+skill:
+  id: skill.var.use
+  title: "Use a variable's stored value"
+  description: "use a variable's stored value (unquoted name = the value; quoted = literal text)."
+  upstream: [ skill.var.assign, skill.string.literal ]
+  misconceptions:
+
+    - id: mis.var.use_quoted
+      skill: skill.var.use
+      title: "Quotes the variable name, printing the word instead of the value"
+      # Behavioral + structural. AST tag quoted_var_name = a string Constant equal to "name";
+      # corroborated by the test failure (greet returns "My name is name"). Traced both.
+      signature: { all: [ { astTag: quoted_var_name }, { testFailure: { } } ] }
+      feedback: |
+        Wrapping the box name in quotes — `"name"` — turns it into the literal four-letter word,
+        so the greeting always says "My name is name". Drop the quotes to hand Python the VALUE
+        inside the box: `"My name is " + name`. Quotes = literal text; no quotes = the variable.
+      hintLadder:
+        - { level: 1, body: "Your greeting always says the same thing no matter the input. What does `\"name\"` (in quotes) actually mean to Python?" }
+        - { level: 2, body: "Quotes make text literal. `\"name\"` is the word; `name` (no quotes) is the value in the box." }
+        - { level: 3, body: 'Join the literal part to the VARIABLE: `return "My name is " + name` — only the greeting words stay in quotes.' }
+        - { level: 4, body: "Solution:", revealCode: "def greet(name):\n    anotherName = name\n    return \"My name is \" + anotherName" }
+      skillDeltas:
+        - { skill: skill.var.use, kind: misconception, weight: 0.4 }
+        - { skill: skill.var.assign, kind: misconception, weight: 0.1 }
+      triggers:
+        # quoted the var -> Constant "name" present AND output wrong ("My name is name"). Traced.
+        - { stepKind: build, code: "def greet(name):\n    return \"My name is \" + \"name\"\n" }
+        # also fires when the body keeps the variable name quoted, e.g. via a print of the literal
+        - { stepKind: build, code: "def greet(name):\n    anotherName = \"name\"\n    return \"My name is \" + anotherName\n" }
+      notTriggers:
+        # correct concat: no "name" Constant, tests pass
+        - { stepKind: build, code: "def greet(name):\n    anotherName = name\n    return \"My name is \" + anotherName\n" }
+        # correct f-string variant: no literal "name" Constant, tests pass (oracle blesses it)
+        - { stepKind: build, code: "def greet(name):\n    return f\"My name is {name}\"\n" }
+        # sibling's undefined error: no "name" Constant -> astTag absent -> all[] is false
+        - { stepKind: build, code: "def greet(name):\n    return \"My name is \" + anotherName\n" }

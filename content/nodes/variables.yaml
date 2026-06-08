@@ -1,0 +1,150 @@
+# content/nodes/variables.yaml
+# P4–P6 ascent for node.variables. Descent (ids, requires, teaches, track) is FIXED by
+# content/AUTHORING_BRIEF.md. Owns skills: skill.var.assign, skill.var.use.
+node:
+  id: node.variables
+  title: "Variables: storage boxes with names"
+  track: spine
+  requires:
+    # FIXED per the DAG. Both have producers in the bundle (node.output teaches them).
+    - { skill: skill.string.literal, minMastery: 0.6, kind: prerequisite }
+    - { skill: skill.output.print_literal, minMastery: 0.5, kind: utility }
+  teaches: [ skill.var.assign, skill.var.use ]
+  cells:
+
+    # ---------------------------------------------------------------------------
+    - id: cell.variables.box
+      title: "Putting something in the box"
+      certifies: [ skill.var.assign ]
+      steps:
+
+        - id: cell.variables.box#1
+          kind: watch
+          skills: [ skill.var.assign ]
+          prompt: "A variable is a labelled box"
+          body: |
+            A **variable** is a storage box with a name on the front. You do two things:
+            first you pick a name for the box (let's literally call it `name`), then you put
+            something in with the equals sign — the box's name on the **left**, the value on
+            the **right**:
+
+                name = "Alan"
+
+            The value here is a string, so it needs quotes (you met quotes in the last node).
+            `name` now holds the text `Alan`. The box keeps it until you put something else in.
+          carryContext: |
+            Assignment goes name = value: NAME on the LEFT, VALUE on the RIGHT.
+            A string value needs quotes: name = "Alan".
+
+        - id: cell.variables.box#2
+          kind: predict
+          skills: [ skill.var.assign ]
+          prompt: "We forgot the quotes. What does Python do?"
+          code: |
+            name = Alan
+            print(name)
+          choices:
+            - { id: a, label: "It prints: Alan" }
+            - { id: b, label: "It crashes with an error (NameError)", misconception: mis.var.undefined }
+            - { id: c, label: "It prints the empty box" }
+          # The TEMPTING wrong answer is (a): the learner expects the word Alan. Without quotes
+          # Python reads `Alan` as ANOTHER variable's name — and nothing is in a box called Alan,
+          # so it crashes. The correct prediction is (b).
+          expected: { normalized: ["b", "it crashes with an error", "nameerror"] }
+          reveal: run-and-show
+
+        - id: cell.variables.box#3
+          kind: recognize
+          skills: [ skill.var.assign ]
+          # SyntaxError-shaped misconception (mis.var.assign_reversed) — detected HERE, never via
+          # build-step AST (ast.parse throws before a tree exists).
+          prompt: |
+            You want to store the text `Alan` in a box called `name`. Which line does that?
+          choices:
+            - { id: a, label: 'name = "Alan"' }
+            - { id: b, label: '"Alan" = name', misconception: mis.var.assign_reversed }
+            - { id: c, label: 'name == "Alan"' }
+          correctChoiceId: a
+
+    # ---------------------------------------------------------------------------
+    - id: cell.variables.use
+      title: "Reusing what is in the box"
+      certifies: [ skill.var.use ]
+      steps:
+
+        - id: cell.variables.use#1
+          kind: watch
+          skills: [ skill.var.use ]
+          prompt: "Open the box by writing its name (no quotes)"
+          body: |
+            To **use** what's in a box, you write the box's name with **no quotes** — that hands
+            Python the value inside. You can copy one box into another, then print it:
+
+                name = "Alan"
+                anotherName = name        # copy the value across
+                print(anotherName)        # -> Alan
+
+            Because the box holds a string, you can join strings onto it with `+`. Mind the
+            space — it lives INSIDE the quotes, before the closing quote:
+
+                print("My name is " + name)   # -> My name is Alan
+
+            Quotes are the difference: `name` (no quotes) means "the value in the box";
+            `"name"` (quotes) means the literal four-letter word.
+          carryContext: |
+            Unquoted name = the VALUE in the box. Quoted "name" = the literal word.
+            Join text with + ; keep the trailing space inside the quotes: "My name is " + name.
+
+        - id: cell.variables.use#2
+          kind: predict
+          skills: [ skill.var.use ]
+          prompt: "name holds Alan. What does this print?"
+          code: |
+            name = "Alan"
+            print("name")
+          choices:
+            - { id: a, label: "Alan" }
+            - { id: b, label: "name", misconception: mis.var.use_quoted }
+          # Tempting wrong answer is (a): learners read past the quotes. With quotes Python prints
+          # the literal word `name`, not the box's contents. Correct prediction: (b).
+          expected: { normalized: ["b", "name"] }
+          reveal: run-and-show
+
+        - id: cell.variables.use#3
+          kind: build
+          language: python
+          runtime: headless
+          skills: [ skill.var.assign, skill.var.use ]
+          prompt: |
+            Finish `greet`. Copy the `name` box into a box called `anotherName`, then return the
+            greeting `My name is <name>` built from it (use the variable — no typing the name as
+            text). Watch the space after "is".
+          starterCode: |
+            def greet(name):
+                # 1. copy name into anotherName
+                # 2. return "My name is " + anotherName
+                pass
+          evaluator:
+            run: { timeoutMs: 2000, memoryMb: 256, entrypoint: greet }
+            tests:
+              comparator: deep-equal
+              cases:
+                - { input: "Alan", expected: "My name is Alan" }
+                - { input: "Sam",  expected: "My name is Sam" }
+                - { input: "Zoe",  expected: "My name is Zoe", hidden: true }
+            ast:
+              queries:
+                # mis.var.use_quoted: the learner quoted the variable name, so a string Constant
+                # whose value is the literal "name" appears. Confirmed against python3 ast.
+                - { tag: quoted_var_name,
+                    query: { node: Constant, where: { attr: value, eq: "name" } } }
+            property:
+              # Oracle so any correct phrasing passes (str concat, f-string, .format, ...).
+              referenceImpl: |
+                def sol(name):
+                    return "My name is " + name
+              generators:
+                - { param: name, type: str, min: 1, max: 8, alphabet: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" }
+              numCases: 50
+              seed: 1234
+              comparator: deep-equal

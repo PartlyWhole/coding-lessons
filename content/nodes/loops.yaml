@@ -1,0 +1,269 @@
+# content/nodes/loops.yaml
+# Node: loops — "repeat until you win" (the guessing game).
+# Descent (P0–P3) is FIXED by content/AUTHORING_BRIEF.md. This file authors the ascent (P4–P6)
+# for the two skills this node owns: skill.loop.while, skill.loop.termination.
+node:
+  id: node.loops
+  title: "Loops: repeat until you win"
+  track: spine
+  requires:
+    # FIXED per AUTHORING_BRIEF.md P3. Every skill here is produced by a node in the bundle.
+    - { skill: skill.cond.elif_chain, minMastery: 0.6, kind: prerequisite }  # conditionals
+    - { skill: skill.input.store,     minMastery: 0.5, kind: utility }       # input
+    - { skill: skill.type.int_input,  minMastery: 0.5, kind: utility }       # input
+    - { skill: skill.bool.compare,    minMastery: 0.5, kind: utility }       # conditionals
+  teaches: [ skill.loop.while, skill.loop.termination ]
+
+  cells:
+
+    # =========================================================================
+    # CELL 1 — while: repeat an indented block while a condition stays True.
+    # =========================================================================
+    - id: cell.loops.while_basics
+      title: "Saying it again (and again)"
+      certifies: [ skill.loop.while ]
+      steps:
+
+        - id: cell.loops.while_basics#1
+          kind: watch
+          skills: [ skill.loop.while ]
+          prompt: "The computer can repeat itself"
+          body: |
+            Last time you built a guessing game where the human guesses once and the computer
+            says **too low**, **too high**, or **just right**. One guess is tedious — nobody
+            nails 1–100 on the first try.
+
+            A `while` loop repeats an indented block **as long as a condition stays True**:
+
+            ```python
+            count = 3
+            while count > 0:
+                print("snacks!")
+                count = count - 1
+            ```
+
+            The header ends in a colon; the indented body runs, then Python re-checks the
+            condition at the top. When `count > 0` is finally False, the loop stops and the
+            program moves on.
+          carryContext: |
+            A `while` loop = a header `while <condition>:` plus an indented body. The body runs
+            over and over while the condition is True; Python re-checks the condition at the top
+            of every pass.
+
+        - id: cell.loops.while_basics#2
+          kind: predict
+          skills: [ skill.loop.while ]
+          prompt: "`n` starts at 3. How many lines does this print, and what are they?"
+          code: |
+            n = 3
+            while n > 0:
+                print(n)
+                n = n - 1
+            print("done")
+          choices:
+            - { id: a, label: "3 / 2 / 1 / done" }
+            - { id: b, label: "3 / 2 / 1 / 0 / done" }
+            - { id: c, label: "3 / done   (the body runs once)" }
+          expected: { normalized: ["3\n2\n1\ndone", "a"] }
+          reveal: run-and-show
+
+        - id: cell.loops.while_basics#3
+          kind: recognize
+          skills: [ skill.loop.while ]
+          prompt: "Which header repeats the body while `tries` is still above zero?"
+          choices:
+            - { id: a, label: "while tries > 0:" }
+            - { id: b, label: "while tries > 0   (no colon)" }
+            - { id: c, label: "while (tries > 0)   then the body NOT indented" }
+          correctChoiceId: a
+
+        - id: cell.loops.while_basics#4
+          kind: build
+          language: python
+          runtime: headless
+          skills: [ skill.loop.while ]
+          prompt: |
+            Count down out loud. Read the starting number `start` from input, then print every
+            number from `start` down to `1`, one per line, while it stays above zero.
+            Print exactly the numbers — nothing else.
+          starterCode: |
+            start = int(input())
+            # write a while loop that prints start, start-1, ... down to 1
+          evaluator:
+            run: { timeoutMs: 2000, memoryMb: 256 }
+            tests:
+              comparator: deep-equal
+              cases:
+                - { input: "3\n", expected: "3\n2\n1\n" }
+                - { input: "1\n", expected: "1\n" }          # boundary: one pass
+                - { input: "5\n", expected: "5\n4\n3\n2\n1\n", hidden: true }
+            ast:
+              queries:
+                - { tag: has_while, query: { node: While } }
+            property:
+              referenceImpl: |
+                def sol(start):
+                    return "".join(f"{i}\n" for i in range(start, 0, -1))
+              generators: [ { param: start, type: int, min: 1, max: 30 } ]
+              numCases: 40
+              seed: 1234
+
+    # =========================================================================
+    # CELL 2 — termination: make the loop END. The guessing-game capstone.
+    #   Surfaces mis.loop.infinite_true (while True, no break) and
+    #   mis.loop.no_update (condition var never reassigned).
+    # =========================================================================
+    - id: cell.loops.guessing_game
+      title: "Repeat until you win"
+      certifies: [ skill.loop.termination ]
+      steps:
+
+        - id: cell.loops.guessing_game#1
+          kind: watch
+          skills: [ skill.loop.termination ]
+          prompt: "Loop the guess, not just the message"
+          body: |
+            Here is the one-shot game again — the computer picks a secret 1–100 and judges a
+            single guess:
+
+            ```python
+            import random
+            number = random.randint(1, 100)
+            guess = int(input())
+            if number == guess:
+                print("correct")
+            elif number > guess:
+                print("too low")
+            else:
+                print("too high")
+            ```
+
+            To let the human keep guessing, we wrap the read-and-judge in a loop. The tempting
+            move is `while True:` — "just keep going":
+
+            ```python
+            while True:
+                guess = int(input())
+                if number > guess:
+                    print("too low")
+                elif number < guess:
+                    print("too high")
+            ```
+
+            But `while True` never stops on its own — its condition is *always* True. A loop
+            needs a way **out**: either a `break` when the guess is right, or a condition that
+            eventually turns False.
+          carryContext: |
+            A loop must TERMINATE. `while True:` is an infinite loop unless something inside it
+            runs `break`. The alternative is a condition that becomes False — e.g.
+            `while guess != number:` — but only if the body actually updates `guess`.
+
+        - id: cell.loops.guessing_game#2
+          kind: predict
+          skills: [ skill.loop.termination ]
+          prompt: |
+            The secret is 82. The human types 50, then 90, then 82. What does this print —
+            and does it ever stop?
+          code: |
+            import random
+            random.seed(42)
+            number = random.randint(1, 100)   # 82
+            while True:
+                guess = int(input())
+                if number > guess:
+                    print("too low")
+                elif number < guess:
+                    print("too high")
+          choices:
+            - { id: a, label: "too low / too high / correct, then stops" }
+            - { id: b, label: "too low / too high — then it never prints 'correct' and keeps demanding input forever", misconception: mis.loop.infinite_true }
+            - { id: c, label: "nothing — while True is a syntax error" }
+          expected: { normalized: ["b"] }
+          reveal: run-and-show
+
+        - id: cell.loops.guessing_game#3
+          kind: recognize
+          skills: [ skill.loop.termination ]
+          prompt: |
+            You want the loop to end the moment the guess is right. Which fix actually makes
+            the `while True:` loop terminate on a correct guess?
+          choices:
+            - { id: a, label: "Add `if number == guess: print('correct'); break` inside the loop." }
+            - { id: b, label: "Add `if number == guess: print('correct')` — but no break.", misconception: mis.loop.infinite_true }
+            - { id: c, label: "Change the body to print 'correct' louder; while True stops by itself eventually." }
+          correctChoiceId: a
+
+        - id: cell.loops.guessing_game#4
+          kind: recognize
+          skills: [ skill.loop.termination ]
+          prompt: |
+            A classmate avoids `while True` and writes `guess = 0` then
+            `while guess != number:`. Which version actually ends?
+          choices:
+            - { id: a, label: "The body reads `guess = int(input())` each pass — when guess equals number the condition is False and the loop ends." }
+            - { id: b, label: "The body only prints hints and never re-reads `guess`, so `guess` stays 0 forever.", misconception: mis.loop.no_update }
+          correctChoiceId: a
+
+        - id: cell.loops.guessing_game#5
+          kind: build
+          language: python
+          runtime: headless
+          skills: [ skill.loop.termination, skill.loop.while ]
+          prompt: |
+            Build the full guessing game. The computer picks a secret with
+            `random.seed(42)` then `random.randint(1, 100)` (so it is 82). Loop: read a guess,
+            and print exactly one of `too low`, `too high`, or `correct` per guess. When the
+            guess is correct, print `correct` and **stop** — the loop must terminate.
+
+            Guesses arrive on stdin, one per line. Print nothing but the verdicts.
+          starterCode: |
+            import random
+            random.seed(42)
+            number = random.randint(1, 100)
+            # Loop here: read int(input()) each pass, judge it, and STOP when correct.
+          evaluator:
+            run: { timeoutMs: 2000, memoryMb: 256 }
+            tests:
+              comparator: deep-equal
+              cases:
+                # secret is 82 (seed 42). stdin = guesses, one per line.
+                - { input: "50\n90\n82\n", expected: "too low\ntoo high\ncorrect\n" }
+                - { input: "82\n",          expected: "correct\n" }                    # boundary: win on first guess
+                - { input: "1\n100\n81\n83\n82\n", expected: "too low\ntoo high\ntoo low\ntoo high\ncorrect\n", hidden: true }
+            ast:
+              queries:
+                # Primary signature for the infinite-loop misconception: a `while True:` with no break.
+                - tag: infinite_true_no_break
+                  query:
+                    all:
+                      - { node: While, where: { childMatches: { node: Constant, where: { attr: value, eq: true } } } }
+                      - { not: { node: Break } }
+                # Corroborating: a non-constant while condition whose names are never reassigned in the body.
+                - tag: while_cond_no_update
+                  query:
+                    node: While
+                    where: { not: { childMatches: { node: Assign } } }
+            property:
+              # Oracle: the transcript for any secret + guess sequence ending in the secret.
+              # Generator varies the guess sequence; the program's own seed fixes secret=82,
+              # so the oracle is pinned to 82 and we feed sequences that end at 82.
+              referenceImpl: |
+                def sol(guesses):
+                    secret = 82
+                    out = []
+                    for g in guesses:
+                        if g == secret:
+                            out.append("correct"); break
+                        elif g < secret:
+                            out.append("too low")
+                        else:
+                            out.append("too high")
+                    return "".join(line + "\n" for line in out)
+              generators:
+                - param: guesses
+                  type: list
+                  elem: { type: choice, choices: [1, 25, 50, 75, 82, 90, 99, 100] }
+                  min: 1
+                  max: 8
+              numCases: 40
+              seed: 1234

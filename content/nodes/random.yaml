@@ -1,0 +1,157 @@
+# content/nodes/random.yaml — EXTENSION node (P4–P6)
+# Goal (P0): the learner can get a random number — import random, call random.randint(a, b),
+# store the result, and print it. Certified by skill.random.randint.
+# Extension node: carries exactly ONE kind:track edge to var.assign (variables spine parent),
+# plus print_literal as a utility requirement (per the FIXED descent, AUTHORING_BRIEF §P3).
+node:
+  id: node.random
+  title: "Roll the dice: random numbers"
+  track: extension
+  requires:
+    # The single track edge to the spine parent (variables). REQUIRED for an extension node.
+    - { skill: skill.var.assign, minMastery: 0.6, kind: track }
+    # Utility: needed to show the number on screen, but taught upstream by `output`.
+    - { skill: skill.output.print_literal, minMastery: 0.5, kind: utility }
+  teaches: [ skill.random.randint ]
+  cells:
+
+    # ───────────────────────────────────────────────────────────────────────────
+    # Cell 1 — Concept ladder: install the idea, provoke the missing-import fault-line.
+    # ───────────────────────────────────────────────────────────────────────────
+    - id: cell.random.intro
+      title: "A machine that surprises you"
+      certifies: [ skill.random.randint ]
+      steps:
+
+        - id: cell.random.intro#1
+          kind: watch
+          skills: [ skill.random.randint ]
+          prompt: "What is an RNG?"
+          body: |
+            Ever wonder how a video game decides where the next enemy spawns, or whether
+            you land a critical hit? A **random number generator** (RNG). Python ships one
+            in the `random` toolbox.
+
+            Two steps, always:
+
+            1. Open the toolbox: `import random`
+            2. Ask for a number in a range: `random.randint(1, 100)`
+
+            `random.randint(a, b)` hands you a whole number somewhere from `a` to `b` —
+            and both ends are **included**. So `random.randint(1, 100)` can give you `1`,
+            it can give you `100`, or anything in between.
+          carryContext: |
+            To use random numbers you must FIRST `import random`, then call
+            `random.randint(a, b)`. The range is inclusive of BOTH a and b.
+
+        - id: cell.random.intro#2
+          kind: predict
+          skills: [ skill.random.randint ]
+          prompt: "We skipped a step. What happens when you run this?"
+          code: |
+            number = random.randint(1, 100)
+            print("Your random number is: " + str(number))
+          choices:
+            - { id: a, label: "It crashes with a NameError — 'random' is not defined", }
+            - { id: b, label: "It prints a random number from 1 to 100", misconception: mis.random.no_import }
+            - { id: c, label: "It prints 0" }
+          expected: { normalized: ["a"] }
+          reveal: run-and-show
+
+        - id: cell.random.intro#3
+          kind: recognize
+          skills: [ skill.random.randint ]
+          prompt: "Which program correctly gets and prints a random number 1–100?"
+          choices:
+            - id: a
+              label: |
+                import random
+                number = random.randint(1, 100)
+                print("Your random number is: " + str(number))
+            - id: b
+              label: |
+                number = random.randint(1, 100)
+                print("Your random number is: " + str(number))
+              misconception: mis.random.no_import
+            - id: c
+              label: |
+                import random
+                number = random.randint(1, 99)
+                print("Your random number is: " + str(number))
+              misconception: mis.random.range_off_by_one
+          correctChoiceId: a
+
+    # ───────────────────────────────────────────────────────────────────────────
+    # Cell 2 — Build/certify. Gradable despite non-determinism (BRIEF §6.4):
+    # the learner writes get_random(a, b); the harness seeds `random` from
+    # PropertyConfig.seed and seeds the reference impl identically, then asserts
+    # PROPERTIES (in-range AND matches the seeded oracle) — never a fixed value.
+    # ───────────────────────────────────────────────────────────────────────────
+    - id: cell.random.build
+      title: "Roll your own"
+      certifies: [ skill.random.randint ]
+      steps:
+
+        - id: cell.random.build#1
+          kind: watch
+          skills: [ skill.random.randint ]
+          prompt: "Package it up"
+          body: |
+            Let's wrap the idea in a function so we can roll on demand. `get_random(a, b)`
+            should return a random whole number from `a` to `b`, both ends included.
+
+            Remember the two steps: `import random` at the top, then return
+            `random.randint(a, b)`. Don't shave the top end — `randint(a, b)` already
+            includes `b`.
+          carryContext: |
+            get_random(a, b) returns random.randint(a, b). import random first.
+            Both a and b are possible results.
+
+        - id: cell.random.build#2
+          kind: build
+          language: python
+          runtime: headless
+          skills: [ skill.random.randint ]
+          prompt: |
+            Finish `get_random(a, b)` so it returns a random whole number from `a` to `b`
+            (both ends included). Then it's ready for any game that needs a lucky roll.
+          starterCode: |
+            import random
+
+            def get_random(a, b):
+                # return a random whole number from a to b (both included)
+                pass
+          evaluator:
+            run: { timeoutMs: 2000, memoryMb: 256, entrypoint: get_random }
+            # Concrete cases are SEEDED by the harness (BRIEF §6.4): the grader seeds
+            # `random` from property.seed before each call and seeds the reference impl
+            # identically, so these expected values are reproducible, not flaky.
+            # With seed 1234, random.randint(1,100) == 100 — the inclusive top boundary,
+            # the exact value an off-by-one randint(1,99) can NEVER produce.
+            tests:
+              comparator: deep-equal
+              cases:
+                - { input: [1, 100], expected: 100 }              # seed 1234 -> 100 (top boundary; off-by-one gives 57)
+                - { input: [1, 6], expected: 4, hidden: true }    # seed 1234 -> die roll, in range
+            ast:
+              queries:
+                # Corroborates the missing-import fault if the learner drops it here too.
+                - { tag: uses_random_name, query: { node: Name, where: { attr: id, eq: random } } }
+                - { tag: has_random_import, query: { node: Import } }
+            property:
+              # The oracle. The harness seeds `random` from `seed` before calling the
+              # learner AND seeds the reference identically, so a correct solution matches
+              # the oracle every case; an off-by-one randint(a, b-1) diverges (and the
+              # in-range assertion in the oracle catches a clamped/shifted answer too).
+              referenceImpl: |
+                import random
+                def sol(a, b):
+                    r = random.randint(a, b)
+                    assert a <= r <= b
+                    return r
+              generators:
+                - { param: a, type: int, min: 1, max: 5 }
+                - { param: b, type: int, min: 50, max: 100 }
+              numCases: 50
+              seed: 1234
+              comparator: deep-equal

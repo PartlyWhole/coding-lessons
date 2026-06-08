@@ -1,0 +1,144 @@
+# content/skills/loops.taxonomy.yaml
+# Taxonomy for node.loops: two skills, separated by `---`.
+#   skill.loop.while        — repeat an indented block while a condition stays True.
+#   skill.loop.termination  — make a loop END (break, or a condition that turns False).
+# Every misconception ships a deterministic signature + 4-level hintLadder + skillDeltas +
+# traced triggers/notTriggers. All fixtures were traced against python3 3.9 before writing.
+
+skill:
+  id: skill.loop.while
+  title: "Repeat with a while loop"
+  description: "repeat an indented block while a condition stays True (header colon + indent; condition re-checked each pass)."
+  upstream: [ skill.bool.compare, skill.cond.elif_chain ]
+  misconceptions:
+
+    # The marquee loop misconception. Primary signature is the AST shape (While test is the
+    # constant True with no Break); the worker watchdog timeout is the backstop, not the detector.
+    - id: mis.loop.infinite_true
+      skill: skill.loop.while
+      title: "Thinks `while True:` stops on its own"
+      # while True with no break: the loop body contains a Constant-True test and there is no Break.
+      signature:
+        all:
+          - { astTag: infinite_true_no_break }
+      feedback: |
+        `while True:` means the condition is *literally always True*, so the loop never ends by
+        itself — Python keeps re-running the body forever (here, demanding more input it never
+        gets). A `while True` loop needs an explicit way out: a `break` statement that runs when
+        you are done. Add `if number == guess: print("correct"); break` so the loop stops the
+        moment the guess is right.
+      hintLadder:
+        - { level: 1, body: "When does `while True:` decide to stop? Re-read its condition — what is it checking?" }
+        - { level: 2, body: "The condition is just `True`, which never becomes False. The loop can only end if something *inside* it forces an exit. What statement breaks out of a loop?" }
+        - { level: 3, body: "Add a branch that fires on a correct guess and runs `break`:\n\n```python\nwhile True:\n    guess = int(input())\n    if number == guess:\n        print(\"correct\")\n        break\n    elif number > guess:\n        print(\"too low\")\n    else:\n        print(\"too high\")\n```" }
+        - { level: 4, body: "Full solution:", revealCode: "import random\nrandom.seed(42)\nnumber = random.randint(1, 100)\nwhile True:\n    guess = int(input())\n    if number == guess:\n        print(\"correct\")\n        break\n    elif number > guess:\n        print(\"too low\")\n    else:\n        print(\"too high\")\n" }
+      skillDeltas:
+        - { skill: skill.loop.termination, kind: misconception, weight: 0.4 }
+        - { skill: skill.loop.while,       kind: misconception, weight: 0.2 }
+      # TRACED via /tmp/ast_check.py: trigger code matches infinite_true; both notTriggers do not.
+      triggers:
+        - stepKind: build
+          code: |
+            import random
+            random.seed(42)
+            number = random.randint(1, 100)
+            while True:
+                guess = int(input())
+                if number > guess:
+                    print("too low")
+                else:
+                    print("too high")
+        - { stepKind: recognize, choice: b }
+      notTriggers:
+        # Correct: while True WITH a break -> no infinite_true.
+        - stepKind: build
+          code: |
+            import random
+            random.seed(42)
+            number = random.randint(1, 100)
+            while True:
+                guess = int(input())
+                if number == guess:
+                    print("correct")
+                    break
+                elif number > guess:
+                    print("too low")
+                else:
+                    print("too high")
+        # Sibling-owned wrong answer: condition loop that never updates -> mis.loop.no_update, not this.
+        - stepKind: build
+          code: |
+            guess = 0
+            number = 82
+            while guess != number:
+                print("forever")
+        - { stepKind: recognize, choice: a }
+
+---
+
+skill:
+  id: skill.loop.termination
+  title: "Make a loop terminate"
+  description: "end a loop on purpose: a break, or a condition that becomes False (and avoid the infinite loop)."
+  upstream: [ skill.loop.while, skill.bool.compare ]
+  misconceptions:
+
+    # The second loop fault-line: a non-True condition that the body never updates, so the
+    # condition can never flip and the loop runs forever.
+    - id: mis.loop.no_update
+      skill: skill.loop.termination
+      title: "Loop variable in the condition is never updated in the body"
+      # While with a (non-constant) condition naming a variable, whose body never reassigns it.
+      # Detected as: a While that contains no Assign inside its body.
+      signature:
+        all:
+          - { astTag: while_cond_no_update }
+      feedback: |
+        The loop condition `while guess != number:` can only end when `guess` finally equals
+        `number`. But if the body never changes `guess`, the condition stays the same on every
+        pass and the loop runs forever. Re-read the guess inside the loop —
+        `guess = int(input())` — so the value can actually reach `number` and the condition turn
+        False.
+      hintLadder:
+        - { level: 1, body: "Your loop ends when `guess != number` becomes False. What would have to change for that to happen?" }
+        - { level: 2, body: "`guess` starts at 0 and the body never reassigns it, so `guess != number` is True forever. Where should the new guess be read?" }
+        - { level: 3, body: "Move the read INSIDE the loop so each pass updates `guess`:\n\n```python\nguess = 0\nwhile guess != number:\n    guess = int(input())\n    if number > guess:\n        print(\"too low\")\n    elif number < guess:\n        print(\"too high\")\n    else:\n        print(\"correct\")\n```" }
+        - { level: 4, body: "Full solution:", revealCode: "import random\nrandom.seed(42)\nnumber = random.randint(1, 100)\nguess = 0\nwhile guess != number:\n    guess = int(input())\n    if number > guess:\n        print(\"too low\")\n    elif number < guess:\n        print(\"too high\")\n    else:\n        print(\"correct\")\n" }
+      skillDeltas:
+        - { skill: skill.loop.termination, kind: misconception, weight: 0.4 }
+      # TRACED via /tmp/ast_check.py: trigger (no Assign in body) matches; notTriggers all update.
+      triggers:
+        - stepKind: build
+          code: |
+            import random
+            random.seed(42)
+            number = random.randint(1, 100)
+            guess = 0
+            while guess != number:
+                print("too low")
+        - { stepKind: recognize, choice: b }
+      notTriggers:
+        # Correct: body reassigns guess each pass -> condition can flip -> no fire.
+        - stepKind: build
+          code: |
+            import random
+            random.seed(42)
+            number = random.randint(1, 100)
+            guess = 0
+            while guess != number:
+                guess = int(input())
+                if number > guess:
+                    print("too low")
+                elif number < guess:
+                    print("too high")
+                else:
+                    print("correct")
+        # Sibling-owned: while True WITH break has an Assign in body -> not this misconception.
+        - stepKind: build
+          code: |
+            while True:
+                guess = int(input())
+                if guess == 82:
+                    print("correct")
+                    break
+        - { stepKind: recognize, choice: a }

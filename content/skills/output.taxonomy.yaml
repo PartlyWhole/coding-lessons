@@ -1,0 +1,97 @@
+# content/skills/output.taxonomy.yaml
+# Taxonomy for node.output: the two skills it teaches and their misconceptions.
+# One topic ("output") per file; two skill documents separated by `---`.
+
+skill:
+  id: skill.output.print_literal
+  title: "Print a line of text"
+  description: "call print(...) on a string literal to display text."
+  upstream: [ ]                     # spine root — nothing upstream
+  misconceptions:
+
+    # The text exists but print was never called (bare string, or stored in a
+    # variable, with no print). Detected structurally: no Call to print anywhere.
+    - id: mis.print.no_call
+      skill: skill.output.print_literal
+      title: "Wrote the text but never called print"
+      # astTag fires when the submission contains no print call; choice c is the
+      # recognize distractor that picks the bare-string line.
+      signature: { any: [ { astTag: no_print_call }, { choice: c } ] }
+      feedback: |
+        You've got the words right — but writing a string by itself doesn't make
+        the computer SAY it. A string just sitting there is like a sticky note no
+        one reads aloud. To put it on the screen you have to hand it to `print`:
+        print("...").
+      hintLadder:
+        - { level: 1, body: "The text is correct. But who's reading it out loud? A string on its own is silent." }
+        - { level: 2, body: "You need the `print` command. It takes your string in parentheses and displays it." }
+        - { level: 3, body: "Wrap your text in a print call, like: print(\"your text here\"). The string goes inside the ( )." }
+        - { level: 4, body: "Solution:", revealCode: "print(\"Hello World!!! I'm ALIVE and I demand snacks!!\")" }
+      skillDeltas:
+        - { skill: skill.output.print_literal, kind: misconception, weight: 0.3 }
+      # TRACED:
+      #  triggers:
+      #   - bare string expr  -> AST has no Call to print -> no_print_call tag fires.
+      #   - msg = "..."       -> assignment, still no print call -> tag fires.
+      #   - recognize choice c -> {choice: c} branch fires.
+      #  notTriggers:
+      #   - print("...")      -> has a print Call -> tag absent -> no fire (the correct answer).
+      #   - print(snacks)     -> parses with a print Call (NameError only at runtime),
+      #                          so the tag is absent -> no fire (sibling mis.print.unquoted owns it).
+      #   - recognize choice a -> not c -> no fire.
+      triggers:
+        - { stepKind: build,     code: "\"Hello World!!! I'm ALIVE and I demand snacks!!\"" }
+        - { stepKind: build,     code: "msg = \"Hello World!!! I'm ALIVE and I demand snacks!!\"" }
+        - { stepKind: recognize, choice: c }
+      notTriggers:
+        - { stepKind: build,     code: "print(\"Hello World!!! I'm ALIVE and I demand snacks!!\")" }
+        - { stepKind: build,     code: "print(snacks)" }
+        - { stepKind: recognize, choice: a }
+
+---
+
+skill:
+  id: skill.string.literal
+  title: "A string is text in quotes"
+  description: "text in quotes; spaces/dashes/symbols are characters."
+  upstream: [ ]
+  misconceptions:
+
+    # Forgot the quotes: print(snacks) makes Python read `snacks` as a name to
+    # look up, not as text. A single bare word -> NameError at runtime.
+    - id: mis.print.unquoted
+      skill: skill.string.literal
+      title: "Left the quotes off the text"
+      # A bare name raises NameError (runtime) when run. choice b is the recognize
+      # distractor that picks the unquoted line. (A multi-word unquoted string is a
+      # SyntaxError, which can't be AST-attributed — so the recognize distractor is
+      # the targeted-feedback path; runError:runtime is the build-side backstop.)
+      signature: { any: [ { runError: runtime }, { choice: b } ] }
+      feedback: |
+        Without quotes, Python doesn't see text — it sees a *name* and goes looking
+        for a box with that label. There's no such box, so it crashes
+        (NameError: name 'snacks' is not defined). The quotes are what say "this is
+        literal text, don't look anything up." Put them back: print("snacks").
+      hintLadder:
+        - { level: 1, body: "Python didn't treat your words as text. Without quotes, what does it think `snacks` is?" }
+        - { level: 2, body: "A bare word with no quotes is read as a variable name. Python looks for a value stored under that name and finds nothing." }
+        - { level: 3, body: "Put quotes around the text so Python keeps it literal: print(\"snacks\") instead of print(snacks)." }
+        - { level: 4, body: "Solution:", revealCode: "print(\"Hello World!!! I'm ALIVE and I demand snacks!!\")" }
+      skillDeltas:
+        - { skill: skill.string.literal, kind: misconception, weight: 0.3 }
+      # TRACED:
+      #  triggers:
+      #   - print(snacks)      -> NameError at runtime -> {runError: runtime} fires.
+      #   - recognize choice b -> {choice: b} branch fires.
+      #  notTriggers:
+      #   - print("...")       -> runs clean, no runError -> no fire (correct answer).
+      #   - bare string "..."  -> runs clean (no error); the no-call sibling owns this,
+      #                           not us -> no fire.
+      #   - recognize choice a -> not b -> no fire.
+      triggers:
+        - { stepKind: build,     code: "print(snacks)" }
+        - { stepKind: recognize, choice: b }
+      notTriggers:
+        - { stepKind: build,     code: "print(\"Hello World!!! I'm ALIVE and I demand snacks!!\")" }
+        - { stepKind: build,     code: "\"Hello World!!! I'm ALIVE and I demand snacks!!\"" }
+        - { stepKind: recognize, choice: a }

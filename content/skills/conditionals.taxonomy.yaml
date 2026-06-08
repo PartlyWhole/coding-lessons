@@ -1,0 +1,181 @@
+# content/skills/conditionals.taxonomy.yaml
+# Taxonomy for node.conditionals: skill.bool.compare, skill.cond.if_else, skill.cond.elif_chain.
+# P2 misconception ids/signatures are FIXED by content/AUTHORING_BRIEF.md.
+# SyntaxError-shaped mistakes (assign_for_eq, no_colon, assign_in_elif) are detected at
+# recognize/recall steps (choice / recallEquals), NEVER via build-step AST — ast.parse throws
+# before producing a tree. Every fixture below was TRACED against python3 (3.9).
+skill:
+  id: skill.bool.compare
+  title: "Compare two values to get True/False"
+  description: "Compare values with `==`, `!=`, `<`, `>` to get True or False."
+  upstream: [ skill.var.use ]
+  misconceptions:
+
+    # --- SyntaxError-shaped: detected at recognize (choice) + recall (recallEquals) ---
+    - id: mis.bool.assign_for_eq
+      skill: skill.bool.compare
+      title: "Uses a single `=` (assignment) where `==` (comparison) is meant"
+      # `if x = 1:` is a SyntaxError -> cannot be AST-attributed. Caught at recognize/recall.
+      signature: { any: [ { choice: b }, { recallEquals: "=" } ] }
+      feedback: |
+        `=` and `==` are different tools. A single `=` STORES a value (`number = 1`). To
+        ASK whether two values are equal you need DOUBLE equals `==`, which gives back True
+        or False. Writing `if number = 1:` is a SyntaxError — Python refuses to run it.
+      hintLadder:
+        - { level: 1, body: "You want to ask a question, not store a value. Is one `=` enough?" }
+        - { level: 2, body: "One `=` assigns. Comparing for equality needs a different, doubled operator." }
+        - { level: 3, body: "To check equality use `==`: `if number == 1:` gives True or False." }
+        - { level: 4, body: "Solution:", revealCode: "number == 1" }
+      skillDeltas:
+        - { skill: skill.bool.compare, kind: misconception, weight: 0.4 }
+      triggers:
+        - { stepKind: recognize, choice: b }     # "number = 1"
+        - { stepKind: recall,    input: "=" }
+      notTriggers:
+        - { stepKind: recognize, choice: a }     # "number == 1" (correct)
+        - { stepKind: recognize, choice: c }     # "number is 1" (sibling: is_for_eq)
+        - { stepKind: recall,    input: "==" }   # correct
+
+    # --- `is` for value equality: detected at recognize (choice) + recall (recallEquals) ---
+    - id: mis.bool.is_for_eq
+      skill: skill.bool.compare
+      title: "Uses `is` for value equality instead of `==`"
+      # AST Compare-with-Is is unpinned in the design; recognize/recall choice is the source of truth.
+      signature: { any: [ { choice: c }, { recallEquals: "is" } ] }
+      feedback: |
+        `is` asks "are these the exact same object in memory?", which is NOT the same as
+        "do these have the same value". For small ints it sometimes *looks* right, but it
+        is the wrong tool and fails in general. To compare VALUES for equality, use `==`.
+      hintLadder:
+        - { level: 1, body: "`is` and `==` ask different questions. Which one is about VALUE?" }
+        - { level: 2, body: "`is` is identity (same object). You want equality of value." }
+        - { level: 3, body: "Use `==` for value equality: `number == 1`." }
+        - { level: 4, body: "Solution:", revealCode: "number == 1" }
+      skillDeltas:
+        - { skill: skill.bool.compare, kind: misconception, weight: 0.3 }
+      triggers:
+        - { stepKind: recognize, choice: c }     # "number is 1"
+        - { stepKind: recall,    input: "is" }
+      notTriggers:
+        - { stepKind: recognize, choice: a }     # "number == 1" (correct)
+        - { stepKind: recognize, choice: b }     # "number = 1" (sibling: assign_for_eq)
+        - { stepKind: recall,    input: "==" }   # correct
+
+---
+
+skill:
+  id: skill.cond.if_else
+  title: "Run one of two blocks with if/else"
+  description: "Run exactly one of two blocks (colon + indentation; branches are mutually exclusive)."
+  upstream: [ skill.bool.compare ]
+  misconceptions:
+
+    # --- Missing colon on the header: SyntaxError -> recall + recognize ---
+    - id: mis.cond.no_colon
+      skill: skill.cond.if_else
+      title: "Forgets the `:` ending the if/elif/else header"
+      # `if x == 1` (no colon) is a SyntaxError -> caught at recall (empty/;) and recognize.
+      signature: { any: [ { recallEquals: "" }, { recallEquals: ";" }, { choice: b } ] }
+      feedback: |
+        Every `if`, `elif`, and `else` HEADER line must end with a colon `:`. The colon is
+        what tells Python "an indented block belongs to me." Leaving it off (or using `;`)
+        is a SyntaxError. `if number == 1:` — note the trailing colon.
+      hintLadder:
+        - { level: 1, body: "What punctuation marks the end of an `if` header, before the indented block?" }
+        - { level: 2, body: "It is not `;`. Python uses a colon to open a block." }
+        - { level: 3, body: "End the header with `:` — `if number == 1:` — then indent the block." }
+        - { level: 4, body: "Solution:", revealCode: "if number == 1:" }
+      skillDeltas:
+        - { skill: skill.cond.if_else, kind: misconception, weight: 0.4 }
+      triggers:
+        - { stepKind: recall,    input: "" }     # typed no mark
+        - { stepKind: recall,    input: ";" }    # used a semicolon
+        - { stepKind: recognize, choice: b }     # "if number == 1" (no colon)
+      notTriggers:
+        - { stepKind: recall,    input: ":" }    # correct
+        - { stepKind: recognize, choice: a }     # "if number == 1:" (correct)
+        - { stepKind: recognize, choice: c }     # "if number = 1:" (sibling: assign_for_eq)
+
+    # --- Believes BOTH branches run: predict distractor (choice) ---
+    - id: mis.cond.both_branches
+      skill: skill.cond.if_else
+      title: "Believes both the if-block and the else-block run"
+      # Pure mental-model error, surfaced by a predict distractor.
+      signature: { choice: c }
+      feedback: |
+        Only ONE block runs. If the condition is True, the `if` block runs and the `else`
+        block is SKIPPED entirely; if it is False, only the `else` block runs. Never both.
+        The two blocks are mutually exclusive — exactly one fires every time.
+      hintLadder:
+        - { level: 1, body: "If the `if` condition is True, does Python still bother with the `else`?" }
+        - { level: 2, body: "`else` means 'otherwise'. It only runs when the `if` was False." }
+        - { level: 3, body: "Exactly one block runs: the `if` block OR the `else` block, never both." }
+        - { level: 4, body: "With number == 1 True, only this prints:", revealCode: "Your number is 1" }
+      skillDeltas:
+        - { skill: skill.cond.if_else, kind: misconception, weight: 0.4 }
+      triggers:
+        - { stepKind: predict, choice: c }       # "both lines print"
+      notTriggers:
+        - { stepKind: predict, choice: a }       # "Your number is 1" (correct)
+        - { stepKind: predict, choice: b }       # only the else line
+
+---
+
+skill:
+  id: skill.cond.elif_chain
+  title: "Chain conditions with elif"
+  description: "Chain conditions with `elif`; checked top-down, first true wins, `else` is the fallback."
+  upstream: [ skill.cond.if_else, skill.bool.compare ]
+  misconceptions:
+
+    # --- `elif number = 2:` (the arc's BUG): SyntaxError -> recognize ---
+    - id: mis.elif.assign_in_elif
+      skill: skill.cond.elif_chain
+      title: "Uses `=` (assignment) inside an `elif` condition"
+      # The Magic-8 arc's bug. `elif number = 2:` is a SyntaxError -> caught at recognize.
+      signature: { choice: b }
+      feedback: |
+        This is the Magic-8 Ball arc's bug. An `elif` condition is a COMPARISON, so it
+        needs `==`, not a single `=`. `elif number = 2:` tries to ASSIGN inside the
+        condition, which Python rejects as a SyntaxError. Write `elif number == 2:`.
+      hintLadder:
+        - { level: 1, body: "An `elif` asks a question. Is a single `=` a question or a command?" }
+        - { level: 2, body: "Just like `if`, an `elif` condition compares — it needs `==`, not `=`." }
+        - { level: 3, body: "Fix the assignment to a comparison: `elif number == 2:`." }
+        - { level: 4, body: "Solution:", revealCode: "elif number == 2:" }
+      skillDeltas:
+        - { skill: skill.cond.elif_chain, kind: misconception, weight: 0.4 }
+        - { skill: skill.bool.compare, kind: misconception, weight: 0.2 }
+      triggers:
+        - { stepKind: recognize, choice: b }     # "elif number = 2:"
+      notTriggers:
+        - { stepKind: recognize, choice: a }     # "elif number == 2:" (correct)
+        - { stepKind: recognize, choice: c }     # "elif number == 2" (sibling: no_colon)
+
+    # --- Overlapping conditions ordered so an earlier branch shadows a later one: testFailure ---
+    - id: mis.elif.order_overlap
+      skill: skill.cond.elif_chain
+      title: "Orders overlapping conditions so an earlier branch shadows a later one"
+      # Behavioral. On the Magic-8 build a too-broad earlier branch (e.g. `number >= 1`)
+      # swallows the cases meant for later branches. Detected by test failure; the elif AST
+      # tag corroborates (and ranks the diagnosis above a bare mismatch). caseIndex 1 = seed "0".
+      signature: { all: [ { astTag: has_elif }, { testFailure: { caseIndex: 1 } } ] }
+      feedback: |
+        The computer checks branches TOP-DOWN and the FIRST True one wins — the rest are
+        skipped. A condition that is too broad (or placed too early) will swallow values
+        meant for a later branch, so that later branch never runs. Order branches from the
+        most specific/narrow to the most general, and use `==` so the Magic-8 numbers don't
+        overlap.
+      hintLadder:
+        - { level: 1, body: "Seed 0 gives number 2, but you printed the first reply. Which branch caught it?" }
+        - { level: 2, body: "An earlier, too-broad condition fires first and skips the rest. Check branch ORDER and breadth." }
+        - { level: 3, body: "Match each number exactly with `==`: `if number == 1:` / `elif number == 2:` / `else:`." }
+        - { level: 4, body: "Solution:", revealCode: "if number == 1:\n    print(\"It is certain\")\nelif number == 2:\n    print(\"Ask again later\")\nelse:\n    print(\"My reply is no\")" }
+      skillDeltas:
+        - { skill: skill.cond.elif_chain, kind: misconception, weight: 0.4 }
+      triggers:
+        # `if number >= 1:` shadows numbers 2 and 3 -> seed "0" (case 1) and "5" (case 2) fail.
+        - { stepKind: build, code: "import random\nseed = int(input())\nrandom.seed(seed)\nnumber = random.randint(1, 3)\nif number >= 1:\n    print(\"It is certain\")\nelif number == 2:\n    print(\"Ask again later\")\nelse:\n    print(\"My reply is no\")" }
+      notTriggers:
+        # Correct Magic-8 Ball passes every seed case -> no testFailure.
+        - { stepKind: build, code: "import random\nseed = int(input())\nrandom.seed(seed)\nnumber = random.randint(1, 3)\nif number == 1:\n    print(\"It is certain\")\nelif number == 2:\n    print(\"Ask again later\")\nelse:\n    print(\"My reply is no\")" }

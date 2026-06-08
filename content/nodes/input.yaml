@@ -1,0 +1,241 @@
+# content/nodes/input.yaml
+# Node: the conversation bot. Read what the user types, store it, reply with it,
+# and (the marquee fault-line) discover that input() returns a STRING — convert
+# with int() before number comparison/math.
+#
+# Descent context (FIXED, from content/AUTHORING_BRIEF.md):
+#   track:    spine
+#   requires: var.assign (prereq) + string.concat (utility) + print_literal (utility)
+#   teaches:  input.read, input.store, type.int_input
+#   misconceptions owned: mis.input.not_stored, mis.type.int_input
+#
+# Grading (§6.2): build steps are top-level programs (no entrypoint). input() reads
+# from stdin; the prompt text is echoed to stdout. Each test case feeds `input` as
+# the stdin string and asserts the full stdout (prompt + greeting + trailing \n).
+node:
+  id: node.input
+  title: "The conversation bot — input()"
+  track: spine
+  requires:
+    - { skill: skill.var.assign, minMastery: 0.6, kind: prerequisite }
+    - { skill: skill.string.concat, minMastery: 0.5, kind: utility }
+    - { skill: skill.output.print_literal, minMastery: 0.5, kind: utility }
+  teaches: [ skill.input.read, skill.input.store, skill.type.int_input ]
+  cells:
+
+    # =====================================================================
+    # CELL 1 — the bot learns your name (input.read + input.store)
+    # =====================================================================
+    - id: cell.input.bot
+      title: "Teach the computer your name"
+      certifies: [ skill.input.read, skill.input.store ]
+      steps:
+
+        - id: cell.input.bot#1
+          kind: watch
+          skills: [ skill.input.read ]
+          prompt: "The computer wants to talk back"
+          body: |
+            So far the computer only ever speaks first — it has no idea who we are.
+            Let's let it ask. `input("...")` prints a prompt and then waits for the
+            user to type a line and press Enter. Whatever they type comes back as the
+            answer:
+
+                input("What's your name? ")
+
+            Run that and the program pauses at the prompt until you type something.
+            But notice: it asked, you answered... and then the answer just vanished.
+            The computer didn't *keep* it anywhere.
+          carryContext: |
+            `input("prompt")` shows the prompt and returns the line the user typed.
+            The prompt text itself appears on screen (it is part of the output).
+
+        - id: cell.input.bot#2
+          kind: predict
+          skills: [ skill.input.store ]
+          prompt: |
+            The user types `Alan`. What does this program print after the prompt?
+          code: |
+            input("What's your name? ")
+            print("Hi " + name + "!")
+          choices:
+            - { id: a, label: "It crashes: `name` was never given a value" }
+            - { id: b, label: "Hi Alan!", misconception: mis.input.not_stored }
+            - { id: c, label: "Hi !" }
+          expected: { normalized: ["a"] }
+          reveal: run-and-show
+
+        - id: cell.input.bot#3
+          kind: watch
+          skills: [ skill.input.store ]
+          prompt: "Catch the answer in a box"
+          body: |
+            `input(...)` *hands back* what the user typed, but if nobody catches it,
+            it's gone. To keep it, store it in a variable — the same `name = value`
+            move you already know, with `input(...)` on the right:
+
+                name = input("What's your name? ")
+                print("Hi " + name)
+
+            Now `name` holds the typed text and you can reuse it. Try it and you get
+            `HiAlan` — oops, no space. Spacing lives *inside* the quotes, so add one
+            and a friendly ending:
+
+                print("Hi " + name + "!!! Nice to meet you :)")
+          carryContext: |
+            Store input so you can reuse it: `name = input("...")`. The variable then
+            holds the typed string; join it into a message with `+`.
+
+        - id: cell.input.bot#4
+          kind: recognize
+          skills: [ skill.input.store ]
+          prompt: |
+            You want to remember what the user types so you can greet them by name.
+            Which line keeps the answer?
+          choices:
+            - { id: a, label: "`name = input(\"What's your name? \")`" }
+            - { id: b, label: "`input(\"What's your name? \")`", misconception: mis.input.not_stored }
+            - { id: c, label: "`input = \"What's your name? \"`", misconception: mis.input.not_stored }
+            - { id: d, label: "`name = \"Alan\"`", misconception: mis.input.hardcoded }
+          correctChoiceId: a
+
+        - id: cell.input.bot#5
+          kind: build
+          language: python
+          runtime: headless
+          skills: [ skill.input.read, skill.input.store ]
+          prompt: |
+            Write the conversation bot. Ask `What's your name? ` with `input`, store
+            the answer, then print `Hi <name>!` (one space after "Hi", a "!" at the
+            end). Example: if the user types `Alan`, the program prints
+            `What's your name? Hi Alan!`.
+          starterCode: |
+            # Ask for the name and store it, then greet.
+            name =
+            print(
+          evaluator:
+            run: { timeoutMs: 2000, memoryMb: 256 }
+            tests:
+              comparator: deep-equal
+              cases:
+                - { input: "Alan\n", expected: "What's your name? Hi Alan!\n" }
+                - { input: "Sam\n",  expected: "What's your name? Hi Sam!\n" }
+                - { input: "Mira\n", expected: "What's your name? Hi Mira!\n", hidden: true }
+            ast:
+              queries:
+                # bare Expr-statement call to input() => the answer was never stored
+                - { tag: input_not_stored,
+                    query: { node: Call, where: { calls: input }, within: { node: Expr } } }
+                # no call to input() AT ALL => the learner hardcoded a value instead of asking
+                - { tag: no_input_call,
+                    query: { not: { node: Call, where: { calls: input } } } }
+            property:
+              # Oracle models the stdin->stdout transform: prompt is echoed, then greeting.
+              referenceImpl: |
+                def sol(name):
+                    return "What's your name? " + "Hi " + name + "!\n"
+              generators:
+                - { param: name, type: str, min: 1, max: 8, alphabet: "abcdefghijklmnopqrstuvwxyz" }
+              numCases: 40
+              seed: 1234
+
+    # =====================================================================
+    # CELL 2 — input() is a STRING; convert with int() (type.int_input)
+    # =====================================================================
+    - id: cell.input.numbers
+      title: "When the answer is a number"
+      certifies: [ skill.type.int_input ]
+      steps:
+
+        - id: cell.input.numbers#1
+          kind: watch
+          skills: [ skill.type.int_input ]
+          prompt: "The bot wants to do math now"
+          body: |
+            The bot is greedy — it wants to know how many snacks you'll bring, then
+            double it. You ask, you store the answer, you try to multiply... and the
+            program explodes. Here's the secret: `input(...)` *always* hands back
+            text — a string — even when the user types digits. `"5"` is not `5`. You
+            cannot do number-math on text.
+          carryContext: |
+            `input()` always returns a STRING, even for digits. `"5"` is text, not 5.
+
+        - id: cell.input.numbers#2
+          kind: predict
+          skills: [ skill.type.int_input ]
+          prompt: |
+            The user types `5`. What happens when this runs?
+          code: |
+            snacks = input("How many snacks? ")
+            print(snacks + 1)
+          choices:
+            - { id: a, label: "Prints 6" }
+            - { id: b, label: "Prints 51 (glues the digits together)" }
+            - { id: c, label: "Crashes with a TypeError: can't add text and a number", misconception: mis.type.int_input }
+          expected: { normalized: ["c"] }
+          reveal: run-and-show
+
+        - id: cell.input.numbers#3
+          kind: watch
+          skills: [ skill.type.int_input ]
+          prompt: "Convert it first"
+          body: |
+            To treat the typed answer as a number, wrap it in `int(...)` — that turns
+            the text `"5"` into the number `5`. Convert *as you read it*:
+
+                snacks = int(input("How many snacks? "))
+                print(snacks + 1)        # now it's real number-math
+
+            Same trick before any comparison: later, the guessing game will do
+            `if int(input("Guess: ")) < secret:` — convert before you compare.
+          carryContext: |
+            Convert with int(): `n = int(input("..."))`. Do it before any math or
+            number comparison.
+
+        - id: cell.input.numbers#4
+          kind: recall
+          skills: [ skill.type.int_input ]
+          prompt: |
+            Fill the blank so `age` is a number you can do math with:
+            `age = ____(input("Your age? "))`
+          accepted:
+            normalized: ["int"]
+            misconceptionMap:
+              str: mis.type.int_input
+              "": mis.type.int_input
+
+        - id: cell.input.numbers#5
+          kind: build
+          language: python
+          runtime: headless
+          skills: [ skill.type.int_input ]
+          prompt: |
+            Write the snack-doubler. Ask `How many snacks? ` with `input`, convert the
+            answer to a number, then print `Double is <2*n>`. Example: the user types
+            `5`, the program prints `How many snacks? Double is 10`.
+          starterCode: |
+            # Read the number (remember: input() gives you text!), then double it.
+            snacks =
+            print(
+          evaluator:
+            run: { timeoutMs: 2000, memoryMb: 256 }
+            tests:
+              comparator: deep-equal
+              cases:
+                - { input: "5\n",   expected: "How many snacks? Double is 10\n" }
+                - { input: "0\n",   expected: "How many snacks? Double is 0\n" }
+                - { input: "100\n", expected: "How many snacks? Double is 200\n", hidden: true }
+            ast:
+              queries:
+                # bare Expr-statement call to input() => answer not stored at all
+                - { tag: input_not_stored,
+                    query: { node: Call, where: { calls: input }, within: { node: Expr } } }
+            property:
+              # Oracle takes the typed integer and returns the full expected stdout.
+              referenceImpl: |
+                def sol(n):
+                    return "How many snacks? Double is " + str(n * 2) + "\n"
+              generators:
+                - { param: n, type: int, min: 0, max: 999 }
+              numCases: 50
+              seed: 1234
