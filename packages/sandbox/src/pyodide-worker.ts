@@ -41,10 +41,12 @@ def __trellis_run(code, entrypoint, stdin_text):
     if stdin_text is not None:
         sys.stdin = io.StringIO(stdin_text)
     return_value = None
+    called = False
     try:
         exec(compiled, ns)
         if entrypoint and entrypoint in ns and callable(ns[entrypoint]):
             return_value = ns[entrypoint]()
+            called = True
     except BaseException as e:
         tb = e.__traceback__
         line = None
@@ -59,10 +61,12 @@ def __trellis_run(code, entrypoint, stdin_text):
     finally:
         sys.stdout = old_out
         sys.stdin = old_in
-    return json.dumps({
-        "ran": True, "stdout": out.getvalue(), "wallMs": 0, "timedOut": False,
-        "returnValue": return_value,
-    }, default=str)
+    result = {"ran": True, "stdout": out.getvalue(), "wallMs": 0, "timedOut": False}
+    if called:
+        # Only surface returnValue when an entrypoint actually ran, so a top-level
+        # program (no entrypoint) omits the key rather than reporting null.
+        result["returnValue"] = return_value
+    return json.dumps(result, default=str)
 `;
 
 // Minimal shape of the Pyodide object we use (avoids a dependency on @types/pyodide,
@@ -118,9 +122,12 @@ async function runOne(id: number, req: WireRunRequest): Promise<void> {
   }
   const t0 = now();
   try {
+    // NOTE: pass `undefined`, NOT `null` — in pinned Pyodide (0.27+) JS `null` maps to
+    // the `pyodide.ffi.jsnull` sentinel, while JS `undefined` maps to Python `None`,
+    // which is what the harness's `is not None` / truthiness checks expect.
     pyodide.globals.set("_code", req.code);
-    pyodide.globals.set("_entry", req.entrypoint ?? null);
-    pyodide.globals.set("_stdin", req.stdin ?? null);
+    pyodide.globals.set("_entry", req.entrypoint ?? undefined);
+    pyodide.globals.set("_stdin", req.stdin ?? undefined);
     const json = (await pyodide.runPythonAsync("__trellis_run(_code, _entry, _stdin)")) as string;
     const result = { ...(JSON.parse(json) as RunResultData), wallMs: now() - t0 };
     ctx.postMessage({ kind: "result", id, result });
