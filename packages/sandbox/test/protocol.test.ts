@@ -4,6 +4,7 @@ import { RunResult } from "@trellis/schema";
 import {
   isResultMessage,
   isReadyMessage,
+  isInitErrorMessage,
   type WorkerToHost,
   type RunResultData,
 } from "../src/protocol.js";
@@ -16,9 +17,12 @@ describe("protocol message guards", () => {
       id: 1,
       result: { ran: true, stdout: "hi\n", wallMs: 3, timedOut: false },
     };
+    const initError: WorkerToHost = { kind: "init-error", message: "boom" };
     expect(isReadyMessage(ready)).toBe(true);
     expect(isResultMessage(ready)).toBe(false);
     expect(isResultMessage(result)).toBe(true);
+    expect(isInitErrorMessage(initError)).toBe(true);
+    expect(isInitErrorMessage(ready)).toBe(false);
   });
 });
 
