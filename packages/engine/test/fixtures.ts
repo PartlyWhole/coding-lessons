@@ -239,7 +239,7 @@ export function skillState(mastery: number): SkillState {
   return {
     mastery,
     attempts: 1,
-    passes: mastery > 0 ? 1 : 0,
+    passes: 1,
     lastSeen: "2026-06-08T00:00:00.000Z",
     misconceptionCounts: {},
   };
