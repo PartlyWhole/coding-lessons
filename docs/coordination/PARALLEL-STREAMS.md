@@ -106,13 +106,15 @@ Both prior open decisions are now **RESOLVED** (orchestrator + user, 2026-06-08)
 
 ## 7. Status board (orchestrator updates this — streams report, don't edit)
 
-Worktrees created off `main` (each has a `START-HERE.md` onboarding scaffold, git-excluded):
+Worktrees created off `main` (each has a `START-HERE.md` onboarding scaffold, git-excluded).
+All three branches synced to `main` @ `303834e` (2026-06-08) — they start with the re-themed
+conditionals content + both §6 decisions resolved.
 
-| Stream | Status | Worktree / branch | Notes |
+| Stream | Status | Worktree / branch (base) | Notes |
 |---|---|---|---|
-| A · M1 authoring | ready to start | `../trellis-m1` / `m1-authoring` | write plan first (writing-plans) |
-| B · M2 engine | ready to start | `../trellis-m2` / `m2-engine` | write plan first; builds on hand-authored Bundle fixtures (no dep on M1) |
-| C · M3a sandbox | ready to start (verify deferred) | `../trellis-m3a` / `m3a-sandbox` | **no network here → real-Pyodide verification deferred**; build host + mock-worker tests now |
+| A · M1 authoring | launching @ `303834e` | `../trellis-m1` / `m1-authoring` | write plan first (writing-plans). Invariant lint should find ZERO spine→extension edges (decision resolved). |
+| B · M2 engine | launching @ `303834e` | `../trellis-m2` / `m2-engine` | write plan first; builds on hand-authored Bundle fixtures (no dep on M1). Gating-diff pair = `var.assign`@0.6 + `print_literal`@0.5 (§6). |
+| C · M3a sandbox | launching @ `303834e` (verify deferred) | `../trellis-m3a` / `m3a-sandbox` | **no network here → real-Pyodide verification deferred**; build host + mock-worker tests now |
 
 ## 8. Reference index
 
