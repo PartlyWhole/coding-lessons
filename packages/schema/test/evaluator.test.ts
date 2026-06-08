@@ -21,6 +21,11 @@ describe("AstQuery", () => {
     expect(validate(AstQuery, q).ok).toBe(true);
   });
 
+  it("accepts a field-scoped query (the pinned §6.3 field selector)", () => {
+    const q = { node: "While", field: { test: { node: "Constant", where: { attr: "value", eq: true } } } };
+    expect(validate(AstQuery, q).ok).toBe(true);
+  });
+
   it("rejects an invalid count operator (closed union)", () => {
     expect(validate(AstQuery, { node: "For", count: { op: "<", n: 2 } }).ok).toBe(false);
   });

@@ -311,6 +311,7 @@ type Attribution = "pass" | "misconception" | "syntax" | "runtime" | "mismatch";
 interface RawSignals {
   ran: boolean;
   runError?: { type: "syntax" | "runtime"; message: string; line?: number };
+  timedOut?: boolean;           // worker watchdog killed it (§6.1) — the deterministic infinite-loop signal
   tests?: { passed: number; failed: number; failures: { caseIndex: number; got: Json }[] };
   astTags?: string[];           // which AstConfig queries matched
   property?: { passed: boolean; counterexample?: Json };
@@ -691,6 +692,7 @@ type AstQuery =
   | { node: string;                      // ast node type, e.g. "For", "Call", "BinOp"
       where?: AstPred;                    // predicate on attributes/children
       within?: AstQuery;                  // must occur inside a match of this
+      field?: { [astField: string]: AstQuery };  // match a SPECIFIC child field (e.g. While.test, If.orelse)
       count?: { op: "=" | ">=" | "<="; n: number } }
   | { not: AstQuery }
   | { all: AstQuery[] }
@@ -702,6 +704,32 @@ type AstPred =
   | { usesName: string }                  // references identifier
   | { childMatches: AstQuery };
 ```
+
+**Grammar semantics (pinned — these resolve under-specifications that otherwise make the matcher's
+behavior undefined; authored queries and the matcher MUST agree on them):**
+
+1. **Field-scoped matching (`field`).** `field: { <name>: Q }` matches iff the node's named child
+   field (e.g. `While.test`, `If.orelse`, `Call.func`, `Assign.targets`) contains a match of `Q`.
+   This is required for *exact* detectors: `infinite_true_no_break` must say "the `While`'s **test**
+   is literally `True`" — `{ node: "While", field: { test: { node: "Constant", where: { attr: "value", eq: true } } } }` —
+   not `childMatches`, which would also match a stray `True` deeper in the loop body. Likewise
+   `has_elif` is `{ node: "If", field: { orelse: { node: "If" } } }`, distinguishing an `elif`
+   (nested `If` in `orelse`) from a nested `if` in a branch body.
+2. **Combinators are NOT allowed inside `where`.** `AstPred` is exactly the four forms above;
+   `not`/`all`/`any` live only at the `AstQuery` level. The compiler (§13.2) MUST **reject** a
+   `where` clause containing `not`/`all`/`any` with a loud error — a matcher that silently ignores
+   unknown `where` keys would return *true by default*, letting a malformed signature pass unnoticed.
+3. **Traversal scope is transitive.** `within` is satisfied by *any* ancestor (not just the direct
+   parent); `childMatches` matches *any* descendant (not just a direct child); `not: Q` is evaluated
+   over the query's **current root** (the whole submission at top level, or the matched subtree when
+   nested). `infinite_true_no_break`'s "no `break` anywhere in the loop" relies on this scoping.
+4. **`count` scope.** `count` counts matches **within the matched node's subtree** (not the whole
+   submission), so `{ node: "For", count: { op: "<=", n: 1 } }` bounds `For` nodes nested under the
+   match. Pinned now even though v1 content does not yet use `count`.
+6. **`Compare.ops` (list-valued operator attribute).** `{ attr: "ops", eq: [...] }` against a
+   `Compare` node matches by the operators' **class-name list in order** — e.g. `["Gt"]`, `["LtE"]`,
+   `["Eq"]`. (CPython AST node-type names follow the **pinned** Pyodide Python version, §6.1; a
+   version bump re-runs the matcher's fixture suite.)
 
 Examples of authored signatures:
 
@@ -766,6 +794,8 @@ A misconception's `signature` is a predicate over `RawSignals` (including `astTa
 type Signature =
   | { astTag: string }                                   // an AST query matched
   | { runError: "syntax" | "runtime" }
+  | { timedOut: true }                                   // watchdog killed it (§6.1) — the robust
+                                                         // infinite-loop signal; keys on RawSignals.timedOut
   | { testFailure: { caseIndex?: number; gotEquals?: Json } }
   | { propertyFailed: true }
   | { choice: string }                                   // recognize: a distractor chosen
@@ -774,6 +804,12 @@ type Signature =
   | { any: Signature[] }
   | { not: Signature };
 ```
+
+The `{ timedOut: true }` form exists because a genuine infinite loop's *deterministic* signal is the
+worker watchdog timeout (§6.1), not an AST shape. Without it, an "infinite loop" misconception would
+have to lean on a fragile structural approximation; with it, the misconception keys on the actual
+runtime fact (`RawSignals.timedOut`, surfaced from `RunResult.timedOut`) with the AST shape as mere
+corroboration.
 
 **Matching logic** — deterministic, ordered, first-match-wins within a skill, with a global
 priority so structural causes beat generic ones:

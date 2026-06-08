@@ -45,6 +45,9 @@ export const AstQuery = Type.Recursive((Self) =>
         ]),
       ),
       within: Type.Optional(Self),
+      // §6.3 — match a SPECIFIC child field (e.g. While.test, If.orelse), turning over-matching
+      // childMatches heuristics into exact detectors. Field name → sub-query.
+      field: Type.Optional(Type.Record(Type.String(), Self)),
       count: Type.Optional(
         Type.Object({
           op: Type.Union([Type.Literal("="), Type.Literal(">="), Type.Literal("<=")]),

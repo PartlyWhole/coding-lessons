@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { validate } from "../src/validate.js";
-import { Signature, Diagnosis, LearnerModel, BehavioralEvent, SkillState } from "../src/runtime.js";
+import { Signature, RawSignals, Diagnosis, LearnerModel, BehavioralEvent, SkillState } from "../src/runtime.js";
 
 describe("Signature", () => {
   it("accepts the §13.1 implicit_coercion signature", () => {
@@ -11,6 +11,17 @@ describe("Signature", () => {
   it("accepts nested all/not combinators", () => {
     const sig = { all: [{ astTag: "loop" }, { not: { propertyFailed: true } }] };
     expect(validate(Signature, sig).ok).toBe(true);
+  });
+
+  it("accepts the timedOut primitive (§7 infinite-loop signal)", () => {
+    expect(validate(Signature, { timedOut: true }).ok).toBe(true);
+  });
+});
+
+describe("RawSignals", () => {
+  it("accepts the optional timedOut field", () => {
+    const s = { ran: false, timedOut: true, wallMs: 2000 };
+    expect(validate(RawSignals, s).ok).toBe(true);
   });
 });
 

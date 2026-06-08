@@ -15,6 +15,8 @@ export const Signature = Type.Recursive((Self) =>
   Type.Union([
     Type.Object({ astTag: Type.String() }),
     Type.Object({ runError: Type.Union([Type.Literal("syntax"), Type.Literal("runtime")]) }),
+    // §7 — keys on the watchdog timeout (§6.1): the deterministic infinite-loop signal.
+    Type.Object({ timedOut: Type.Literal(true) }),
     Type.Object({
       testFailure: Type.Object({
         caseIndex: Type.Optional(Type.Number()),
@@ -41,6 +43,8 @@ export const RawSignals = Type.Object({
       line: Type.Optional(Type.Number()),
     }),
   ),
+  // §6.1 — worker watchdog killed it; the deterministic infinite-loop signal (§7 { timedOut: true }).
+  timedOut: Type.Optional(Type.Boolean()),
   tests: Type.Optional(
     Type.Object({
       passed: Type.Integer({ minimum: 0 }),
