@@ -7,23 +7,17 @@ import {
   MisconId,
   RichText,
   MasteryThreshold,
+  SkillDelta,
 } from "./ids.js";
 import { EvaluatorConfig } from "./evaluator.js";
 import { Signature } from "./runtime.js";
-
-// §3.5
-export const SkillDelta = Type.Object({
-  skill: SkillId,
-  kind: Type.Union([Type.Literal("pass"), Type.Literal("fail"), Type.Literal("misconception")]),
-  weight: Type.Number(),
-});
-export type SkillDelta = Static<typeof SkillDelta>;
 
 export const Hint = Type.Object({
   level: Type.Union([Type.Literal(1), Type.Literal(2), Type.Literal(3), Type.Literal(4)]),
   body: RichText,
   revealCode: Type.Optional(Type.String()),
 });
+export type Hint = Static<typeof Hint>;
 
 export const Misconception = Type.Object({
   id: MisconId,
@@ -56,6 +50,7 @@ export const Requirement = Type.Object({
     Type.Literal("track"),
   ]),
 });
+export type Requirement = Static<typeof Requirement>;
 
 export const ConceptNode = Type.Object({
   id: NodeId,
@@ -73,17 +68,20 @@ export const Choice = Type.Object({
   label: RichText,
   misconception: Type.Optional(MisconId),
 });
+export type Choice = Static<typeof Choice>;
 
 export const AcceptedAnswer = Type.Object({
   normalized: Type.Optional(Type.Array(Type.String())),
   patterns: Type.Optional(Type.Array(Type.String())),
   misconceptionMap: Type.Optional(Type.Record(Type.String(), MisconId)),
 });
+export type AcceptedAnswer = Static<typeof AcceptedAnswer>;
 
 export const LineRange = Type.Object({
   startLine: Type.Number(),
   endLine: Type.Number(),
 });
+export type LineRange = Static<typeof LineRange>;
 
 const StepBaseProps = {
   id: StepId,
@@ -97,6 +95,7 @@ export const WatchStep = Type.Object({
   kind: Type.Literal("watch"),
   body: RichText,
 });
+export type WatchStep = Static<typeof WatchStep>;
 
 export const PredictStep = Type.Object({
   ...StepBaseProps,
@@ -106,6 +105,7 @@ export const PredictStep = Type.Object({
   expected: AcceptedAnswer,
   reveal: Type.Literal("run-and-show"),
 });
+export type PredictStep = Static<typeof PredictStep>;
 
 export const RecognizeStep = Type.Object({
   ...StepBaseProps,
@@ -113,12 +113,14 @@ export const RecognizeStep = Type.Object({
   choices: Type.Array(Choice),
   correctChoiceId: Type.String(),
 });
+export type RecognizeStep = Static<typeof RecognizeStep>;
 
 export const RecallStep = Type.Object({
   ...StepBaseProps,
   kind: Type.Literal("recall"),
   accepted: AcceptedAnswer,
 });
+export type RecallStep = Static<typeof RecallStep>;
 
 export const BuildStep = Type.Object({
   ...StepBaseProps,
@@ -129,6 +131,7 @@ export const BuildStep = Type.Object({
   lockedRegions: Type.Optional(Type.Array(LineRange)),
   evaluator: EvaluatorConfig,
 });
+export type BuildStep = Static<typeof BuildStep>;
 
 export const Step = Type.Union([WatchStep, PredictStep, RecognizeStep, RecallStep, BuildStep]);
 export type Step = Static<typeof Step>;

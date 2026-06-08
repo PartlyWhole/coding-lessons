@@ -7,8 +7,8 @@ import {
   Attribution,
   SignalType,
   Json,
+  SkillDelta,
 } from "./ids.js";
-import { SkillDelta } from "./content.js";
 
 // §7 — a misconception signature: a boolean predicate over RawSignals.
 export const Signature = Type.Recursive((Self) =>
@@ -43,9 +43,9 @@ export const RawSignals = Type.Object({
   ),
   tests: Type.Optional(
     Type.Object({
-      passed: Type.Number(),
-      failed: Type.Number(),
-      failures: Type.Array(Type.Object({ caseIndex: Type.Number(), got: Json })),
+      passed: Type.Integer({ minimum: 0 }),
+      failed: Type.Integer({ minimum: 0 }),
+      failures: Type.Array(Type.Object({ caseIndex: Type.Integer({ minimum: 0 }), got: Json })),
     }),
   ),
   astTags: Type.Optional(Type.Array(Type.String())),
@@ -53,7 +53,7 @@ export const RawSignals = Type.Object({
     Type.Object({ passed: Type.Boolean(), counterexample: Type.Optional(Json) }),
   ),
   stdout: Type.Optional(Type.String()),
-  wallMs: Type.Number(),
+  wallMs: Type.Number({ minimum: 0 }),
 });
 export type RawSignals = Static<typeof RawSignals>;
 
@@ -75,8 +75,8 @@ export type Diagnosis = Static<typeof Diagnosis>;
 // §3.8
 export const SkillState = Type.Object({
   mastery: Type.Number({ minimum: 0, maximum: 1 }),
-  attempts: Type.Number(),
-  passes: Type.Number(),
+  attempts: Type.Integer({ minimum: 0 }),
+  passes: Type.Integer({ minimum: 0 }),
   pKnown: Type.Optional(Type.Number({ minimum: 0, maximum: 1 })),
   lastSeen: Type.String(),
   misconceptionCounts: Type.Record(MisconId, Type.Number()),
@@ -95,7 +95,7 @@ export const BehavioralEvent = Type.Object({
   id: Type.String(),
   learnerId: Type.String(),
   sessionId: Type.String(),
-  seq: Type.Number(),
+  seq: Type.Integer({ minimum: 0 }),
   stepId: StepId,
   ts: Type.String(),
   type: SignalType,

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { validate } from "../src/validate.js";
-import { Signature, Diagnosis, LearnerModel, BehavioralEvent } from "../src/runtime.js";
+import { Signature, Diagnosis, LearnerModel, BehavioralEvent, SkillState } from "../src/runtime.js";
 
 describe("Signature", () => {
   it("accepts the §13.1 implicit_coercion signature", () => {
@@ -65,5 +65,36 @@ describe("BehavioralEvent", () => {
       payload: { correct: false },
     };
     expect(validate(BehavioralEvent, e).ok).toBe(true);
+  });
+});
+
+describe("SkillState negative", () => {
+  it("rejects mastery out of range (1.5)", () => {
+    const s = {
+      mastery: 1.5,
+      attempts: 3,
+      passes: 1,
+      lastSeen: "2026-06-08T10:00:00.000Z",
+      misconceptionCounts: {},
+    };
+    expect(validate(SkillState, s).ok).toBe(false);
+  });
+});
+
+describe("Diagnosis negative", () => {
+  it("rejects an unknown attribution value", () => {
+    const d = {
+      id: "diag.2",
+      learnerId: "learner.abc",
+      stepId: "cell.concat.intro#2",
+      contentVersion: "2026.06.0",
+      submittedAt: "2026-06-08T10:00:00.000Z",
+      correct: false,
+      attribution: "bogus",
+      signals: { ran: true, wallMs: 42 },
+      skillDeltas: [],
+      seed: 1,
+    };
+    expect(validate(Diagnosis, d).ok).toBe(false);
   });
 });

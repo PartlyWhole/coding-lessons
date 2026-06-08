@@ -67,3 +67,13 @@ export const Json = Type.Recursive((This) =>
   ]),
 );
 export type Json = Static<typeof Json>;
+
+// §3.5 — a skill mastery delta. Defined here (a leaf type depending only on SkillId)
+// rather than in content.ts so that content↔runtime stay a clean DAG with no ESM
+// module-init cycle.
+export const SkillDelta = Type.Object({
+  skill: SkillId,
+  kind: Type.Union([Type.Literal("pass"), Type.Literal("fail"), Type.Literal("misconception")]),
+  weight: Type.Number(),
+});
+export type SkillDelta = Static<typeof SkillDelta>;

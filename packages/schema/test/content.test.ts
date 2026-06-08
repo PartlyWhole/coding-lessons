@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { validate } from "../src/validate.js";
-import { ConceptNode, Cell, Misconception, Skill } from "../src/content.js";
+import { ConceptNode, Cell, Misconception, Skill, RecognizeStep, RecallStep } from "../src/content.js";
 
 describe("ConceptNode", () => {
   it("accepts the §13.1 string-concat node with three requirement kinds", () => {
@@ -108,5 +108,30 @@ describe("Skill", () => {
       upstream: ["skill.string.literal"],
     };
     expect(validate(Skill, s).ok).toBe(true);
+  });
+});
+
+describe("Step variants", () => {
+  it("accepts a valid RecognizeStep", () => {
+    const step = {
+      id: "c#0",
+      kind: "recognize",
+      prompt: "p",
+      skills: [],
+      choices: [{ id: "a", label: "A" }],
+      correctChoiceId: "a",
+    };
+    expect(validate(RecognizeStep, step).ok).toBe(true);
+  });
+
+  it("accepts a valid RecallStep", () => {
+    const step = {
+      id: "c#1",
+      kind: "recall",
+      prompt: "p",
+      skills: [],
+      accepted: { normalized: ["x"] },
+    };
+    expect(validate(RecallStep, step).ok).toBe(true);
   });
 });
