@@ -466,7 +466,7 @@ Create `packages/schema/test/evaluator.test.ts`:
 ```ts
 import { describe, it, expect } from "vitest";
 import { validate } from "../src/validate.js";
-import { EvaluatorConfig, AstQuery } from "../src/evaluator.js";
+import { EvaluatorConfig, AstQuery, GenSpec } from "../src/evaluator.js";
 
 describe("AstQuery", () => {
   it("accepts a nested structural query (the §13.1 implicit_coerce example)", () => {
@@ -485,6 +485,20 @@ describe("AstQuery", () => {
   it("accepts boolean combinators", () => {
     const q = { all: [{ node: "For" }, { not: { node: "Call", where: { calls: "$self" } } }] };
     expect(validate(AstQuery, q).ok).toBe(true);
+  });
+
+  it("rejects an invalid count operator (closed union)", () => {
+    expect(validate(AstQuery, { node: "For", count: { op: "<", n: 2 } }).ok).toBe(false);
+  });
+
+  it("rejects a non-integer count.n", () => {
+    expect(validate(AstQuery, { node: "For", count: { op: "=", n: 1.5 } }).ok).toBe(false);
+  });
+});
+
+describe("GenSpec", () => {
+  it("rejects an unknown generator type (closed union)", () => {
+    expect(validate(GenSpec, { param: "x", type: "dict" }).ok).toBe(false);
   });
 });
 
@@ -528,12 +542,14 @@ Create `packages/schema/src/evaluator.ts`:
 import { Type, type Static } from "@sinclair/typebox";
 import { Json } from "./ids.js";
 
-// §3.6
+// §3.6 — numeric budgets are whole positive values; constrain so the M1 content
+// compiler rejects nonsense (negative/zero/fractional) at the schema gate.
 export const RunConfig = Type.Object({
-  timeoutMs: Type.Number(),
-  memoryMb: Type.Number(),
+  timeoutMs: Type.Integer({ minimum: 1 }),
+  memoryMb: Type.Integer({ minimum: 1 }),
   entrypoint: Type.Optional(Type.String()),
 });
+export type RunConfig = Static<typeof RunConfig>;
 
 export const TestConfig = Type.Object({
   cases: Type.Array(
@@ -551,6 +567,7 @@ export const TestConfig = Type.Object({
     ]),
   ),
 });
+export type TestConfig = Static<typeof TestConfig>;
 
 // §6.3 — AstPred references AstQuery (childMatches), so both are recursive.
 // Declared together inside one Type.Recursive over a discriminated wrapper would be
@@ -573,7 +590,7 @@ export const AstQuery = Type.Recursive((Self) =>
       count: Type.Optional(
         Type.Object({
           op: Type.Union([Type.Literal("="), Type.Literal(">="), Type.Literal("<=")]),
-          n: Type.Number(),
+          n: Type.Integer({ minimum: 0 }),
         }),
       ),
     }),
@@ -587,6 +604,7 @@ export type AstQuery = Static<typeof AstQuery>;
 export const AstConfig = Type.Object({
   queries: Type.Array(Type.Object({ tag: Type.String(), query: AstQuery })),
 });
+export type AstConfig = Static<typeof AstConfig>;
 
 // §6.4
 export const GenSpec = Type.Recursive((Self) =>
@@ -612,12 +630,13 @@ export type GenSpec = Static<typeof GenSpec>;
 export const PropertyConfig = Type.Object({
   referenceImpl: Type.String(),
   generators: Type.Array(GenSpec),
-  numCases: Type.Number(),
-  seed: Type.Number(),
+  numCases: Type.Integer({ minimum: 1 }),
+  seed: Type.Integer(),
   comparator: Type.Optional(
     Type.Union([Type.Literal("deep-equal"), Type.Literal("float-close")]),
   ),
 });
+export type PropertyConfig = Static<typeof PropertyConfig>;
 
 export const EvaluatorConfig = Type.Object({
   run: RunConfig,
@@ -634,7 +653,7 @@ export type EvaluatorConfig = Static<typeof EvaluatorConfig>;
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `pnpm --filter @trellis/schema test evaluator`
-Expected: PASS (4 tests).
+Expected: PASS (7 tests).
 
 - [ ] **Step 5: Commit**
 

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { validate } from "../src/validate.js";
-import { EvaluatorConfig, AstQuery } from "../src/evaluator.js";
+import { EvaluatorConfig, AstQuery, GenSpec } from "../src/evaluator.js";
 
 describe("AstQuery", () => {
   it("accepts a nested structural query (the §13.1 implicit_coerce example)", () => {
@@ -19,6 +19,20 @@ describe("AstQuery", () => {
   it("accepts boolean combinators", () => {
     const q = { all: [{ node: "For" }, { not: { node: "Call", where: { calls: "$self" } } }] };
     expect(validate(AstQuery, q).ok).toBe(true);
+  });
+
+  it("rejects an invalid count operator (closed union)", () => {
+    expect(validate(AstQuery, { node: "For", count: { op: "<", n: 2 } }).ok).toBe(false);
+  });
+
+  it("rejects a non-integer count.n", () => {
+    expect(validate(AstQuery, { node: "For", count: { op: "=", n: 1.5 } }).ok).toBe(false);
+  });
+});
+
+describe("GenSpec", () => {
+  it("rejects an unknown generator type (closed union)", () => {
+    expect(validate(GenSpec, { param: "x", type: "dict" }).ok).toBe(false);
   });
 });
 

@@ -3,10 +3,11 @@ import { Json } from "./ids.js";
 
 // §3.6
 export const RunConfig = Type.Object({
-  timeoutMs: Type.Number(),
-  memoryMb: Type.Number(),
+  timeoutMs: Type.Integer({ minimum: 1 }),
+  memoryMb: Type.Integer({ minimum: 1 }),
   entrypoint: Type.Optional(Type.String()),
 });
+export type RunConfig = Static<typeof RunConfig>;
 
 export const TestConfig = Type.Object({
   cases: Type.Array(
@@ -24,6 +25,7 @@ export const TestConfig = Type.Object({
     ]),
   ),
 });
+export type TestConfig = Static<typeof TestConfig>;
 
 // §6.3 — AstPred references AstQuery (childMatches), so both are recursive.
 // Declared together inside one Type.Recursive over a discriminated wrapper would be
@@ -46,7 +48,7 @@ export const AstQuery = Type.Recursive((Self) =>
       count: Type.Optional(
         Type.Object({
           op: Type.Union([Type.Literal("="), Type.Literal(">="), Type.Literal("<=")]),
-          n: Type.Number(),
+          n: Type.Integer({ minimum: 0 }),
         }),
       ),
     }),
@@ -60,6 +62,7 @@ export type AstQuery = Static<typeof AstQuery>;
 export const AstConfig = Type.Object({
   queries: Type.Array(Type.Object({ tag: Type.String(), query: AstQuery })),
 });
+export type AstConfig = Static<typeof AstConfig>;
 
 // §6.4
 export const GenSpec = Type.Recursive((Self) =>
@@ -85,12 +88,13 @@ export type GenSpec = Static<typeof GenSpec>;
 export const PropertyConfig = Type.Object({
   referenceImpl: Type.String(),
   generators: Type.Array(GenSpec),
-  numCases: Type.Number(),
-  seed: Type.Number(),
+  numCases: Type.Integer({ minimum: 1 }),
+  seed: Type.Integer(),
   comparator: Type.Optional(
     Type.Union([Type.Literal("deep-equal"), Type.Literal("float-close")]),
   ),
 });
+export type PropertyConfig = Static<typeof PropertyConfig>;
 
 export const EvaluatorConfig = Type.Object({
   run: RunConfig,
