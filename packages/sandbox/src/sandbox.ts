@@ -50,6 +50,17 @@ export function createSandbox(config: SandboxConfig): ManagedSandbox {
     try {
       await host.ready();
       return await raceRun(host, req, start, () => host.terminate());
+    } catch (err) {
+      // Warmup failure (init-error / warmup timeout / crash before ready). The pooled
+      // path absorbs this in WarmPool.spawn's .catch; mirror that here as a structured
+      // runtime error instead of letting a raw throw escape to the caller.
+      return {
+        ran: false,
+        stdout: "",
+        wallMs: clock.now() - start,
+        timedOut: false,
+        error: { type: "runtime", message: err instanceof Error ? err.message : String(err) },
+      };
     } finally {
       host.terminate();
     }

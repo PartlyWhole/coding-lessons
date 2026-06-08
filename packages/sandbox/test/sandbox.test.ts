@@ -98,4 +98,24 @@ describe("createSandbox (gate behaviors)", () => {
     expect(dedicated?.terminated).toBe(true);
     sb.dispose();
   });
+
+  it("a dedicated-worker warmup failure surfaces as a structured runtime error", async () => {
+    const clock = new FakeClock();
+    const { factory } = makeMockFactory({ ready: "never" });
+    const sb = createSandbox({
+      workerFactory: factory,
+      clock,
+      poolSize: 1,
+      memoryMb: 128,
+      warmupTimeoutMs: 5000,
+    });
+    const p = sb.run({ ...base, memoryMb: 512 }); // > pool cap → dedicated worker
+    clock.advance(5000); // dedicated host warmup times out
+    const res = await p;
+    expect(res.ran).toBe(false);
+    expect(res.timedOut).toBe(false);
+    expect(res.error?.type).toBe("runtime");
+    expect(res.error?.message).toMatch(/warmup/i);
+    sb.dispose();
+  });
 });
