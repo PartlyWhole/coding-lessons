@@ -257,7 +257,7 @@ These are the leaf types every other schema references. Per §3.1, ids are strin
 Create `packages/schema/src/ids.ts`:
 
 ```ts
-import { Type, type Static, type TSchema } from "@sinclair/typebox";
+import { Type, type Static } from "@sinclair/typebox";
 
 // §3.1 — identifiers are opaque strings; aliases document intent.
 export const SkillId = Type.String();
@@ -313,7 +313,9 @@ export type SignalType = Static<typeof SignalType>;
 export const MasteryThreshold = Type.Number({ minimum: 0, maximum: 1 });
 
 // A recursive JSON value (used by TestConfig.cases and BehavioralEvent.payload).
-export const Json: TSchema = Type.Recursive((This) =>
+// NOTE: do not annotate as `: TSchema` — that erases the inferred TRecursive type and
+// makes `Static<typeof Json>` collapse to `unknown`. Let TypeScript infer the type.
+export const Json = Type.Recursive((This) =>
   Type.Union([
     Type.Null(),
     Type.Boolean(),
@@ -325,6 +327,8 @@ export const Json: TSchema = Type.Recursive((This) =>
 );
 export type Json = Static<typeof Json>;
 ```
+
+> **Recursive-schema typing rule (applies to `Json` here and to `AstQuery`/`GenSpec` in Task 5 and `Signature` in Task 7):** never annotate a `Type.Recursive(...)` const as `: TSchema`. `TSchema['static']` is `unknown`, so the annotation makes the exported `Static<typeof X>` type collapse to `unknown`, defeating the package's purpose. Let TypeScript infer the `TRecursive<...>` type and drop the now-unused `TSchema` import. In the rare case `tsc` reports "Type instantiation is excessively deep and possibly infinite" when the recursive schema is embedded in another `Type.Object`, apply a localized `as TSchema` cast **at the embedding site only** (e.g. `query: AstQuery as unknown as TSchema`) rather than annotating the const — that keeps the exported type intact. (Verified during M0 execution: the un-annotated form compiles cleanly for all four recursive types.)
 
 - [ ] **Step 2: Verify it typechecks**
 
@@ -521,7 +525,7 @@ Expected: FAIL — cannot resolve `../src/evaluator.js`.
 Create `packages/schema/src/evaluator.ts`:
 
 ```ts
-import { Type, type Static, type TSchema } from "@sinclair/typebox";
+import { Type, type Static } from "@sinclair/typebox";
 import { Json } from "./ids.js";
 
 // §3.6
@@ -552,7 +556,7 @@ export const TestConfig = Type.Object({
 // Declared together inside one Type.Recursive over a discriminated wrapper would be
 // awkward; instead AstQuery is recursive and AstPred embeds it by referencing the
 // exported AstQuery schema.
-export const AstQuery: TSchema = Type.Recursive((Self) =>
+export const AstQuery = Type.Recursive((Self) =>
   Type.Union([
     Type.Object({
       node: Type.String(),
@@ -585,7 +589,7 @@ export const AstConfig = Type.Object({
 });
 
 // §6.4
-export const GenSpec: TSchema = Type.Recursive((Self) =>
+export const GenSpec = Type.Recursive((Self) =>
   Type.Object({
     param: Type.String(),
     type: Type.Union([
@@ -1033,7 +1037,7 @@ Expected: FAIL — cannot resolve `../src/runtime.js`.
 Create `packages/schema/src/runtime.ts`:
 
 ```ts
-import { Type, type Static, type TSchema } from "@sinclair/typebox";
+import { Type, type Static } from "@sinclair/typebox";
 import {
   SkillId,
   StepId,
@@ -1046,7 +1050,7 @@ import {
 import { SkillDelta } from "./content.js";
 
 // §7 — a misconception signature: a boolean predicate over RawSignals.
-export const Signature: TSchema = Type.Recursive((Self) =>
+export const Signature = Type.Recursive((Self) =>
   Type.Union([
     Type.Object({ astTag: Type.String() }),
     Type.Object({ runError: Type.Union([Type.Literal("syntax"), Type.Literal("runtime")]) }),

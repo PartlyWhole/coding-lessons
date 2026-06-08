@@ -1,4 +1,4 @@
-import { Type, type Static, type TSchema } from "@sinclair/typebox";
+import { Type, type Static } from "@sinclair/typebox";
 
 // §3.1 — identifiers are opaque strings; aliases document intent.
 export const SkillId = Type.String();
@@ -54,7 +54,9 @@ export type SignalType = Static<typeof SignalType>;
 export const MasteryThreshold = Type.Number({ minimum: 0, maximum: 1 });
 
 // A recursive JSON value (used by TestConfig.cases and BehavioralEvent.payload).
-export const Json: TSchema = Type.Recursive((This) =>
+// NOTE: do not annotate as `: TSchema` — that erases the inferred TRecursive type and
+// makes `Static<typeof Json>` collapse to `unknown`. Let TypeScript infer the type.
+export const Json = Type.Recursive((This) =>
   Type.Union([
     Type.Null(),
     Type.Boolean(),
