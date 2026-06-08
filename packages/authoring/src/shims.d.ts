@@ -7,6 +7,7 @@ declare module "node:fs" {
   export function readdirSync(path: string): string[];
   export function existsSync(path: string): boolean;
   export function mkdirSync(path: string, opts?: { recursive?: boolean }): void;
+  export function rmSync(path: string, opts?: { recursive?: boolean; force?: boolean }): void;
 }
 declare module "node:path" {
   export function join(...parts: string[]): string;
