@@ -1,0 +1,611 @@
+{
+  "url": "http://localhost:8765/verification/debt2.html",
+  "results": [
+    {
+      "name": "0-pyodide-python-version",
+      "pass": true,
+      "evidence": {
+        "pyodidePython": "3.12.7 (main, Jan 23 2025, 22:14:53) [Clang 19.0.0git (https:/github.com/llvm/llvm-project 0a8cd1ed1f4f35905df318015b"
+      }
+    },
+    {
+      "name": "A-21-fixture-differential",
+      "pass": true,
+      "evidence": {
+        "buildBearingMisconceptions": 15,
+        "fixturesRun": 49,
+        "fixturesAgree": 49,
+        "perFixture": [
+          {
+            "mis": "mis.elif.order_overlap",
+            "label": "triggers",
+            "want": true,
+            "got": true,
+            "agree": true
+          },
+          {
+            "mis": "mis.elif.order_overlap",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.input.hardcoded",
+            "label": "triggers",
+            "want": true,
+            "got": true,
+            "agree": true
+          },
+          {
+            "mis": "mis.input.hardcoded",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.input.hardcoded",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.input.not_stored",
+            "label": "triggers",
+            "want": true,
+            "got": true,
+            "agree": true
+          },
+          {
+            "mis": "mis.input.not_stored",
+            "label": "triggers",
+            "want": true,
+            "got": true,
+            "agree": true
+          },
+          {
+            "mis": "mis.input.not_stored",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.type.int_input",
+            "label": "triggers",
+            "want": true,
+            "got": true,
+            "agree": true
+          },
+          {
+            "mis": "mis.type.int_input",
+            "label": "triggers",
+            "want": true,
+            "got": true,
+            "agree": true
+          },
+          {
+            "mis": "mis.type.int_input",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.type.int_input",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.type.int_input",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.loop.infinite_true",
+            "label": "triggers",
+            "want": true,
+            "got": true,
+            "agree": true
+          },
+          {
+            "mis": "mis.loop.infinite_true",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.loop.infinite_true",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.loop.no_update",
+            "label": "triggers",
+            "want": true,
+            "got": true,
+            "agree": true
+          },
+          {
+            "mis": "mis.loop.no_update",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.loop.no_update",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.print.no_call",
+            "label": "triggers",
+            "want": true,
+            "got": true,
+            "agree": true
+          },
+          {
+            "mis": "mis.print.no_call",
+            "label": "triggers",
+            "want": true,
+            "got": true,
+            "agree": true
+          },
+          {
+            "mis": "mis.print.no_call",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.print.no_call",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.print.unquoted",
+            "label": "triggers",
+            "want": true,
+            "got": true,
+            "agree": true
+          },
+          {
+            "mis": "mis.print.unquoted",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.print.unquoted",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.random.no_import",
+            "label": "triggers",
+            "want": true,
+            "got": true,
+            "agree": true
+          },
+          {
+            "mis": "mis.random.no_import",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.random.no_import",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.random.range_off_by_one",
+            "label": "triggers",
+            "want": true,
+            "got": true,
+            "agree": true
+          },
+          {
+            "mis": "mis.random.range_off_by_one",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.random.range_off_by_one",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.concat.missing_space",
+            "label": "triggers",
+            "want": true,
+            "got": true,
+            "agree": true
+          },
+          {
+            "mis": "mis.concat.missing_space",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.concat.missing_space",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.concat.plus_in_quotes",
+            "label": "triggers",
+            "want": true,
+            "got": true,
+            "agree": true
+          },
+          {
+            "mis": "mis.concat.plus_in_quotes",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.concat.plus_in_quotes",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.concat.str_num",
+            "label": "triggers",
+            "want": true,
+            "got": true,
+            "agree": true
+          },
+          {
+            "mis": "mis.concat.str_num",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.concat.str_num",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.var.undefined",
+            "label": "triggers",
+            "want": true,
+            "got": true,
+            "agree": true
+          },
+          {
+            "mis": "mis.var.undefined",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.var.undefined",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.var.use_quoted",
+            "label": "triggers",
+            "want": true,
+            "got": true,
+            "agree": true
+          },
+          {
+            "mis": "mis.var.use_quoted",
+            "label": "triggers",
+            "want": true,
+            "got": true,
+            "agree": true
+          },
+          {
+            "mis": "mis.var.use_quoted",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.var.use_quoted",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          },
+          {
+            "mis": "mis.var.use_quoted",
+            "label": "notTriggers",
+            "want": false,
+            "got": false,
+            "agree": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "B-section4-acceptance",
+      "pass": true,
+      "evidence": {
+        "fstr": {
+          "id": "d",
+          "learnerId": "L",
+          "stepId": "cell.string_concat.text_plus_number#4",
+          "contentVersion": "acceptance@1",
+          "submittedAt": "2026-06-08T00:00:00.000Z",
+          "correct": true,
+          "attribution": "pass",
+          "signals": {
+            "ran": true,
+            "wallMs": 0,
+            "astTags": [],
+            "tests": {
+              "passed": 3,
+              "failed": 0,
+              "failures": []
+            },
+            "property": {
+              "passed": true
+            }
+          },
+          "skillDeltas": [
+            {
+              "skill": "skill.string.concat_str_num",
+              "kind": "pass",
+              "weight": 1
+            }
+          ],
+          "seed": 1234
+        },
+        "coerce": {
+          "id": "d",
+          "learnerId": "L",
+          "stepId": "cell.string_concat.text_plus_number#4",
+          "contentVersion": "acceptance@1",
+          "submittedAt": "2026-06-08T00:00:00.000Z",
+          "correct": true,
+          "attribution": "pass",
+          "signals": {
+            "ran": true,
+            "wallMs": 0,
+            "astTags": [
+              "implicit_coerce"
+            ],
+            "tests": {
+              "passed": 3,
+              "failed": 0,
+              "failures": []
+            },
+            "property": {
+              "passed": true
+            }
+          },
+          "skillDeltas": [
+            {
+              "skill": "skill.string.concat_str_num",
+              "kind": "pass",
+              "weight": 1
+            }
+          ],
+          "seed": 1234
+        },
+        "bad": {
+          "id": "d",
+          "learnerId": "L",
+          "stepId": "cell.string_concat.text_plus_number#4",
+          "contentVersion": "acceptance@1",
+          "submittedAt": "2026-06-08T00:00:00.000Z",
+          "correct": false,
+          "attribution": "misconception",
+          "signals": {
+            "ran": true,
+            "wallMs": 0,
+            "astTags": [
+              "implicit_coerce"
+            ],
+            "tests": {
+              "passed": 0,
+              "failed": 3,
+              "failures": [
+                {
+                  "caseIndex": 0,
+                  "got": null
+                },
+                {
+                  "caseIndex": 1,
+                  "got": null
+                },
+                {
+                  "caseIndex": 2,
+                  "got": null
+                }
+              ]
+            },
+            "runError": {
+              "type": "runtime",
+              "message": "runtime"
+            }
+          },
+          "skillDeltas": [
+            {
+              "skill": "skill.string.concat_str_num",
+              "kind": "misconception",
+              "weight": 0.4
+            },
+            {
+              "skill": "skill.string.concat",
+              "kind": "misconception",
+              "weight": 0.1
+            }
+          ],
+          "seed": 1234,
+          "misconceptionId": "mis.concat.str_num"
+        }
+      }
+    },
+    {
+      "name": "C1-determinism-seeded-property",
+      "pass": false,
+      "evidence": {
+        "identicalModuloWallMs": true,
+        "wallMsValues": [
+          0.5,
+          0.30000001192092896,
+          0.30000001192092896
+        ],
+        "diagnosis": {
+          "id": "d",
+          "learnerId": "L",
+          "stepId": "cell.random.build#2",
+          "contentVersion": "acceptance@1",
+          "submittedAt": "2026-06-08T00:00:00.000Z",
+          "correct": false,
+          "attribution": "misconception",
+          "signals": {
+            "ran": true,
+            "wallMs": 0,
+            "astTags": [
+              "has_random_import",
+              "uses_random_name"
+            ],
+            "tests": {
+              "passed": 1,
+              "failed": 1,
+              "failures": [
+                {
+                  "caseIndex": 0,
+                  "got": 57
+                }
+              ]
+            }
+          },
+          "skillDeltas": [
+            {
+              "skill": "skill.random.randint",
+              "kind": "misconception",
+              "weight": 0.4
+            }
+          ],
+          "seed": 1234,
+          "misconceptionId": "mis.random.range_off_by_one"
+        }
+      }
+    },
+    {
+      "name": "C2-correct-property-passes",
+      "pass": true,
+      "evidence": {
+        "id": "d",
+        "learnerId": "L",
+        "stepId": "cell.random.build#2",
+        "contentVersion": "acceptance@1",
+        "submittedAt": "2026-06-08T00:00:00.000Z",
+        "correct": true,
+        "attribution": "pass",
+        "signals": {
+          "ran": true,
+          "wallMs": 0,
+          "astTags": [
+            "has_random_import",
+            "uses_random_name"
+          ],
+          "tests": {
+            "passed": 2,
+            "failed": 0,
+            "failures": []
+          },
+          "property": {
+            "passed": true
+          }
+        },
+        "skillDeltas": [
+          {
+            "skill": "skill.random.randint",
+            "kind": "pass",
+            "weight": 1
+          }
+        ],
+        "seed": 1234
+      }
+    },
+    {
+      "name": "C3-parseAndMatch-deterministic",
+      "pass": true,
+      "evidence": {
+        "tags": [],
+        "queryTags": [
+          "implicit_coerce"
+        ]
+      }
+    }
+  ],
+  "consoleLines": [
+    "[error] Error thrown in read:",
+    "[error] ReferenceError: prompt is not defined\n    at Object.stdin (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:97772)\n    at LegacyReader._getInput (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:99452)\n    at LegacyReader.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:100028)\n    at https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96983\n    at handleEAGAIN (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96113)\n    at readWriteHelper (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96229)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96965)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:224711)\n    at doReadv (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:375917)\n    at _fd_read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:377307)",
+    "[error] Error thrown in read:",
+    "[error] ReferenceError: prompt is not defined\n    at Object.stdin (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:97772)\n    at LegacyReader._getInput (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:99452)\n    at LegacyReader.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:100028)\n    at https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96983\n    at handleEAGAIN (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96113)\n    at readWriteHelper (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96229)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96965)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:224711)\n    at doReadv (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:375917)\n    at _fd_read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:377307)",
+    "[error] Error thrown in read:",
+    "[error] ReferenceError: prompt is not defined\n    at Object.stdin (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:97772)\n    at LegacyReader._getInput (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:99452)\n    at LegacyReader.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:100028)\n    at https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96983\n    at handleEAGAIN (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96113)\n    at readWriteHelper (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96229)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96965)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:224711)\n    at doReadv (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:375917)\n    at _fd_read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:377307)",
+    "[error] Error thrown in read:",
+    "[error] ReferenceError: prompt is not defined\n    at Object.stdin (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:97772)\n    at LegacyReader._getInput (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:99452)\n    at LegacyReader.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:100028)\n    at https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96983\n    at handleEAGAIN (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96113)\n    at readWriteHelper (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96229)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96965)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:224711)\n    at doReadv (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:375917)\n    at _fd_read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:377307)",
+    "[error] Error thrown in read:",
+    "[error] ReferenceError: prompt is not defined\n    at Object.stdin (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:97772)\n    at LegacyReader._getInput (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:99452)\n    at LegacyReader.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:100028)\n    at https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96983\n    at handleEAGAIN (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96113)\n    at readWriteHelper (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96229)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96965)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:224711)\n    at doReadv (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:375917)\n    at _fd_read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:377307)",
+    "[error] Error thrown in read:",
+    "[error] ReferenceError: prompt is not defined\n    at Object.stdin (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:97772)\n    at LegacyReader._getInput (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:99452)\n    at LegacyReader.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:100028)\n    at https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96983\n    at handleEAGAIN (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96113)\n    at readWriteHelper (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96229)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96965)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:224711)\n    at doReadv (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:375917)\n    at _fd_read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:377307)",
+    "[error] Error thrown in read:",
+    "[error] ReferenceError: prompt is not defined\n    at Object.stdin (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:97772)\n    at LegacyReader._getInput (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:99452)\n    at LegacyReader.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:100028)\n    at https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96983\n    at handleEAGAIN (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96113)\n    at readWriteHelper (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96229)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96965)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:224711)\n    at doReadv (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:375917)\n    at _fd_read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:377307)",
+    "[error] Error thrown in read:",
+    "[error] ReferenceError: prompt is not defined\n    at Object.stdin (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:97772)\n    at LegacyReader._getInput (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:99452)\n    at LegacyReader.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:100028)\n    at https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96983\n    at handleEAGAIN (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96113)\n    at readWriteHelper (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96229)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96965)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:224711)\n    at doReadv (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:375917)\n    at _fd_read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:377307)",
+    "[error] Error thrown in read:",
+    "[error] ReferenceError: prompt is not defined\n    at Object.stdin (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:97772)\n    at LegacyReader._getInput (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:99452)\n    at LegacyReader.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:100028)\n    at https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96983\n    at handleEAGAIN (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96113)\n    at readWriteHelper (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96229)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96965)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:224711)\n    at doReadv (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:375917)\n    at _fd_read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:377307)",
+    "[error] Error thrown in read:",
+    "[error] ReferenceError: prompt is not defined\n    at Object.stdin (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:97772)\n    at LegacyReader._getInput (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:99452)\n    at LegacyReader.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:100028)\n    at https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96983\n    at handleEAGAIN (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96113)\n    at readWriteHelper (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96229)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96965)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:224711)\n    at doReadv (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:375917)\n    at _fd_read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:377307)",
+    "[error] Error thrown in read:",
+    "[error] ReferenceError: prompt is not defined\n    at Object.stdin (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:97772)\n    at LegacyReader._getInput (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:99452)\n    at LegacyReader.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:100028)\n    at https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96983\n    at handleEAGAIN (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96113)\n    at readWriteHelper (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96229)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96965)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:224711)\n    at doReadv (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:375917)\n    at _fd_read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:377307)",
+    "[error] Error thrown in read:",
+    "[error] ReferenceError: prompt is not defined\n    at Object.stdin (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:97772)\n    at LegacyReader._getInput (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:99452)\n    at LegacyReader.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:100028)\n    at https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96983\n    at handleEAGAIN (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96113)\n    at readWriteHelper (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96229)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96965)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:224711)\n    at doReadv (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:375917)\n    at _fd_read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:377307)",
+    "[error] Error thrown in read:",
+    "[error] ReferenceError: prompt is not defined\n    at Object.stdin (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:97772)\n    at LegacyReader._getInput (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:99452)\n    at LegacyReader.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:100028)\n    at https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96983\n    at handleEAGAIN (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96113)\n    at readWriteHelper (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96229)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96965)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:224711)\n    at doReadv (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:375917)\n    at _fd_read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:377307)",
+    "[error] Error thrown in read:",
+    "[error] ReferenceError: prompt is not defined\n    at Object.stdin (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:97772)\n    at LegacyReader._getInput (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:99452)\n    at LegacyReader.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:100028)\n    at https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96983\n    at handleEAGAIN (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96113)\n    at readWriteHelper (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96229)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:96965)\n    at Object.read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:224711)\n    at doReadv (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:375917)\n    at _fd_read (https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.asm.js:10:377307)"
+  ]
+}

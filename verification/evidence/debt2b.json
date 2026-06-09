@@ -1,0 +1,64 @@
+{
+  "url": "http://localhost:8765/verification/debt2b.html",
+  "results": [
+    {
+      "name": "C1b-counterexample-determinism",
+      "pass": true,
+      "evidence": {
+        "identicalModuloWallMs": true,
+        "wallMsValues": [
+          1.0999999940395355,
+          0.5,
+          1.2999999821186066
+        ],
+        "testsSignal": {
+          "passed": 3,
+          "failed": 0,
+          "failures": []
+        },
+        "property": {
+          "passed": false,
+          "counterexample": [
+            3
+          ]
+        },
+        "diagnosis": {
+          "id": "d",
+          "learnerId": "L",
+          "stepId": "cell.conditionals.compare#5",
+          "contentVersion": "acceptance@1",
+          "submittedAt": "2026-06-08T00:00:00.000Z",
+          "correct": false,
+          "attribution": "mismatch",
+          "signals": {
+            "ran": true,
+            "wallMs": 0,
+            "astTags": [
+              "uses_compare"
+            ],
+            "tests": {
+              "passed": 3,
+              "failed": 0,
+              "failures": []
+            },
+            "property": {
+              "passed": false,
+              "counterexample": [
+                3
+              ]
+            }
+          },
+          "skillDeltas": [
+            {
+              "skill": "skill.bool.compare",
+              "kind": "fail",
+              "weight": 1
+            }
+          ],
+          "seed": 1234
+        }
+      }
+    }
+  ],
+  "consoleLines": []
+}
