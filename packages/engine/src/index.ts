@@ -26,3 +26,18 @@ export {
 } from "./diagnose.js";
 
 export { newSkillState, applyDiagnosis, targetUpstream } from "./learnerModel.js";
+
+export type { BuildSandbox, BuildSubmission } from "./buildSandbox.js";
+export { compareValues, floatClose, setEqual } from "./compare.js";
+export type { Comparator } from "./compare.js";
+export { makePrng } from "./prng.js";
+export type { Prng } from "./prng.js";
+export { genValue, genArgs } from "./generators.js";
+export { shrink, shrinkCandidates } from "./shrink.js";
+export { runTests } from "./testRunner.js";
+export type { TestRunResult } from "./testRunner.js";
+export { runProperty } from "./propertyRunner.js";
+export type { PropertyResult } from "./propertyRunner.js";
+export { evaluate, assembleBuildSignals } from "./evaluate.js";
+export type { Submission } from "./evaluate.js";
+export { entrypointDriver, parseDriverStdout, SENTINEL } from "./pyDriver.js";
