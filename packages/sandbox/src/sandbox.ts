@@ -1,9 +1,10 @@
-import type { RunRequest, RunResult, Sandbox } from "@trellis/schema";
+import type { RunRequest, RunResult, Sandbox, AstQuery } from "@trellis/schema";
 import { realClock, type Clock } from "./clock.js";
 import { PINNED_PYODIDE_URL } from "./pinned.js";
 import type { WorkerFactory } from "./protocol.js";
 import { WorkerHost } from "./worker-host.js";
 import { WarmPool, type PoolStatus } from "./warm-pool.js";
+import { parseAndMatch as runParseAndMatch } from "./parse-and-match.js";
 
 export interface SandboxConfig {
   workerFactory: WorkerFactory;
@@ -20,6 +21,7 @@ export interface ManagedSandbox extends Sandbox {
   warmup(): Promise<void>;
   status(): PoolStatus;
   dispose(): void;
+  parseAndMatch(code: string, queries: { tag: string; query: AstQuery }[]): Promise<string[]>;
 }
 
 export function createSandbox(config: SandboxConfig): ManagedSandbox {
@@ -116,5 +118,6 @@ export function createSandbox(config: SandboxConfig): ManagedSandbox {
     warmup: () => pool.warmup(),
     status: () => pool.status(),
     dispose: () => pool.drain(),
+    parseAndMatch: (code, queries) => runParseAndMatch(run, code, queries),
   };
 }

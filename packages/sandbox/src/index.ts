@@ -9,3 +9,9 @@ export type { WorkerLike, WorkerFactory } from "./protocol.js";
 export { PYODIDE_VERSION, PINNED_PYODIDE_URL } from "./pinned.js";
 // Production worker factory + entry. Real-Pyodide behavior is DEFERRED (needs network).
 export { browserWorkerFactory } from "./browser-worker.js";
+export { createLocalSandbox } from "./local-cpython.js";
+export type { LocalSandbox, LocalSandboxConfig } from "./local-cpython.js";
+export { parseAndMatch } from "./parse-and-match.js";
+export type { RunFn } from "./parse-and-match.js";
+export { AST_QUERY_INTERPRETER, buildMatchProgram, MATCH_SENTINEL } from "./ast-query.js";
+export { RUN_HARNESS } from "./run-harness.js";
