@@ -5,6 +5,7 @@ import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
 import { python } from "@codemirror/lang-python";
 import type { LineRange } from "@trellis/schema";
 import { lockedRegionsExtension } from "./lockedRegions.js";
+import { trellisEditor } from "./trellis-editor-theme.js";
 
 export interface EditorPaneProps {
   value: string;
@@ -28,6 +29,7 @@ export function EditorPane({ value, onChange, lockedRegions = [], readOnly = fal
       doc: value,
       extensions: [
         lineNumbers(),
+        ...trellisEditor, // Greenhouse terrarium theme + beginner-few-hues highlighting
         history(),
         keymap.of([...defaultKeymap, ...historyKeymap]),
         python(),

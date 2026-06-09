@@ -48,7 +48,7 @@ describe("TinyMarkdown (watch-step body subset)", () => {
 
   it("preserves block order", () => {
     const { container } = render(<TinyMarkdown text={"a\n\n    code\n\nb"} />);
-    const kids = [...container.children[0]?.parentElement!.querySelectorAll("p, pre")];
+    const kids = [...container.querySelectorAll("p, pre")];
     expect(kids.map((k) => k.tagName)).toEqual(["P", "PRE", "P"]);
   });
 });

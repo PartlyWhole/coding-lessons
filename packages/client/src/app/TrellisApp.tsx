@@ -52,7 +52,7 @@ export function TrellisApp({ bundleUrl, contentVersion, cellId, sandbox, warmup,
       );
     }
     return () => db?.close();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- injectables are mount-stable
+    // injectables (warmup/driver/fetchImpl) are mount-stable by contract — deps unchanged
   }, [bundleUrl, contentVersion, cellId]);
 
   // ⚑ Greenhouse app states: calm, centered, no spinners anywhere.
