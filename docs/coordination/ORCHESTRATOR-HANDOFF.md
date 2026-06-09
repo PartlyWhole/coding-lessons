@@ -147,8 +147,8 @@ they never edit `docs/coordination/**`. You merge to `main`.
 | C | M3a `@trellis/sandbox` host | ✅ integrated `1c05031` · **Pyodide verify deferred** (worktree removed) | — | `packages/sandbox/**` |
 | D | M3b build ladder | ✅ integrated `ee79120` (worktree removable) | `../trellis-m3b` / `m3b-build-ladder` | `packages/engine/**` (`evaluate`) + `packages/sandbox/**` (`parseAndMatch`) |
 | E | M4 misconceptions + hints | ✅ integrated `406b069` (+ Escalation B `cf7daa7`; worktree removable) | `../trellis-m4` / `m4-misconceptions-hints` | `packages/engine/**` (§9 ladder) + `packages/authoring/**` (gates 5–7) |
-| **F** | **M5-persist `@trellis/persist`** | **🔄 in flight** `a056037` | `../trellis-m5-persist` / `m5-persist` | `packages/persist/**` (new) |
-| G | M5-client `@trellis/client` | ⏸ pending E+F | (not yet created) | `packages/client/**` (new) |
+| F | M5-persist `@trellis/persist` | ✅ integrated `4e8eca5` (worktree removable; `nativeDriver` real-browser verify deferred) | `../trellis-m5-persist` / `m5-persist` | `packages/persist/**` (new) |
+| **G** | **M5-client `@trellis/client`** | **🆕 launching** `4e8eca5` (E+F both on `main`) | `../trellis-m5-client` / `m5-client` | `packages/client/**` (new) |
 
 A/B/C/D were independent/sequential and are all in `main` (A/B/C worktrees cleaned; D's removable). **The
 live front is now E ∥ F** — two NEW concurrent streams off `main` @ `a056037`, set up this session with
