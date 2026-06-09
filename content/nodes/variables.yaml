@@ -44,8 +44,10 @@ node:
             name = Alan
             print(name)
           choices:
-            - { id: a, label: "It prints: Alan" }
-            - { id: b, label: "It crashes with an error (NameError)", misconception: mis.var.undefined }
+            # Tag on a: the believer reads bare `Alan` as text and predicts it prints.
+            # (Was mis-tagged on the CORRECT choice b — gate-9 finding, user-approved move 2026-06-09.)
+            - { id: a, label: "It prints: Alan", misconception: mis.var.undefined }
+            - { id: b, label: "It crashes with an error (NameError)" }
             - { id: c, label: "It prints the empty box" }
           # The TEMPTING wrong answer is (a): the learner expects the word Alan. Without quotes
           # Python reads `Alan` as ANOTHER variable's name — and nothing is in a box called Alan,
@@ -103,8 +105,10 @@ node:
             name = "Alan"
             print("name")
           choices:
-            - { id: a, label: "Alan" }
-            - { id: b, label: "name", misconception: mis.var.use_quoted }
+            # Tag on a: the use_quoted believer (quotes still fetch the box) predicts "Alan".
+            # (Was mis-tagged on the CORRECT choice b — gate-9 finding, user-approved move 2026-06-09.)
+            - { id: a, label: "Alan", misconception: mis.var.use_quoted }
+            - { id: b, label: "name" }
           # Tempting wrong answer is (a): learners read past the quotes. With quotes Python prints
           # the literal word `name`, not the box's contents. Correct prediction: (b).
           expected: { normalized: ["b", "name"] }

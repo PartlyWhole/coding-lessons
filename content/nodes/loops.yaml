@@ -175,8 +175,10 @@ node:
                 elif number < guess:
                     print("too high")
           choices:
-            - { id: a, label: "too low / too high / correct, then stops" }
-            - { id: b, label: "too low / too high — then it never prints 'correct' and keeps demanding input forever", misconception: mis.loop.infinite_true }
+            # Tag on a: the infinite_true believer (while True stops on its own) predicts "then stops".
+            # (Was mis-tagged on the CORRECT choice b — gate-9 finding, user-approved move 2026-06-09.)
+            - { id: a, label: "too low / too high / correct, then stops", misconception: mis.loop.infinite_true }
+            - { id: b, label: "too low / too high — then it never prints 'correct' and keeps demanding input forever" }
             - { id: c, label: "nothing — while True is a syntax error" }
           expected: { normalized: ["b"] }
           reveal: run-and-show

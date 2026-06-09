@@ -169,9 +169,11 @@ node:
             snacks = input("How many snacks? ")
             print(snacks + 1)
           choices:
-            - { id: a, label: "Prints 6" }
+            # Tag on a: the int_input believer (input() returns a number) predicts 5+1=6.
+            # (Was mis-tagged on the CORRECT choice c — gate-9 finding, user-approved move 2026-06-09.)
+            - { id: a, label: "Prints 6", misconception: mis.type.int_input }
             - { id: b, label: "Prints 51 (glues the digits together)" }
-            - { id: c, label: "Crashes with a TypeError: can't add text and a number", misconception: mis.type.int_input }
+            - { id: c, label: "Crashes with a TypeError: can't add text and a number" }
           expected: { normalized: ["c"] }
           reveal: run-and-show
 
