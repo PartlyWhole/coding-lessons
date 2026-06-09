@@ -62,6 +62,24 @@ A, B, C are independent (disjoint packages) and merge to `main` in any order.
 - **Own cross-stream decisions** (surface to the user; don't guess) — see §6.
 - **Resume the downstream chain** once inputs land (see §7).
 
+### 4.1 Integration runbook (the repeatable spine — validated on M2/M3a/M1)
+
+Run this for every stream merge. It's generic; the per-stream milestone gate slots into step 3.
+Set `export PATH="/opt/homebrew/lib/node_modules/corepack/shims:$PATH"` first.
+
+0. **Pre-flight — verify, don't trust the report.**
+   - Scope: `git diff --stat main...<branch>` = only the stream's `packages/<pkg>/**` + its plan doc + `pnpm-lock.yaml`.
+   - Contract/content/shared-docs clean: `git diff --name-only main...<branch> -- packages/schema content/ docs/ turbo.json .eslintrc.cjs pnpm-workspace.yaml` is **empty**.
+   - Rebased onto current `main`: `git merge-base --is-ancestor main <branch>` → yes. **If not, bounce it back** — never merge a stale base (it re-introduces pre-fix contract/content).
+1. **Merge.** FF if rebased: `git merge --ff-only <branch>`. Else `git merge --no-ff <branch> -m "Integrate Stream X — <pkg>"`.
+2. **Lockfile.** `pnpm install --prefer-offline` then `pnpm install --frozen-lockfile` (proves consistency with all manifests). **On a `pnpm-lock.yaml` merge conflict, do NOT hand-merge** — regenerate: `pnpm install` → `git add pnpm-lock.yaml` → finish the commit. (This is the only expected conflict given disjoint packages.)
+3. **Full gate on the merged result.** `pnpm -r typecheck && pnpm -r lint && pnpm -r test && pnpm -r build`; then a native-ESM import of the new package's `dist/src/index.js` (cycle/deadlock check); then the **stream's milestone gate** (its plan's acceptance criterion). Paste real output — no success claim without it.
+4. **No-drift check.** `git diff <pre-merge-main-sha>..HEAD -- packages/schema` is empty (the rebase didn't sneak a contract edit in).
+5. **Record.** `PARALLEL-STREAMS.md` §7 board → ✅ integrated @ `<sha>`; add the package to §2 ("what's DONE on main"). Commit the board update.
+6. **Unblock downstream** (§7) once the milestone's dependents have their inputs.
+
+**Hold-and-escalate, don't paper over:** if a stream's cross-implementation differential (e.g. a TS matcher vs the Python `harness.py` on the §6.3 fixtures) disagrees, that's a spec/contract ambiguity — pause integration and pin it (§5), don't merge around it.
+
 ## 5. The frozen contract — change protocol
 If a stream escalates that the seam (`@trellis/schema`) must change: decide it with the user if it's
 a design choice, make the change ONCE on `main` (test-first, keep the module graph acyclic — see §8),
