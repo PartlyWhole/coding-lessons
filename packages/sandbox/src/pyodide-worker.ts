@@ -17,57 +17,7 @@
  * wiring of the bundled URL is the app's concern (see browser-worker.ts).
  */
 import type { HostToWorker, RunResultData, WireRunRequest, WorkerToHost } from "./protocol.js";
-
-// The Python harness, loaded once at init. Per run it builds a fresh namespace, captures
-// stdout, classifies syntax (compile) vs runtime (exec) errors with a line number, and
-// returns a JSON-serializable dict so the result survives structured clone.
-//   ran=false  → syntax error or never executed
-//   ran=true   → executed (possibly raising a runtime error, reported in `error`)
-const HARNESS = `
-import io, sys, json
-
-def __trellis_run(code, entrypoint, stdin_text):
-    ns = {}
-    out = io.StringIO()
-    try:
-        compiled = compile(code, "<submission>", "exec")
-    except SyntaxError as e:
-        return json.dumps({
-            "ran": False, "stdout": "", "wallMs": 0, "timedOut": False,
-            "error": {"type": "syntax", "message": (e.msg or "syntax error"), "line": e.lineno},
-        })
-    old_out, old_in = sys.stdout, sys.stdin
-    sys.stdout = out
-    if stdin_text is not None:
-        sys.stdin = io.StringIO(stdin_text)
-    return_value = None
-    called = False
-    try:
-        exec(compiled, ns)
-        if entrypoint and entrypoint in ns and callable(ns[entrypoint]):
-            return_value = ns[entrypoint]()
-            called = True
-    except BaseException as e:
-        tb = e.__traceback__
-        line = None
-        while tb is not None:
-            if tb.tb_frame.f_code.co_filename == "<submission>":
-                line = tb.tb_lineno
-            tb = tb.tb_next
-        return json.dumps({
-            "ran": True, "stdout": out.getvalue(), "wallMs": 0, "timedOut": False,
-            "error": {"type": "runtime", "message": f"{type(e).__name__}: {e}", "line": line},
-        })
-    finally:
-        sys.stdout = old_out
-        sys.stdin = old_in
-    result = {"ran": True, "stdout": out.getvalue(), "wallMs": 0, "timedOut": False}
-    if called:
-        # Only surface returnValue when an entrypoint actually ran, so a top-level
-        # program (no entrypoint) omits the key rather than reporting null.
-        result["returnValue"] = return_value
-    return json.dumps(result, default=str)
-`;
+import { RUN_HARNESS } from "./run-harness.js";
 
 // Minimal shape of the Pyodide object we use (avoids a dependency on @types/pyodide,
 // which isn't installable offline). Verified against the Pyodide docs API.
@@ -96,7 +46,7 @@ async function init(memoryMb: number, pyodideUrl: string): Promise<void> {
     loadPyodide: (opts: { indexURL: string }) => Promise<PyodideLike>;
   };
   const py = await mod.loadPyodide({ indexURL: pyodideUrl });
-  await py.runPythonAsync(HARNESS);
+  await py.runPythonAsync(RUN_HARNESS);
   pyodide = py;
   // `memoryMb` is accepted for forward-compat. A hard per-instance WASM cap needs a
   // custom WebAssembly.Memory at module instantiation (emscripten-build dependent);
