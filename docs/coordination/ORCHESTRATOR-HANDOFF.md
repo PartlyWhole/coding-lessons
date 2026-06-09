@@ -162,9 +162,14 @@ the held M4 re-key (archived 2026-06-09 handoff, "Decisions" section).
   seams beat schema edits (M3b/M4/M5 + all five of today's streams shipped with ZERO schema changes).
 
 ## 2. Work queue (nothing in flight at handoff)
-1. **Content track ramp-up** — the content orchestrator's first branches will arrive for §4.1
-   review (content edition). Expect new nodes/cells; the bar: validators + CLI lint (gates 1–9)
-   + harness + 458 workspace tests stay green; bundle compiles; walkthrough unaffected.
+1. **Content track: FULL CURRICULUM REBUILD in flight** (user-redirected, 2026-06-09 night;
+   see `CONTENT-ROADMAP.md` + `INTER-ORCHESTRATOR-PROTOCOL.md` §6). Kid-focused, capstone =
+   building a 2D pygame game. **No handover branches imminent** — process/philosophy being
+   user-validated first; the live corpus stays in-tree and gate-covered meanwhile. Two
+   capability requests queued (protocol §6): rich-media `watch` steps (await specs; design ⚑ +
+   likely additive schema/client seam) and M6.5 pygame timing (capstone dependency — M6 vs
+   M6.5 ordering becomes a user call once the rebuild roadmap lands). The §4.1 content-edition
+   bar is unchanged when branches do arrive.
 2. **Polish queue** (small, design-adjacent): backtick rendering in feedback/hint bodies (needs a
    design ⚑ sign-off — could go back to the design session); hint-button-persists-after-syntax-
    error (frozen-behavior UX question for the user, eventually).

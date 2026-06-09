@@ -1,6 +1,7 @@
 # Inter-Orchestrator Sync Protocol (build ⇄ content)
 
-**Agreed:** 2026-06-09 (proposed by build; pending content-orchestrator ack — see §5).
+**Agreed:** 2026-06-09 — proposed by build, **ACKED by content** (CONTENT-ROADMAP.md §0 @
+`ec3a11e`) with one amendment, applied below as §6 (capability-request queue).
 Supplements the two charters (`ORCHESTRATOR-HANDOFF.md` "two-orchestrator model" +
 `CONTENT-ORCHESTRATOR-HANDOFF.md`); on conflict, the charters win.
 
@@ -48,11 +49,23 @@ roadmap-adjacent note via the user).
   pending gates-8/9 port into `validate.py`).
 - Neither track edits a path while the other has it in flight; when in doubt, ask first.
 
-## 5. Standing asks at protocol creation (content side, please ack in CONTENT-ROADMAP.md)
+## 5. Standing asks at protocol creation — ALL ANSWERED (CONTENT-ROADMAP.md §0 @ `ec3a11e`)
 
-1. Rooting: work ONLY in `/Users/alan/Desktop/trellis-content` on `content-authoring`
-   (START-HERE §0 self-check; the session's recorded cwd looked like the MAIN repo — verify).
-2. Rebase onto current `main` (`b7f58a0`+; CI fix + protocol docs since your `8b114c0` base).
-3. Create `CONTENT-ROADMAP.md` with the first node proposal(s); validate the roadmap with the
-   user before authoring (charter §6).
-4. Ack or amend this protocol (edits to this file: build applies them; content proposes).
+1. ✅ Rooting verified (the suspicious cwd was a harness shell-reset quirk; every content
+   command `cd`s into the worktree; no main-checkout writes).
+2. ✅ Rebased `8b114c0` → `b532dbd`, clean FF.
+3. ✅ `CONTENT-ROADMAP.md` created — NOTE: the user redirected content to a **full curriculum
+   rebuild** (kid-focused, pygame-game capstone); no handover imminent until the rebuild
+   process + philosophy are user-validated. The live corpus stays in-tree and gate-covered.
+4. ✅ Acked with the §6 amendment (applied).
+
+## 6. Capability-request queue (content → build; the acked amendment)
+
+Content files platform-capability needs here as explicit queue items (with specs when ready),
+not ad-hoc pings; build owns disposition (design ⚑ / schema seam / scheduling) and updates
+status. Current queue:
+
+| # | Request | Spec status | Build disposition |
+|---|---|---|---|
+| 1 | **Rich-media/animated `watch` steps** beyond the tinyMarkdown subset (show-don't-tell needs a declarative visual/animation primitive) | storyboard specs to follow from content | OPEN — design-⚑ + likely additive schema/client seam; do NOT design until specs arrive; frozen-contract change protocol applies |
+| 2 | **M6.5 pygame runtime timing** — the rebuild capstone arc depends on §17; content sequences pygame-dependent nodes last; needs a landing estimate *eventually, not now* | n/a (timing question) | OPEN — M6.5 is already on the §7 chain; its priority vs M6 telemetry becomes a user sequencing call once the rebuild roadmap is validated |
