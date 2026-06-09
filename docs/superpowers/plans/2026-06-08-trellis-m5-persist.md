@@ -923,18 +923,20 @@ Expected: FAIL — `learnerModel.js` not found.
 - [ ] **Step 3: Write `src/learnerModel.ts`**
 
 ```ts
-import type { LearnerModel, SkillState, Diagnosis, ContentVersion, SkillId } from "@trellis/schema";
+// NOTE: @trellis/schema exports SkillId/StepId/ContentVersion as TypeBox VALUES (Type.String()),
+// not TS types — so we use `string` (their exact Static<> resolution) for those positions.
+import type { LearnerModel, SkillState, Diagnosis } from "@trellis/schema";
 import type { TrellisDb } from "./db.js";
 import { STORES } from "./schema.js";
 import type { StoredSkillState } from "./schema.js";
 
 /** Read all learner_skill rows into a LearnerModel for `contentVersion` (§3.8/§4.3 gating input). */
-export async function loadLearnerModel(db: TrellisDb, contentVersion: ContentVersion): Promise<LearnerModel> {
+export async function loadLearnerModel(db: TrellisDb, contentVersion: string): Promise<LearnerModel> {
   const rows = (await db.conn.tx([STORES.learnerSkill], "readonly", async (tx) =>
     tx.store(STORES.learnerSkill).getAll(),
   )) as StoredSkillState[];
 
-  const skills: Record<SkillId, SkillState> = {};
+  const skills: Record<string, SkillState> = {};
   for (const row of rows) {
     const { skillId, ...state } = row;
     skills[skillId] = state;
@@ -1075,7 +1077,8 @@ Expected: FAIL — `events.js` not found.
 - [ ] **Step 3: Write `src/events.ts`**
 
 ```ts
-import type { BehavioralEvent, StepId } from "@trellis/schema";
+// StepId is a TypeBox value in @trellis/schema, not a TS type → use `string`.
+import type { BehavioralEvent } from "@trellis/schema";
 import type { TrellisDb } from "./db.js";
 import { STORES } from "./schema.js";
 
@@ -1089,7 +1092,7 @@ export async function appendEvents(db: TrellisDb, events: BehavioralEvent[]): Pr
 
 export interface RecentEventsQuery {
   /** Restrict to one step (per-step trigger evaluation, §11). */
-  stepId?: StepId;
+  stepId?: string;
   /** Max events to return; default 50. */
   limit?: number;
 }
@@ -1207,7 +1210,9 @@ Expected: FAIL — `contentCache.js` not found.
 - [ ] **Step 3: Write `src/contentCache.ts`**
 
 ```ts
-import type { Bundle, ContentVersion } from "@trellis/schema";
+// ContentVersion is a TypeBox value in @trellis/schema, not a TS type → use `string`.
+// Bundle is exported BOTH as a type and as a TypeBox schema value; import the value as BundleSchema.
+import type { Bundle } from "@trellis/schema";
 import { assertValid, Bundle as BundleSchema } from "@trellis/schema";
 import type { TrellisDb } from "./db.js";
 import { STORES, META_KEYS } from "./schema.js";
@@ -1217,7 +1222,7 @@ export interface LoadBundleOptions {
   /** Immutable static URL for this contentVersion's compiled bundle. */
   url: string;
   /** The version we expect; the cache is keyed by it (immutable URL → cache-forever, §3.10). */
-  contentVersion: ContentVersion;
+  contentVersion: string;
   /** Injectable fetch (defaults to globalThis.fetch) — lets tests avoid the network. */
   fetchImpl?: typeof fetch;
 }
