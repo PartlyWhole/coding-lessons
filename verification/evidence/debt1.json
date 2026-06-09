@@ -1,5 +1,5 @@
 {
-  "url": "http://localhost:8765/verification/debt1.html",
+  "url": "http://localhost:8766/verification/debt1.html",
   "results": [
     {
       "name": "1-cdn-pin-resolves",
@@ -26,7 +26,7 @@
           "running": 0,
           "total": 2
         },
-        "warmupMs": 4973,
+        "warmupMs": 1991,
         "budgetMs": 30000
       }
     },
@@ -36,7 +36,7 @@
       "evidence": {
         "ran": true,
         "stdout": "hello from real pyodide\n",
-        "wallMs": 9,
+        "wallMs": 4.299999982118607,
         "timedOut": false
       }
     },
@@ -47,13 +47,13 @@
         "firstRun": {
           "ran": true,
           "stdout": "set 42\n",
-          "wallMs": 3.800000011920929,
+          "wallMs": 1.9000000059604645,
           "timedOut": false
         },
         "secondRun": {
           "ran": true,
           "stdout": "",
-          "wallMs": 5.699999988079071,
+          "wallMs": 2.0999999940395355,
           "timedOut": false,
           "error": {
             "type": "runtime",
@@ -70,7 +70,7 @@
         "import_js": {
           "ran": true,
           "stdout": "",
-          "wallMs": 5,
+          "wallMs": 1.300000011920929,
           "timedOut": false,
           "error": {
             "type": "runtime",
@@ -81,7 +81,7 @@
         "import_pyodide_js": {
           "ran": true,
           "stdout": "",
-          "wallMs": 3.9000000059604645,
+          "wallMs": 1.199999988079071,
           "timedOut": false,
           "error": {
             "type": "runtime",
@@ -92,7 +92,7 @@
         "import_pyodide_code": {
           "ran": true,
           "stdout": "",
-          "wallMs": 2.800000011920929,
+          "wallMs": 1.300000011920929,
           "timedOut": false,
           "error": {
             "type": "runtime",
@@ -103,7 +103,7 @@
         "from_js_import_fetch": {
           "ran": true,
           "stdout": "",
-          "wallMs": 3.9000000059604645,
+          "wallMs": 1,
           "timedOut": false,
           "error": {
             "type": "runtime",
@@ -114,13 +114,13 @@
         "jsproxy_sweep_during_run": {
           "ran": true,
           "stdout": "[]\n",
-          "wallMs": 5.4000000059604645,
+          "wallMs": 1.5,
           "timedOut": false
         },
         "host_entrypoint_after_block": {
           "ran": true,
           "stdout": "",
-          "wallMs": 5.5999999940395355,
+          "wallMs": 1,
           "timedOut": false,
           "returnValue": 2
         },
@@ -135,7 +135,7 @@
       "evidence": {
         "ran": false,
         "stdout": "",
-        "wallMs": 10.700000017881393,
+        "wallMs": 3.9000000059604645,
         "timedOut": false,
         "error": {
           "type": "syntax",
@@ -150,7 +150,7 @@
       "evidence": {
         "ran": true,
         "stdout": "",
-        "wallMs": 4.199999988079071,
+        "wallMs": 2.0999999940395355,
         "timedOut": false,
         "error": {
           "type": "runtime",
@@ -165,7 +165,7 @@
       "evidence": {
         "ran": true,
         "stdout": "",
-        "wallMs": 3.4000000059604645,
+        "wallMs": 1.2000000178813934,
         "timedOut": false,
         "returnValue": 5
       }
@@ -176,7 +176,7 @@
       "evidence": {
         "ran": true,
         "stdout": "abc\n",
-        "wallMs": 5.700000017881393,
+        "wallMs": 1.199999988079071,
         "timedOut": false
       }
     },
@@ -187,14 +187,14 @@
         "timedOutResult": {
           "ran": false,
           "stdout": "",
-          "wallMs": 2001.300000011921,
+          "wallMs": 2001.9000000059605,
           "timedOut": true
         },
         "watchdogMs": 2002,
         "followUpRun": {
           "ran": true,
           "stdout": "alive after kill\n",
-          "wallMs": 27.799999982118607,
+          "wallMs": 1.699999988079071,
           "timedOut": false
         },
         "statusAfterKill": {
@@ -212,7 +212,7 @@
         "cappedRun": {
           "ran": false,
           "stdout": "",
-          "wallMs": 8.200000017881393,
+          "wallMs": 2.2999999821186066,
           "timedOut": false,
           "error": {
             "type": "runtime",
@@ -222,12 +222,12 @@
         "followUpRun": {
           "ran": true,
           "stdout": "alive after cap kill\n",
-          "wallMs": 6.199999988079071,
+          "wallMs": 2,
           "timedOut": false
         },
         "statusAfterCap": {
-          "warming": 0,
-          "ready": 2,
+          "warming": 1,
+          "ready": 1,
           "running": 0,
           "total": 2
         }
@@ -237,8 +237,8 @@
       "name": "12-warm-run-latency",
       "pass": true,
       "evidence": {
-        "warmRunMs": 3,
-        "coldWarmupMs": 4973
+        "warmRunMs": 2,
+        "coldWarmupMs": 1991
       }
     },
     {

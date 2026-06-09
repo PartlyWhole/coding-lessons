@@ -48,7 +48,8 @@ const readIdb = () =>
 // The REAL static host: packages/client/index.html + dist/app/* built by
 // `pnpm --filter @trellis/client build` (scripts/build-app.mjs), served by
 // `python -m http.server 8765` from the repo root — no server logic.
-await page.goto("http://localhost:8765/packages/client/index.html");
+const PORT = process.env.TRELLIS_PORT ?? "8765";
+await page.goto(`http://localhost:${PORT}/packages/client/index.html`);
 
 // ── 1. watch step renders (app booted from the static host) ─────────────
 const watch = page.locator('section[aria-label="watch step"]');

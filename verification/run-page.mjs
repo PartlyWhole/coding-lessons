@@ -7,7 +7,8 @@ import { writeFileSync } from "node:fs";
 
 const [pagePath, flag, timeoutArg] = process.argv.slice(2);
 const timeout = Number(timeoutArg ?? 180000);
-const url = `http://localhost:8765/${pagePath}`;
+const port = process.env.TRELLIS_PORT ?? "8765";
+const url = `http://localhost:${port}/${pagePath}`;
 
 const browser = await chromium.launch();
 const page = await browser.newPage();
