@@ -11,6 +11,7 @@ import {
   pullHint,
   visibleHints,
   initialHintState,
+  canonicalDiagnosis,
 } from "../src/index.js";
 import type { BuildStep, Bundle, Step } from "@trellis/schema";
 
@@ -98,9 +99,11 @@ describe("M4 marquee — str+number → mis.concat.str_num → feedback → pull
     expect(s.revealedThrough).toBe(0);
   });
 
-  it("determinism: the same submission yields a byte-identical Diagnosis", { timeout: 60_000 }, async () => {
+  it("determinism: the same submission yields a byte-identical Diagnosis (modulo wallMs)", { timeout: 60_000 }, async () => {
+    // Canonical comparison per the 2026-06-09 wallMs decision: signals.wallMs is excluded
+    // (a real-time sandbox stamps real wall-clock; the local twin happens to pin 0).
     const a = await evaluate(STR_NUM_STEP, { kind: "build", code: BAD }, sandbox, bundle, fx);
     const b = await evaluate(STR_NUM_STEP, { kind: "build", code: BAD }, sandbox, bundle, fx);
-    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+    expect(JSON.stringify(canonicalDiagnosis(a))).toBe(JSON.stringify(canonicalDiagnosis(b)));
   });
 });

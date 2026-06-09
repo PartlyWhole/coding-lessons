@@ -95,8 +95,16 @@ export async function evaluate(
   let mid: string | undefined;
 
   if (!signals.ran) {
+    // §7 routing (verification escalation 1): a run the watchdog killed — or that faulted
+    // at module level — must still reach detect(), or a re-keyed { timedOut: true } /
+    // { runError } signature can never surface through the live ladder. Misconception
+    // wins; otherwise fall back to the error-type attribution.
     correct = false;
-    attribution = (signals.runError?.type ?? "runtime") as Attribution;
+    mid = detect(step, ctx, bundle) ?? undefined;
+    attribution =
+      mid !== undefined
+        ? "misconception"
+        : ((signals.runError?.type ?? "runtime") as Attribution);
   } else if ((signals.tests?.failed ?? 0) > 0) {
     correct = false;
     mid = detect(step, ctx, bundle) ?? undefined;

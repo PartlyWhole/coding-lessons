@@ -53,5 +53,6 @@ export type { TestRunResult } from "./testRunner.js";
 export { runProperty } from "./propertyRunner.js";
 export type { PropertyResult } from "./propertyRunner.js";
 export { evaluate, assembleBuildSignals } from "./evaluate.js";
+export { canonicalDiagnosis } from "./canonical.js";
 export type { Submission } from "./evaluate.js";
 export { entrypointDriver, parseDriverStdout, SENTINEL } from "./pyDriver.js";

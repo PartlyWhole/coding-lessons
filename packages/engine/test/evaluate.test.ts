@@ -112,3 +112,100 @@ describe("evaluate - build path (§8)", () => {
     expect(a).toEqual(b);
   });
 });
+
+// ── §7/§8 routing of !ran submissions through detect() (verification escalation 1) ──
+// Mirrors the three debt3 checks (verification/debt3.js) at the evaluate() level: a
+// watchdog-killed run must be attributable to a misconception through the LIVE ladder,
+// not only via a direct detect() call.
+
+// The post-re-key loop signatures, as on main (see detect-precedence.test.ts / content).
+const loopBundle = {
+  contentVersion: "test@1",
+  skills: {
+    "skill.loop": {
+      id: "skill.loop", title: "loop", description: "",
+      misconceptions: ["mis.loop.infinite_true", "mis.loop.no_update"], upstream: [],
+    },
+  },
+  misconceptions: {
+    "mis.loop.infinite_true": {
+      id: "mis.loop.infinite_true", skill: "skill.loop", title: "infinite while True",
+      signature: { any: [{ timedOut: true }, { astTag: "infinite_true_no_break" }, { choice: "b" }] },
+      hintLadder: [], feedback: "",
+      skillDeltas: [{ skill: "skill.loop", kind: "misconception", weight: 0.4 }],
+    },
+    "mis.loop.no_update": {
+      id: "mis.loop.no_update", skill: "skill.loop", title: "never-updating while cond",
+      signature: { any: [{ astTag: "while_cond_no_update" }, { choice: "b" }] },
+      hintLadder: [], feedback: "",
+      skillDeltas: [{ skill: "skill.loop", kind: "misconception", weight: 0.4 }],
+    },
+  },
+  nodes: {}, cells: {}, producers: {}, requirements: {},
+} as unknown as Bundle;
+
+const loopStep = {
+  id: "cell.loop#1", kind: "build", skills: ["skill.loop"], language: "python", starterCode: "",
+  evaluator: {
+    run: { timeoutMs: 2000, memoryMb: 256 },
+    ast: {
+      queries: [
+        { tag: "infinite_true_no_break", query: { node: "While" } as AstQuery },
+        { tag: "while_cond_no_update", query: { node: "While" } as AstQuery },
+      ],
+    },
+  },
+} as unknown as BuildStep;
+
+const timeoutSandbox = (tags: string[]) =>
+  sandbox({ run: () => ok({ ran: false, timedOut: true, wallMs: 2001 }), tags });
+
+describe("evaluate — !ran/timedOut routes through detect() (escalation 1)", () => {
+  it("a bare watchdog timeout with no astTags → mis.loop.infinite_true (timedOut branch)", async () => {
+    const d = await evaluate(loopStep, { kind: "build", code: "while True:\n    pass" }, timeoutSandbox([]), loopBundle, fx);
+    expect(d.correct).toBe(false);
+    expect(d.signals.ran).toBe(false);
+    expect(d.signals.timedOut).toBe(true);
+    expect(d.attribution).toBe("misconception");
+    expect(d.misconceptionId).toBe("mis.loop.infinite_true");
+  });
+
+  it("a never-updating `while cond:` timeout → mis.loop.no_update wins §7 precedence", async () => {
+    const sb = timeoutSandbox(["while_cond_no_update"]);
+    const d = await evaluate(loopStep, { kind: "build", code: "while g != n:\n    print(1)" }, sb, loopBundle, fx);
+    expect(d.attribution).toBe("misconception");
+    expect(d.misconceptionId).toBe("mis.loop.no_update");
+  });
+
+  it("a true `while True:` no-break timeout (both tags) → mis.loop.infinite_true", async () => {
+    const sb = timeoutSandbox(["infinite_true_no_break", "while_cond_no_update"]);
+    const d = await evaluate(loopStep, { kind: "build", code: "while True:\n    print(1)" }, sb, loopBundle, fx);
+    expect(d.attribution).toBe("misconception");
+    expect(d.misconceptionId).toBe("mis.loop.infinite_true");
+  });
+
+  it("a module-level runtime error with NO matching signature still → attribution 'runtime'", async () => {
+    const sb = sandbox({ run: () => ok({ ran: false, error: { type: "runtime", message: "ZeroDivisionError" } }), tags: [] });
+    const d = await evaluate(loopStep, { kind: "build", code: "1/0" }, sb, loopBundle, fx);
+    expect(d.correct).toBe(false);
+    expect(d.attribution).toBe("runtime");
+    expect(d.misconceptionId).toBeUndefined();
+  });
+
+  it("a syntax error with NO matching signature still → attribution 'syntax'", async () => {
+    const sb = sandbox({ run: () => ok({ ran: false, error: { type: "syntax", message: "bad" } }), tags: [] });
+    const d = await evaluate(loopStep, { kind: "build", code: "while True\n    pass" }, sb, loopBundle, fx);
+    expect(d.attribution).toBe("syntax");
+    expect(d.misconceptionId).toBeUndefined();
+  });
+
+  it("a module-level runtime error WITH a runError-keyed signature → misconception", async () => {
+    // The mis.rt bundle keys on { runError: "runtime" }; a module-level fault must now
+    // reach detect() and attribute it (a signature may key on runError — START-HERE §3a).
+    const sb = sandbox({ run: () => ok({ ran: false, error: { type: "runtime", message: "NameError" } }), tags: [] });
+    const d = await evaluate(step, { kind: "build", code: "missing" }, sb, bundle, fx);
+    expect(d.correct).toBe(false);
+    expect(d.attribution).toBe("misconception");
+    expect(d.misconceptionId).toBe("mis.rt");
+  });
+});
