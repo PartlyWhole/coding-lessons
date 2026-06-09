@@ -58,6 +58,32 @@ export function specificityRank(sig: Signature): number {
   return 3;
 }
 
+// §7 match-aware specificity — rank a signature by the MOST specific leaf that actually
+// evaluates true for these signals (Infinity if it doesn't match at all). This is what the
+// cross-candidate tie-break needs once a misconception's `any` mixes a structural branch
+// (astTag, rank 0) with a runtime branch (timedOut, rank 2): the candidate that matched via
+// the runtime branch must lose to one that matched structurally, even though both signatures
+// statically contain a rank-0 branch. See design-note §5 (the timedOut re-key).
+export function matchedSpecificity(sig: Signature, ctx: DetectContext): number {
+  if (!evalSignature(sig, ctx)) return Infinity;
+  if ("astTag" in sig || "choice" in sig || "recallEquals" in sig) return 0;
+  if ("testFailure" in sig || "propertyFailed" in sig) return 1;
+  if ("runError" in sig || "timedOut" in sig) return 2;
+  if ("any" in sig) {
+    return Math.min(...sig.any.map((s) => matchedSpecificity(s, ctx)));
+  }
+  if ("all" in sig) {
+    return sig.all.length ? Math.min(...sig.all.map((s) => matchedSpecificity(s, ctx))) : 3;
+  }
+  if ("not" in sig) {
+    // A matched `not` has no positive leaf (the guard above already proved sig is true, so
+    // sig.not is FALSE — recursing would return Infinity). Rank it by the STATIC specificity
+    // of what it negates. Do NOT "simplify" this into a recursive matchedSpecificity call.
+    return specificityRank(sig.not);
+  }
+  return 3;
+}
+
 // §7 detect — first-match within a skill, global tie-break (specificity, then id).
 export function detect(step: Step, ctx: DetectContext, bundle: Bundle): string | null {
   const candidates: string[] = [];
@@ -73,8 +99,13 @@ export function detect(step: Step, ctx: DetectContext, bundle: Bundle): string |
   if (candidates.length === 0) return null;
   const unique = [...new Set(candidates)];
   unique.sort((a, b) => {
-    const ra = specificityRank(bundle.misconceptions[a]!.signature);
-    const rb = specificityRank(bundle.misconceptions[b]!.signature);
+    const sa = bundle.misconceptions[a]!.signature;
+    const sb = bundle.misconceptions[b]!.signature;
+    const ma = matchedSpecificity(sa, ctx);
+    const mb = matchedSpecificity(sb, ctx);
+    if (ma !== mb) return ma - mb;
+    const ra = specificityRank(sa);
+    const rb = specificityRank(sb);
     if (ra !== rb) return ra - rb;
     return a < b ? -1 : a > b ? 1 : 0;
   });
