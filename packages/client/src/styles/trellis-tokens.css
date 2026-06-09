@@ -1,0 +1,129 @@
+/* ============================================================
+   TRELLIS DESIGN TOKENS — approved direction "Greenhouse" v1
+   Accent: B · Bluebell (approved 2026-06-09)
+   This file is implementation-ready: drop into the client as-is.
+   ============================================================ */
+:root {
+  /* ---- Type families (self-host via Fontsource: baloo-2, nunito-sans, jetbrains-mono) ---- */
+  --font-display: "Baloo 2", "Nunito Sans", system-ui, sans-serif;
+  --font-ui: "Nunito Sans", system-ui, -apple-system, sans-serif;
+  --font-code: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* ---- Type scale ---- */
+  --text-display: 28px;   /* .cell-title */
+  --text-title: 20px;     /* .prompt */
+  --text-body: 17px;      /* prose, feedback body, hints */
+  --text-small: 14.5px;   /* peek-back, captions, meta */
+  --text-micro: 12.5px;   /* eyebrows, badges */
+  --text-code: 15px;      /* editor + code blocks */
+  --leading-body: 1.65;
+  --leading-code: 1.7;
+
+  /* ---- Warm neutrals ---- */
+  --paper: #FBF9F5;
+  --surface: #FFFFFF;
+  --surface-sunken: #F4F0E9;
+  --ink: #3B362E;
+  --ink-soft: #6F675C;
+  --ink-faint: #A39A8B;
+  --line: #E9E3D8;
+  --line-strong: #D8D0C1;
+
+  /* ---- Semantic attribution palette (FINAL — approved) ----
+     Update packages/client/src/attribution.ts colors to the -ink values. */
+  --attr-pass-ink: #1A7F4B;
+  --attr-pass-surface: #E9F6EE;
+  --attr-pass-border: #BFE3CD;
+  --attr-misconception-ink: #9C6310;
+  --attr-misconception-surface: #FCF2DF;
+  --attr-misconception-border: #EFD9AB;
+  --attr-mismatch-ink: #7E6A14;
+  --attr-mismatch-surface: #F7F3DD;
+  --attr-mismatch-border: #E4DAAA;
+  --attr-error-ink: #BE4039;
+  --attr-error-surface: #FBEDEB;
+  --attr-error-border: #F1CCC7;
+
+  /* ---- Accent — Bluebell ---- */
+  --accent: #5263D8;
+  --accent-deep: #3F4FB8;
+  --accent-tint: #ECEFFC;
+  --accent-ink: #3A48A8;
+
+  /* ---- Code / editor — the dark terrarium ---- */
+  --code-bg: #242B39;
+  --code-bg-deep: #1B212C;
+  --code-ink: #E9EDF6;
+  --code-line-number: #5C677E;
+  --code-keyword: #92B3FF;
+  --code-string: #FFD08E;
+  --code-number: #8BD9B9;
+  --code-builtin: #C0AFFF;
+  --code-comment: #8290A8;
+  --code-active-line: rgba(255,255,255,0.045);
+  --code-selection: rgba(146,179,255,0.28);
+  --code-locked-bg: rgba(255,255,255,0.055);
+  --code-locked-edge: #5C677E;
+  --codechip-bg: #F1EDE4;
+  --codechip-ink: #50483C;
+
+  /* ---- Spacing (4px base) ---- */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+  --space-12: 48px; --space-16: 64px;
+
+  /* ---- Shape ---- */
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 22px;
+  --radius-pill: 999px;
+
+  /* ---- Elevation ---- */
+  --shadow-1: 0 1px 2px rgba(59,54,46,.05), 0 2px 10px rgba(59,54,46,.06);
+  --shadow-2: 0 2px 6px rgba(59,54,46,.07), 0 10px 28px rgba(59,54,46,.10);
+
+  /* ---- Motion ---- */
+  --dur-fast: 140ms;
+  --dur-base: 240ms;
+  --dur-slow: 420ms;
+  --ease-out-soft: cubic-bezier(.22,.9,.3,1);
+  --ease-spring: cubic-bezier(.34,1.56,.64,1);
+}
+
+/* ============================================================
+   DARK MODE — token values only (approved scope: spec, no mockups).
+   Apply by adding .theme-dark to <html>. The editor terrarium keeps
+   its own palette in both modes (it is already dark).
+   ============================================================ */
+.theme-dark {
+  --paper: #1E232E;
+  --surface: #272D3A;
+  --surface-sunken: #20252F;
+  --ink: #ECEAE4;
+  --ink-soft: #B3AEA3;
+  --ink-faint: #7C766A;
+  --line: #353C4B;
+  --line-strong: #465063;
+
+  --attr-pass-ink: #6FCF9A;
+  --attr-pass-surface: #1F3A2C;
+  --attr-pass-border: #2E5740;
+  --attr-misconception-ink: #E8B855;
+  --attr-misconception-surface: #3C3120;
+  --attr-misconception-border: #5C4A2C;
+  --attr-mismatch-ink: #CFC069;
+  --attr-mismatch-surface: #35311D;
+  --attr-mismatch-border: #514B2B;
+  --attr-error-ink: #F09289;
+  --attr-error-surface: #3E2624;
+  --attr-error-border: #5E3833;
+
+  --accent: #8B99F2;
+  --accent-deep: #5263D8;
+  --accent-tint: #2C3354;
+  --accent-ink: #AEB8F7;
+
+  --codechip-bg: #323A4A;
+  --codechip-ink: #D8DCE8;
+
+  --shadow-1: 0 1px 2px rgba(0,0,0,.25), 0 2px 10px rgba(0,0,0,.25);
+  --shadow-2: 0 2px 6px rgba(0,0,0,.3), 0 10px 28px rgba(0,0,0,.35);
+}

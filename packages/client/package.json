@@ -4,7 +4,9 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -12,25 +14,27 @@
     "lint": "eslint src test --ext .ts,.tsx"
   },
   "dependencies": {
-    "@trellis/schema": "workspace:*",
+    "@codemirror/commands": "^6.6.0",
+    "@codemirror/lang-python": "^6.1.0",
+    "@codemirror/language": "^6.10.0",
+    "@codemirror/state": "^6.4.0",
+    "@codemirror/view": "^6.34.0",
+    "@lezer/highlight": "^1.2.0",
     "@trellis/engine": "workspace:*",
     "@trellis/persist": "workspace:*",
     "@trellis/sandbox": "workspace:*",
+    "@trellis/schema": "workspace:*",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "@codemirror/state": "^6.4.0",
-    "@codemirror/view": "^6.34.0",
-    "@codemirror/commands": "^6.6.0",
-    "@codemirror/lang-python": "^6.1.0"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "vitest": "^2.1.0",
-    "happy-dom": "^15.0.0",
-    "@testing-library/react": "^16.0.0",
     "@testing-library/dom": "^10.0.0",
+    "@testing-library/react": "^16.0.0",
     "@testing-library/user-event": "^14.0.0",
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0"
+    "@types/react-dom": "^19.0.0",
+    "happy-dom": "^15.0.0",
+    "vitest": "^2.1.0"
   }
 }

@@ -51,12 +51,18 @@ importers:
       '@codemirror/lang-python':
         specifier: ^6.1.0
         version: 6.2.1
+      '@codemirror/language':
+        specifier: ^6.10.0
+        version: 6.12.3
       '@codemirror/state':
         specifier: ^6.4.0
         version: 6.6.0
       '@codemirror/view':
         specifier: ^6.34.0
         version: 6.43.1
+      '@lezer/highlight':
+        specifier: ^1.2.0
+        version: 1.2.3
       '@trellis/engine':
         specifier: workspace:*
         version: link:../engine

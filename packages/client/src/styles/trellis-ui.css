@@ -1,0 +1,365 @@
+/* ============================================================
+   TRELLIS UI — component CSS keyed to the EXISTING classNames
+   (CellRunner.tsx, StepView*, FeedbackPanel, HintPanel,
+   PeekBackPanel). Requires trellis-tokens.css.
+
+   Selectors marked [NEW] need a small markup addition (each one
+   was approved or is flagged in the canvas spec notes).
+   Selectors marked [CHANGE] need a one-line component change
+   (e.g. attribution as data-attr instead of inline style).
+   Everything else styles the DOM as it exists today.
+   ============================================================ */
+
+/* ---------------- Page & shell ---------------- */
+body { background: var(--paper); margin: 0; }
+
+.cell-runner {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-10) var(--space-6) 96px;
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* [NEW] step-position eyebrow + progress pips. Additive presentational
+   elements; data (step index / cell.steps.length) is already in runner props. */
+.cell-eyebrow {
+  display: flex; align-items: center; gap: var(--space-3); white-space: nowrap;
+  font-size: var(--text-micro); font-weight: 800;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint);
+}
+.cell-kind-badge {
+  background: var(--accent-tint); color: var(--accent-ink);
+  border-radius: var(--radius-pill); padding: 3px 12px; letter-spacing: .1em;
+}
+.cell-progress { display: flex; gap: 6px; align-items: center; }
+.cell-progress .pip { width: 22px; height: 8px; border-radius: var(--radius-pill); background: var(--line-strong); opacity: .6; }
+.cell-progress .pip.is-done { background: var(--accent); opacity: 1; }
+.cell-progress .pip.is-now { width: 34px; background: var(--accent); opacity: .45; }
+
+.cell-title {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: var(--text-display); line-height: 1.25;
+  margin: 0; letter-spacing: -.1px;
+}
+
+/* ---------------- Active step card ---------------- */
+.active-step > section {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  box-shadow: var(--shadow-1);
+  display: flex; flex-direction: column; gap: var(--space-5);
+}
+
+.prompt { font-size: var(--text-title); font-weight: 800; line-height: 1.45; }
+.prompt code, .body code, .peek-carry code, .feedback code, .hint-body code {
+  font-family: var(--font-code); font-size: .88em; font-weight: 500;
+  background: var(--codechip-bg); color: var(--codechip-ink);
+  border-radius: 6px; padding: 1.5px 6px;
+}
+.body { color: var(--ink); }
+.body p { margin: 0 0 var(--space-3); }
+.body p:last-child { margin-bottom: 0; }
+.body strong { font-weight: 800; }
+
+/* ---------------- Code blocks (predict/watch) ---------------- */
+.cell-runner pre.code, .hint-solution {
+  background: var(--code-bg); color: var(--code-ink);
+  font-family: var(--font-code); font-size: var(--text-code);
+  line-height: var(--leading-code); font-variant-ligatures: none;
+  border-radius: var(--radius-lg); padding: var(--space-4) var(--space-5);
+  margin: 0; overflow-x: auto; box-shadow: var(--shadow-2);
+  tab-size: 4;
+}
+
+/* ---------------- Choices (recognize / predict-with-choices) ----------------
+   Styles the existing fieldset > label > input[type=radio] markup. */
+.cell-runner fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+.cell-runner fieldset label {
+  display: flex; align-items: center; gap: var(--space-3);
+  background: var(--surface); border: 2px solid var(--line-strong);
+  border-radius: var(--radius-lg); padding: 14px 18px;
+  font-size: 16px; cursor: pointer;
+  transition: border-color var(--dur-fast), background var(--dur-fast), transform var(--dur-fast);
+}
+.cell-runner fieldset label:hover { border-color: var(--accent); transform: translateY(-1px); }
+.cell-runner fieldset label:has(input:checked) { border-color: var(--accent); background: var(--accent-tint); }
+.cell-runner fieldset label code { font-size: 14.5px; background: rgba(255,255,255,.7); }
+.cell-runner fieldset input[type="radio"] {
+  appearance: none; -webkit-appearance: none; margin: 0; flex: none;
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid var(--line-strong); background: var(--surface);
+  display: grid; place-items: center; cursor: pointer;
+}
+.cell-runner fieldset input[type="radio"]:checked { border-color: var(--accent); }
+.cell-runner fieldset input[type="radio"]:checked::after {
+  content: ""; width: 11px; height: 11px; border-radius: 50%; background: var(--accent);
+}
+.cell-runner fieldset:disabled label { opacity: .55; cursor: default; transform: none; }
+.cell-runner fieldset:disabled label:hover { border-color: var(--line-strong); }
+
+/* ---------------- Text inputs (predict free-text / recall) ---------------- */
+.cell-runner input[type="text"] {
+  font-family: var(--font-code); font-size: 16px; color: var(--ink);
+  background: var(--surface); border: 2px solid var(--line-strong);
+  border-radius: var(--radius-md); padding: 12px 16px;
+  width: 100%; max-width: 440px; box-sizing: border-box;
+}
+.cell-runner input[type="text"]::placeholder { color: var(--ink-faint); font-family: var(--font-ui); }
+.cell-runner input[type="text"]:focus {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+.cell-runner input[type="text"]:disabled { background: var(--surface-sunken); color: var(--ink-faint); }
+
+/* ---------------- Buttons ----------------
+   Primary = the step's action (Submit / Run & check / Continue) and the
+   runner-level Continue / Try again (direct child of .cell-runner).
+   Ghost = everything in an <aside> (hints, peek-back). */
+.cell-runner button {
+  font-family: var(--font-ui); font-weight: 800; font-size: 16px;
+  letter-spacing: .01em; border: 0; border-radius: var(--radius-md);
+  padding: 12px 26px; cursor: pointer; align-self: flex-start;
+}
+.cell-runner section button, .cell-runner > button {
+  color: #fff; background: var(--accent);
+  box-shadow: 0 3px 0 var(--accent-deep);
+  transition: transform var(--dur-fast) var(--ease-out-soft), box-shadow var(--dur-fast);
+}
+.cell-runner section button:hover:not(:disabled), .cell-runner > button:hover { transform: translateY(-1px); box-shadow: 0 4px 0 var(--accent-deep); }
+.cell-runner section button:active:not(:disabled), .cell-runner > button:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--accent-deep); }
+.cell-runner section button:disabled {
+  background: var(--surface-sunken); color: var(--ink-faint);
+  box-shadow: none; cursor: default;
+}
+.cell-runner aside button {
+  color: var(--accent-ink); background: transparent;
+  border: 2px solid var(--line-strong); font-size: 15px; padding: 9px 18px;
+  box-shadow: none;
+  transition: border-color var(--dur-fast), background var(--dur-fast);
+}
+.cell-runner aside button:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-tint); }
+.cell-runner aside button:disabled { color: var(--ink-faint); cursor: default; }
+.cell-runner button:focus-visible, .cell-runner input:focus-visible, .cell-runner label:has(input:focus-visible) {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+
+/* ---------------- FeedbackPanel ----------------
+   [CHANGE] FeedbackPanel currently sets inline borderLeft/color from
+   attribution.ts. Replace with: className={`feedback feedback--${diagnosis.attribution}`}
+   (and update attribution.ts hex values to the --attr-*-ink tokens for
+   the places that still read them, e.g. peek-back dots). */
+.feedback {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--fb-border);
+  background: var(--fb-surface);
+  padding: var(--space-4) var(--space-5) var(--space-4) 56px;
+  position: relative;
+}
+.feedback::before { /* icon disc — pure CSS, no markup needed */
+  content: ""; position: absolute; left: 18px; top: 17px;
+  width: 26px; height: 26px; border-radius: 50%;
+  background-color: var(--fb-ink);
+  background-image: var(--fb-icon);
+  background-repeat: no-repeat; background-position: center;
+}
+.feedback--pass, .feedback--misconception, .feedback--mismatch,
+.feedback--syntax, .feedback--runtime { color: var(--ink); }
+.feedback--pass    { --fb-ink: var(--attr-pass-ink); --fb-surface: var(--attr-pass-surface); --fb-border: var(--attr-pass-border);
+  --fb-icon: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.2 3.2L13 5" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'); }
+.feedback--misconception { --fb-ink: var(--attr-misconception-ink); --fb-surface: var(--attr-misconception-surface); --fb-border: var(--attr-misconception-border);
+  --fb-icon: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="6.7" cy="6.7" r="4.2" stroke="white" stroke-width="2.1"/><path d="M10.2 10.2L14 14" stroke="white" stroke-width="2.4" stroke-linecap="round"/></svg>'); }
+.feedback--mismatch { --fb-ink: var(--attr-mismatch-ink); --fb-surface: var(--attr-mismatch-surface); --fb-border: var(--attr-mismatch-border);
+  --fb-icon: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 6.2c1.7-1.6 3.3-1.6 5 0s3.3 1.6 5 0M3 10.4c1.7-1.6 3.3-1.6 5 0s3.3 1.6 5 0" stroke="white" stroke-width="1.9" stroke-linecap="round"/></svg>'); }
+.feedback--syntax, .feedback--runtime { --fb-ink: var(--attr-error-ink); --fb-surface: var(--attr-error-surface); --fb-border: var(--attr-error-border);
+  --fb-icon: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 3.2v6" stroke="white" stroke-width="2.4" stroke-linecap="round"/><circle cx="8" cy="12.4" r="1.4" fill="white"/></svg>'); }
+
+.feedback-label {
+  display: block; font-family: var(--font-display); font-weight: 700;
+  font-size: 17px; line-height: 1.55; color: var(--fb-ink);
+}
+/* [NEW — approved] the diagnosed misconception's title, rendered as a chip.
+   Markup: <span className="feedback-misconception-title">{title}</span>
+   right after .feedback-label. Data: bundle.misconceptions[id].title. */
+.feedback-misconception-title {
+  display: inline-block; font-size: 13px; font-weight: 700;
+  color: var(--fb-ink); background: rgba(255,255,255,.65);
+  border: 1px solid var(--fb-border); border-radius: var(--radius-pill);
+  padding: 3px 12px; margin: 4px 0 2px;
+}
+.feedback-misconception { margin: 6px 0 0; font-size: 15.5px; line-height: 1.6; }
+.feedback-reveal { margin: 8px 0 0; font-family: var(--font-code); font-size: 13.5px; color: var(--ink-soft); }
+/* [NEW — flagged] error detail for syntax/runtime: type + line chip and the
+   short interpreter message. Data exists on Diagnosis (error type, line, message). */
+.feedback-error-chip {
+  display: inline-block; font-family: var(--font-code); font-size: 12.5px;
+  font-weight: 700; color: var(--attr-error-ink);
+  background: rgba(255,255,255,.7); border-radius: var(--radius-pill);
+  padding: 2px 10px; margin: 6px 8px 2px 0;
+}
+.feedback-error-message { margin: 4px 0 0; font-family: var(--font-code); font-size: 13.5px; color: var(--ink); }
+
+/* feedback arrival */
+@media (prefers-reduced-motion: no-preference) {
+  .feedback { animation: fbIn var(--dur-base) var(--ease-out-soft) backwards; }
+  .feedback--pass::before { animation: fbPop var(--dur-slow) var(--ease-spring) 120ms backwards; }
+}
+@keyframes fbIn { from { opacity: 0; transform: translateY(8px); } }
+@keyframes fbPop { 0% { transform: scale(.3); } 70% { transform: scale(1.18); } 100% { transform: scale(1); } }
+
+/* ---------------- HintPanel ---------------- */
+.cell-runner aside[aria-label="hints"] { display: flex; flex-direction: column; gap: var(--space-3); }
+ol.hints { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); counter-reset: hint; }
+.hint {
+  counter-increment: hint;
+  display: grid; grid-template-columns: 26px 1fr; gap: var(--space-3);
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); padding: var(--space-3) var(--space-4);
+  font-size: 15.5px; line-height: 1.6;
+}
+.hint::before {
+  content: counter(hint); font-weight: 800; font-size: 12.5px;
+  width: 22px; height: 22px; border-radius: 50%; margin-top: 2px;
+  background: var(--accent-tint); color: var(--accent-ink);
+  display: grid; place-items: center;
+}
+.hint-body { align-self: center; white-space: pre-line; }
+.hint-solution { margin-top: var(--space-2); font-size: 14px; }
+.hint.hint-4 { border-color: var(--accent); }
+@media (prefers-reduced-motion: no-preference) {
+  .hint:last-child { animation: hintIn var(--dur-base) var(--ease-out-soft) backwards; }
+}
+@keyframes hintIn { from { opacity: 0; transform: translateY(6px); } }
+
+/* level-4 confirm row */
+.confirm {
+  display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
+  background: var(--surface-sunken); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); padding: var(--space-3) var(--space-4);
+  font-weight: 700; font-size: 15px;
+}
+.cell-runner .confirm button { font-size: 14.5px; padding: 8px 16px; }
+.cell-runner .confirm button:first-of-type {
+  color: #fff; background: var(--accent); border: 0;
+  box-shadow: 0 2px 0 var(--accent-deep);
+}
+.cell-runner .confirm button:last-of-type {
+  color: var(--ink-soft); background: transparent;
+  border: 2px solid var(--line-strong);
+}
+
+/* ---------------- PeekBackPanel ---------------- */
+.peek-back { border-top: 1px dashed var(--line-strong); padding-top: var(--space-4); margin-top: var(--space-2); }
+.peek-entries { list-style: none; margin: var(--space-3) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.peek-entry {
+  display: grid; grid-template-columns: 14px 1fr auto; gap: 10px; align-items: start;
+  background: var(--surface-sunken); border-radius: var(--radius-md);
+  padding: 10px 14px; font-size: var(--text-small); color: var(--ink-soft);
+}
+.peek-outcome { font-size: 10px; line-height: 1.9; }
+.peek-entry > div { grid-column: 2; }
+.peek-entry .peek-prompt { font-weight: 700; color: var(--ink); grid-row: 1; }
+.peek-entry:not(:has(.peek-outcome)) .peek-prompt { grid-column: 1 / 3; }
+.peek-carry { font-size: 13.5px; margin-top: 2px; }
+/* kind chip from the existing kind-{kind} class */
+.peek-entry::after {
+  grid-column: 3; grid-row: 1;
+  font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink-faint); background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius-pill);
+  padding: 2px 10px;
+}
+.peek-entry.kind-watch::after { content: "watch"; }
+.peek-entry.kind-predict::after { content: "predict"; }
+.peek-entry.kind-recognize::after { content: "recognize"; }
+.peek-entry.kind-recall::after { content: "recall"; }
+.peek-entry.kind-build::after { content: "build"; }
+
+/* ---------------- Cell complete ---------------- */
+.cell-complete {
+  background: var(--attr-pass-surface); border: 1px solid var(--attr-pass-border);
+  color: var(--attr-pass-ink); border-radius: var(--radius-lg);
+  font-family: var(--font-display); font-weight: 700; font-size: 19px;
+  text-align: center; padding: var(--space-5);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cell-complete { animation: fbIn var(--dur-base) var(--ease-out-soft) backwards, fbPopSoft var(--dur-slow) var(--ease-spring) 120ms backwards; }
+}
+@keyframes fbPopSoft { 0% { transform: scale(.96); } 70% { transform: scale(1.015); } 100% { transform: scale(1); } }
+
+/* ---------------- Step replacement transition ----------------
+   .active-step is keyed by step id — a fresh mount each advance.
+   Recipe: add class below to .active-step; old step needs no exit
+   animation (unmount is instant; the entrance carries the motion). */
+@media (prefers-reduced-motion: no-preference) {
+  .active-step { animation: stepIn var(--dur-base) var(--ease-out-soft) 80ms backwards; }
+}
+@keyframes stepIn { from { opacity: 0; transform: translateY(14px); } }
+
+/* ---------------- App states ----------------
+   [NEW] wrappers: TrellisApp's bare <div>Loading…</div> and the alert
+   need classNames: .app-state.app-loading / .app-warming / .app-error */
+.app-state {
+  min-height: 60vh; display: grid; place-content: center; justify-items: center;
+  gap: var(--space-4); text-align: center; font-family: var(--font-ui);
+  color: var(--ink); padding: var(--space-10);
+}
+.app-state .app-status { font-family: var(--font-display); font-weight: 700; font-size: 21px; }
+.app-state .app-sub { font-size: var(--text-small); color: var(--ink-soft); max-width: 38ch; }
+.warm-bar { width: 220px; height: 8px; border-radius: var(--radius-pill); background: var(--surface-sunken); overflow: hidden; position: relative; }
+.warm-bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 38%; border-radius: var(--radius-pill); background: var(--accent); animation: warmSlide 1.3s var(--ease-out-soft) infinite alternate; }
+@keyframes warmSlide { to { left: 62%; } }
+@media (prefers-reduced-motion: reduce) { .warm-bar i { animation: none; width: 100%; opacity: .35; } }
+.app-error[role="alert"] {
+  background: var(--attr-error-surface); border: 1px solid var(--attr-error-border);
+  border-radius: var(--radius-lg); padding: var(--space-5) var(--space-6);
+  max-width: 480px; text-align: left; display: block;
+}
+.app-error .app-status { color: var(--attr-error-ink); font-size: 18px; }
+.app-error code { font-family: var(--font-code); font-size: 13.5px; }
+
+/* ---------------- EditorPane / CodeMirror theme ----------------
+   The real implementation themes CodeMirror via EditorView.theme() —
+   see design/trellis-editor-theme.ts for the COMPLETE, drop-in code
+   (theme + HighlightStyle + locked-region styling contract).
+   Below: the same treatment for the static mocks in this canvas. */
+.editor-pane { border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-2); }
+.editor-pane .ed-body { background: var(--code-bg); font-family: var(--font-code); font-size: var(--text-code); line-height: var(--leading-code); padding: var(--space-3) 0; font-variant-ligatures: none; }
+.ed-line { display: grid; grid-template-columns: 50px 1fr; }
+.ed-num { text-align: right; padding-right: 16px; color: var(--code-line-number); user-select: none; font-size: 13px; padding-top: 1px; }
+.ed-src { color: var(--code-ink); white-space: pre; padding-right: 16px; }
+.ed-line.active { background: var(--code-active-line); }
+.ed-line.locked { background: var(--code-locked-bg); position: relative; }
+.ed-line.locked .ed-src { opacity: .72; }
+.ed-line.locked::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: repeating-linear-gradient(to bottom, var(--code-locked-edge) 0 5px, transparent 5px 9px); }
+.ed-line.locked .ed-num::after { content: "🔒"; font-size: 9px; margin-left: 4px; position: relative; top: -1px; }
+.tok-kw { color: var(--code-keyword); } .tok-str { color: var(--code-string); }
+.tok-num { color: var(--code-number); } .tok-fn { color: var(--code-builtin); }
+.tok-com { color: var(--code-comment); font-style: italic; }
+.ed-caret { display: inline-block; width: 2px; height: 1.1em; background: var(--accent); vertical-align: text-bottom; border-radius: 1px; }
+.ed-console { background: var(--code-bg-deep); padding: var(--space-3) var(--space-4) var(--space-4) 50px; border-top: 1px solid rgba(255,255,255,.06); }
+.ed-console-label { font-family: var(--font-ui); font-size: 11px; font-weight: 800; letter-spacing: .14em; color: var(--code-comment); margin-bottom: 4px; text-transform: uppercase; }
+.ed-console-out { font-family: var(--font-code); font-size: var(--text-code); color: var(--code-ink); white-space: pre; margin: 0; }
+.editor-pane.is-disabled { opacity: .75; }
+.editor-pane.is-disabled .ed-src { opacity: .85; }
+
+/* ---------------- Responsive ---------------- */
+@media (max-width: 880px) {
+  .cell-runner { padding: var(--space-6) var(--space-5) 72px; }
+  .active-step > section { padding: var(--space-5); }
+}
+@media (max-width: 560px) {
+  :root { --text-display: 24px; --text-title: 18px; }
+  .cell-runner { padding: var(--space-4) var(--space-4) 64px; gap: var(--space-4); }
+  .active-step > section { padding: var(--space-4); border-radius: var(--radius-lg); }
+  /* code gets the full width of the phone */
+  .cell-runner pre.code, .editor-pane { margin-left: calc(-1 * var(--space-4)); margin-right: calc(-1 * var(--space-4)); border-radius: 0; }
+  .cell-runner section button, .cell-runner > button { align-self: stretch; text-align: center; }
+}
