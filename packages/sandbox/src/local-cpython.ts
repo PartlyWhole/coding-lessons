@@ -1,26 +1,5 @@
-// Minimal ambient typings for node:child_process (no @types/node installed).
-// Only the spawnSync signature used here is declared.
-declare module "node:child_process" {
-  interface SpawnSyncResult {
-    status: number | null;
-    signal: string | null;
-    stdout: string;
-    stderr: string;
-    error?: { code?: string };
-  }
-  interface SpawnSyncOptions {
-    input?: string;
-    encoding?: "utf-8" | "buffer";
-    timeout?: number;
-    maxBuffer?: number;
-  }
-  export function spawnSync(
-    command: string,
-    args: string[],
-    options: SpawnSyncOptions,
-  ): SpawnSyncResult;
-}
-
+// node:child_process is typed via the minimal ambient declaration in
+// ./node-child-process.d.ts (no @types/node installed). Single source for that typing.
 import { spawnSync } from "node:child_process";
 import type { RunResult, RunRequest, AstQuery } from "@trellis/schema";
 import { RUN_HARNESS } from "./run-harness.js";
