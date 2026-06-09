@@ -158,7 +158,9 @@ node:
             - { id: a, label: "Your number is 1" }
             - { id: b, label: "Your number is not 1" }
             - { id: c, label: "Your number is 1\nYour number is not 1", misconception: mis.cond.both_branches }
-          expected: { normalized: ["your number is 1"] }
+          # Choice-mode predict: expected.normalized must contain the correct CHOICE ID
+          # (see cell.string_concat.join_text#2). Fixed by the verification session.
+          expected: { normalized: ["a", "your number is 1"] }
           reveal: run-and-show
 
         - id: cell.conditionals.if_else#3

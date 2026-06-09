@@ -1,0 +1,98 @@
+{
+  "results": [
+    {
+      "name": "1-app-boots-watch-step",
+      "pass": true,
+      "evidence": {
+        "firstStep": "watch"
+      }
+    },
+    {
+      "name": "2-keyed-step-replacement",
+      "pass": true,
+      "evidence": {
+        "newNodeHasNoMarker": true,
+        "oldStepUnmounted": true
+      }
+    },
+    {
+      "name": "4-real-pyodide-grades-misconception",
+      "pass": true,
+      "evidence": {
+        "feedbackText": "Let's look closer\n\nThat's the big one! `\"text\" + number` crashes with a TypeError — Python will not secretly turn a number into text. You have to convert it yourself: wrap the number in `str(...)`, as in `\"Your random number is: \" + str(number)`, or use an f-string: `f\"Your random number is: {number}\"`. Both turn the number into text first.",
+        "feedbackColor": "rgb(191, 135, 0)",
+        "passFeedbackColorOnPredict": "rgb(26, 127, 55)",
+        "pyodideCdnAssetsFetched": [
+          "pyodide.mjs",
+          "python_stdlib.zip",
+          "pyodide.asm.wasm",
+          "pyodide-lock.json",
+          "pyodide.asm.js"
+        ]
+      }
+    },
+    {
+      "name": "5-hint-ladder-pull-one-per-press-level4-confirmed",
+      "pass": true,
+      "evidence": {
+        "hintCountsAfterEachPull": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "level4WasBehindConfirm": true,
+        "revealCodeShown": true
+      }
+    },
+    {
+      "name": "6-correct-solution-passes-cell-completes",
+      "pass": true,
+      "evidence": {
+        "passFeedback": "Correct",
+        "passColor": "rgb(26, 127, 55)",
+        "misconceptionColor": "rgb(191, 135, 0)",
+        "attributionColorsDiffer": true,
+        "cellComplete": true
+      }
+    },
+    {
+      "name": "7-real-reload-idb-round-trip-identical",
+      "pass": true,
+      "evidence": {
+        "identical": true,
+        "diagnosisCount": 4,
+        "skills": [
+          {
+            "skillId": "skill.string.concat",
+            "mastery": 0,
+            "attempts": 1
+          },
+          {
+            "skillId": "skill.string.concat_str_num",
+            "mastery": 0.845,
+            "attempts": 4
+          }
+        ],
+        "learnerIdStable": true
+      }
+    },
+    {
+      "name": "8-contentVersion-cache-no-refetch-on-reload",
+      "pass": true,
+      "evidence": {
+        "bundleFetchesFirstLoad": 1,
+        "bundleFetchesAfterReload": 1
+      }
+    },
+    {
+      "name": "9-eventbus-no-subscriber-no-errors",
+      "pass": true,
+      "evidence": {
+        "pageErrors": []
+      }
+    }
+  ],
+  "pageErrors": []
+}

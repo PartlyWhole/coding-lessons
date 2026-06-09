@@ -52,7 +52,11 @@ node:
             - { id: a, label: "Hi Alan" }
             - { id: b, label: "HiAlan", misconception: mis.concat.missing_space }
             - { id: c, label: "Hi name" }
-          expected: { normalized: ["HiAlan"] }
+          # Choice-mode predict: the engine matches the CHOSEN ID against expected.normalized
+          # (engine diagnose.ts compareNonBuild) — the id of the correct choice must be listed.
+          # Fixed by the real-Pyodide verification session: as authored ("HiAlan" only) this
+          # step was unanswerable (no choice id ever matched).
+          expected: { normalized: ["b", "HiAlan"] }
           reveal: run-and-show
 
         - id: cell.string_concat.join_text#3
@@ -144,7 +148,9 @@ node:
             - { id: a, label: "It prints: Your random number is: 7" }
             - { id: b, label: "It crashes with a TypeError — can't glue text to a number" }
             - { id: c, label: "It prints: Your random number is: number" }
-          expected: { normalized: ["it crashes with a typeerror", "typeerror", "it crashes"] }
+          # Choice-mode predict: expected.normalized must contain the correct CHOICE ID
+          # (see cell.string_concat.join_text#2). Fixed by the verification session.
+          expected: { normalized: ["b", "it crashes with a typeerror", "typeerror", "it crashes"] }
           reveal: run-and-show
 
         - id: cell.string_concat.text_plus_number#3
