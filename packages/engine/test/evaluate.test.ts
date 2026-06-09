@@ -71,6 +71,40 @@ describe("evaluate - build path (§8)", () => {
     expect(d.misconceptionId).toBe("mis.rt");
   });
 
+  it("tests pass but property fails with no matching misconception -> mismatch", async () => {
+    // tests pass (f(1)===2), but the property oracle (sol(x)=x+1) diverges from the
+    // learner (constant 2) for x!==1, so the property arm fails. No corpus signature here
+    // keys on propertyFailed, so detect() returns null -> attribution "mismatch".
+    const propStep = {
+      id: "cell.x#1", kind: "build", skills: ["skill.x"], language: "python", starterCode: "",
+      evaluator: {
+        run: { timeoutMs: 2000, memoryMb: 256, entrypoint: "f" },
+        tests: { comparator: "deep-equal", cases: [{ input: 1, expected: 2 }] },
+        property: {
+          referenceImpl: "def sol(x):\n    return x + 1",
+          generators: [{ param: "x", type: "int", min: 0, max: 5 }],
+          numCases: 5, seed: 7, comparator: "deep-equal",
+        },
+      },
+    } as unknown as BuildStep;
+    const sb = {
+      parseAndMatch: async (): Promise<string[]> => [],
+      run: async (r: RunRequest): Promise<RunResult> => {
+        if (!r.code.includes("_t_res")) return ok({}); // bare run
+        const m = r.code.match(/b64decode\("([^"]+)"\)/);
+        const args = m ? (JSON.parse(atob(m[1]!)) as number[]) : [];
+        const x = args[0] ?? 0;
+        const v = r.code.includes("def sol") ? x + 1 : 2; // oracle: x+1, learner: constant 2
+        return ok({ stdout: SENTINEL + JSON.stringify({ v }) });
+      },
+    };
+    const d = await evaluate(propStep, { kind: "build", code: "def f(x):\n    return 2" }, sb, bundle, fx);
+    expect(d.correct).toBe(false);
+    expect(d.attribution).toBe("mismatch");
+    expect(d.signals.property?.passed).toBe(false);
+    expect(d.misconceptionId).toBeUndefined();
+  });
+
   it("is deterministic: identical Diagnosis for identical inputs", async () => {
     const mk = () => sandbox({ run: () => ok({ stdout: SENTINEL + JSON.stringify({ v: 2 }) }), tags: ["t"] });
     const a = await evaluate(step, { kind: "build", code: "def f(x):\n    return 2" }, mk(), bundle, fx);
