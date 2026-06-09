@@ -1,18 +1,98 @@
 # Trellis — Orchestrator Handoff
 
 **Purpose:** onboard a fresh agent into the **orchestrator** role for Trellis's parallel build.
-**As of:** `main` @ `ab67dd4`. Re-verify on arrival (state may have advanced).
+**As of:** `main` @ `6787dff` (2026-06-08, late session). Re-verify on arrival (state may have advanced).
+**Read the "State snapshot" section immediately below first — it is the live picture; the rest of this
+doc is the durable role manual.**
 
 > You are the ORCHESTRATOR, not a stream. You do NOT implement milestones — the stream sessions do
 > that in their own worktrees. You own `main`, the frozen contract, the coordination docs, integration
 > review, and the downstream chain. Root your session at the MAIN repo: `/Users/alan/Desktop/Trellis`
 > on branch `main` (confirm with `pwd` + `git branch --show-current`).
 
+---
+
+## State snapshot — read this first (2026-06-08, `main` @ `6787dff`)
+
+This is the live picture as of the handoff. Everything below it (§0–§9) is the durable role manual;
+this section is the "you are here." Re-verify with `git log --oneline -15` + the §0 baseline on arrival.
+
+### Where the build stands
+The **deterministic foundation M0–M3a is COMPLETE and integrated on `main`** — 4 packages, **212 tests
+green** (typecheck/lint/build all clean):
+
+| Milestone | Package | Integration SHA | Tests | Notes |
+|---|---|---|---|---|
+| M0 | `@trellis/schema` | (base) | 37 | frozen contract + two session fixes (below) |
+| M1 | `@trellis/authoring` | `a04c082` | 76 | compiler + 7 §13.2 gates (1–6 live, 7 = M4 stub) + CLI |
+| M2 | `@trellis/engine` | `f5a1ad8` | 76 | pure core: resolver/stepMachine/detect/non-build diagnose/learnerModel |
+| M3a | `@trellis/sandbox` | `1c05031` | 23 | Pyodide worker host; **real-Pyodide verify DEFERRED (no network)** |
+
+**In flight:** **M3b (Stream D)** — the build-evaluation ladder, the *only* live worktree
+(`../trellis-m3b` / `m3b-build-ladder`, off `a84b8d4`). Unlike A/B/C it is **not a new disjoint
+package** — it EXTENDS `@trellis/engine` (adds `evaluate`: Run→Test→AST→Property, comparators, seeded
+property gen + shrinking, build-path diagnose) AND `@trellis/sandbox` (the §6.3 `AstQuery` `parseAndMatch`
+in the worker). Both are integrated, so it's the sequential build-out on a proven core; disjoint from
+nothing live. Its defining gate: the real detector must agree with `content/verify/harness.py` on all 21
+fixtures. Launch = a fresh Desktop session rooted at `../trellis-m3b` following its `START-HERE.md`.
+
+**Not started:** M4 (misconceptions + hints end-to-end; turn on gates 5–7) → M5 (presentation slice).
+**Critical path is single-threaded:** `M3b → M4 → M5`. M4 needs M3b's detector; M5 needs M4. No second
+build stream can run in parallel right now. Deferred entirely: M6 (telemetry), M6.5 (pygame), M7 (hardening).
+
+### Contract & content changes made THIS session (a consumer must know these)
+- **Schema `ElemSpec` split** (`fec6b8f`, test-first): `GenSpec.elem` no longer inherits a required `param`
+  — a paramless recursive `ElemSpec` for list elements; top-level `GenSpec.param` stays required. Fixed the
+  blocker M1 escalated (the `loops` list-element generator was rejected). §6.4: `param` = entrypoint arg,
+  meaningless for elements.
+- **Schema `exports`→`dist`** (`f9bcef6`): `@trellis/schema` `main`/`exports` point at built `dist` with a
+  `development`→`src` condition ordered before `import`. Plain `node` resolves the bare specifier to `dist`
+  (so built consumers that *value*-import schema run under node); Vite/vitest inject `development` → live
+  `src`. Both schema changes are manifest/type-compatible — M2/M3a unaffected.
+- **`conditionals` re-themed Magic-8-Ball → grade classifier** (`303834e`): dropped the
+  `conditionals → random.randint` `requires` edge so the spine never depends on the `random` *extension*
+  (the adopted invariant). `random` is now genuinely optional. Bonus: removed a CPython-version-fragile
+  `random.seed` trace + an unrequired `input()`.
+- **AST queries migrated to the §6.3 `field` selector** (`3a8bf73`): `has_elif` and `infinite_true_no_break`
+  use exact field-scoped forms; `content/verify/harness.py` was taught `field` (rule 1) in lockstep — **it
+  silently ignored unknown query keys (the §6.3 true-by-default trap), so migrating content REQUIRED updating
+  the harness.** M1's TS matcher ↔ harness differential confirmed identical on all 21 fixtures incl. field forms.
+
+### Decisions resolved this session (durably recorded; pointers below)
+- Conditionals invariant → re-theme; gating-diff pair = `var.assign`@0.6 + `print_literal`@0.5 — `PARALLEL-STREAMS.md` §6.
+- GenSpec fix shape = decision A (ElemSpec split); schema packaging = Option 1 (exports→dist) — §6 + design-note.
+- **`mis.loop.infinite_true` `{timedOut:true}` re-key = DEFERRED to M4** (timedOut is ambiguous across
+  infinite-loop misconceptions; the offline isolated-signature harness can't model §7 precedence; zero
+  detection change on the current corpus). It's an explicit **M4 action item** — design-note §5 + §7 below.
+
+### Open debts & immediate next actions
+1. **Await M3b's green report, then integrate via the §4.1 runbook** (Phase 0 scope/contract pre-flight first).
+2. **Then M4** — wire concat misconception→feedback→hint ladder end-to-end, turn on §13.2 gates 5–7, AND do
+   the deferred `timedOut` re-key against the real sandbox + live `detect()` precedence.
+3. **M3a real-Pyodide browser verification** — independent of M3b, blocked only on a *networked browser* env
+   (real Pyodide load, live `worker.terminate()`, line extraction, mem-cap, `PYODIDE_VERSION` 0.27.2 CDN pin,
+   pygame-ce compat). Parallelizable any time someone has the env. M3a is "code-complete + mock-verified," NOT
+   verification-complete until this runs.
+4. **Optional tidy:** `packages/authoring/ORCHESTRATOR-REPORT.md` rode onto `main` via the M1 merge — a harmless
+   stream-internal report; remove it whenever convenient.
+
+### Hard-won gotchas surfaced this session (save yourself the rediscovery)
+- The differential oracle `harness.py` **silently ignores unknown AstQuery keys** — keep it in lockstep with
+  any content query-form change, or it over-matches without failing. The §4.1 hold-and-escalate rule exists
+  for exactly this kind of cross-implementation drift.
+- **Lockfile churn on merges:** never hand-resolve a `pnpm-lock.yaml` conflict — regenerate with `pnpm install`
+  (works offline from the store). Codified in §4.1.
+- The **§4.1 integration runbook** (validated on M2/M3a/M1) is the repeatable spine — follow it every merge.
+
+---
+
 ## 0. First moves on arrival
 1. Confirm rooting: `pwd` = `/Users/alan/Desktop/Trellis`, `git branch --show-current` = `main`.
 2. `git worktree list` and `git log --oneline -12` — see what's merged and which streams exist.
 3. Reproduce the baseline: `export PATH="/opt/homebrew/lib/node_modules/corepack/shims:$PATH"` then
-   `pnpm test` (expect `@trellis/schema` green) and `pnpm build` + a native-ESM import check.
+   `pnpm -r typecheck && pnpm -r lint && pnpm -r test && pnpm -r build` (expect **212 tests** green across
+   schema/engine/sandbox/authoring) + a native-ESM import check of each `dist/src/index.js`. Also confirm the
+   content references: `python3 content/validate.py` and `python3 content/verify/harness.py` (both PASS).
 4. Read, in order: this file → `docs/coordination/PARALLEL-STREAMS.md` (the sync doc you OWN) →
    `docs/superpowers/specs/2026-06-08-trellis-m0-m5-implementation-design.md` (the M0–M5 spec) →
    `TECHNICAL_DESIGN.md` (architecture source of truth). Invoke `superpowers:using-superpowers`.
@@ -44,18 +124,22 @@ them test-first. We do NOT re-litigate the design. Methodology = the **superpowe
   `random` = the extension). See the spec's §1 note and `docs/design-notes/2026-06-08-astquery-grammar-gaps.md`.
 
 ## 3. The parallel streams you coordinate
-Three worktrees off `main`, each its own branch + `START-HERE.md` (git-excluded). Streams are
-launched as SEPARATE Claude Desktop sessions whose workspace folder is the worktree itself (so cwd/
-git/pnpm are correctly scoped — a session rooted in the main repo is the failure mode that already
-bit M1 once; the `START-HERE.md` self-check guards against it).
+Each stream is a SEPARATE Claude Desktop session whose workspace folder is its worktree (so cwd/git/pnpm
+are correctly scoped — a session rooted in the main repo is the failure mode that bit M1 once; the
+git-excluded `START-HERE.md` self-check in each worktree guards against it). Streams report status to you;
+they never edit `docs/coordination/**`. You merge to `main`.
 
-| Stream | Milestone | Worktree / branch | Owns | Notes |
+| Stream | Milestone | Status | Worktree / branch | Owns (writes) |
 |---|---|---|---|---|
-| A | M1 `@trellis/authoring` compiler | `../trellis-m1` / `m1-authoring` | `packages/authoring/**` | reads schema + `content/` |
-| B | M2 `@trellis/engine` pure core | `../trellis-m2` / `m2-engine` | `packages/engine/**` | builds on hand-authored `Bundle` fixtures (no dep on M1) |
-| C | M3a `@trellis/sandbox` host | `../trellis-m3a` / `m3a-sandbox` | `packages/sandbox/**` | **no network here → real-Pyodide verify deferred** |
+| A | M1 `@trellis/authoring` compiler | ✅ integrated `a04c082` (worktree removed) | — | `packages/authoring/**` |
+| B | M2 `@trellis/engine` pure core | ✅ integrated `f5a1ad8` (worktree removed) | — | `packages/engine/**` |
+| C | M3a `@trellis/sandbox` host | ✅ integrated `1c05031` · **Pyodide verify deferred** (worktree removed) | — | `packages/sandbox/**` |
+| **D** | **M3b build ladder** | **🔄 in flight** | `../trellis-m3b` / `m3b-build-ladder` | `packages/engine/**` (adds `evaluate`) + `packages/sandbox/**` (adds `parseAndMatch`) |
 
-A, B, C are independent (disjoint packages) and merge to `main` in any order.
+A/B/C were independent disjoint packages and merged in any order; their worktrees + branches are cleaned up
+(all in `main`). **D (M3b) is the live worktree** — it extends two *already-integrated* packages (the
+sequential build-out), reads schema + `content/` + `harness.py`, and does **not** depend on M1. After D
+comes M4 then M5 (new streams/plans each, when their inputs land — see §7).
 
 ## 4. Your job (the orchestrator loop)
 - **Keep the sync doc current.** `docs/coordination/PARALLEL-STREAMS.md` §7 status board is yours to
