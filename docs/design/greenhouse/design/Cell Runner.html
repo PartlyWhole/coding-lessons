@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trellis — Cell Runner, full state coverage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&amp;family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&amp;family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&amp;display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="trellis-tokens.css" />
+<link rel="stylesheet" href="trellis-ui.css" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  /* canvas page chrome only — product styles live in trellis-ui.css */
+  html, body { margin: 0; height: 100%; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="mock-components.jsx"></script>
+<script type="text/babel" src="artboards-core.jsx"></script>
+<script type="text/babel" src="artboards-steps.jsx"></script>
+<script type="text/babel" src="artboards-feedback.jsx"></script>
+<script type="text/babel" src="artboards-hints.jsx"></script>
+<script type="text/babel" src="artboards-final.jsx"></script>
+<script type="text/babel">
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="anatomy" title="01 · Cell Runner — layout anatomy" subtitle="Single centered 720px column. DOM order = visual order = focus order. All markup keyed to existing classNames; ⚑ marks the few approved/flagged additions.">
+        <DCArtboard id="anatomy-main" label="Anatomy — build step in misconception state" width={1180} height={1092}>
+          <AnatomyBoard />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="app-states" title="02 · App states" subtitle="Before the cell exists: load, the once-per-session Python warm-up, and load failure.">
+        <DCArtboard id="st-loading" label="Loading" width={520} height={522}><LoadingBoard /></DCArtboard>
+        <DCArtboard id="st-warming" label="Warming — getting Python ready" width={520} height={542}><WarmingBoard /></DCArtboard>
+        <DCArtboard id="st-error" label="Load failure (role=alert)" width={520} height={522}><ErrorBoard /></DCArtboard>
+      </DCSection>
+
+      <DCSection id="steps" title="03 · The five step kinds" subtitle="Real content from string_concat.yaml and input.yaml. One card, one thing to do.">
+        <DCArtboard id="step-watch" label="watch — worked example + output" width={760} height={974}><WatchBoard /></DCArtboard>
+        <DCArtboard id="step-predict" label="predict — with choices" width={760} height={946}><PredictBoard /></DCArtboard>
+        <DCArtboard id="step-predict-text" label="predict — free text variant" width={620} height={710}><PredictTextBoard /></DCArtboard>
+        <DCArtboard id="step-recognize" label="recognize — code choices" width={760} height={950}><RecognizeBoard /></DCArtboard>
+        <DCArtboard id="step-recall" label="recall — fill the blank" width={680} height={772}><RecallBoard /></DCArtboard>
+        <DCArtboard id="step-build" label="build — editor with locked scaffolding" width={760} height={810}><BuildBoard /></DCArtboard>
+      </DCSection>
+
+      <DCSection id="feedback" title="04 · Evaluating & the four feedback attributions" subtitle="Amber is not red. Color + icon + label always travel together; the misconception band is the product's heart.">
+        <DCArtboard id="fb-evaluating" label="evaluating — no spinner, by design" width={760} height={724}><EvaluatingBoard /></DCArtboard>
+        <DCArtboard id="fb-pass" label="pass — brief celebration" width={760} height={888}><PassBoard /></DCArtboard>
+        <DCArtboard id="fb-misconception" label="misconception — named diagnosis ⚑" width={760} height={1092}><MisconceptionBoard /></DCArtboard>
+        <DCArtboard id="fb-mismatch" label="mismatch — quiet 'not quite' + reveal" width={760} height={1036}><MismatchBoard /></DCArtboard>
+        <DCArtboard id="fb-runtime" label="runtime error — factual, typed, lined" width={760} height={1004}><RuntimeBoard /></DCArtboard>
+        <DCArtboard id="fb-syntax" label="syntax error" width={760} height={970}><SyntaxBoard /></DCArtboard>
+      </DCSection>
+
+      <DCSection id="hints" title="05 · Hint ladder, levels 1 → 4" subtitle="Pulled, never pushed. Feedback + ladder zone shown; the step card above is unchanged (see 04).">
+        <DCArtboard id="hint-1" label="level 1 pulled" width={640} height={582}><Ladder1Board /></DCArtboard>
+        <DCArtboard id="hint-3" label="levels 1–3 — button relabels" width={640} height={770}><Ladder3Board /></DCArtboard>
+        <DCArtboard id="hint-confirm" label="level-4 gate — inline confirm" width={640} height={772}><Ladder4ConfirmBoard /></DCArtboard>
+        <DCArtboard id="hint-4" label="level 4 — solution revealed" width={640} height={894}><Ladder4Board /></DCArtboard>
+      </DCSection>
+
+      <DCSection id="peekback" title="06 · Peek-back & cell completion" subtitle="History is recessed, not hidden. Completion is a closing note, not fireworks.">
+        <DCArtboard id="peek-closed" label="peek-back — collapsed" width={640} height={312}><PeekClosedBoard /></DCArtboard>
+        <DCArtboard id="peek-open" label="peek-back — expanded" width={640} height={582}><PeekOpenBoard /></DCArtboard>
+        <DCArtboard id="complete" label="cell complete" width={760} height={526}><CompleteBoard /></DCArtboard>
+      </DCSection>
+
+      <DCSection id="responsive" title="07 · Responsive" subtitle="Desktop-first; tablet keeps the column; phone is covered by two @media blocks in trellis-ui.css.">
+        <DCArtboard id="phone" label="phone · 390 — full-bleed code, stretched actions" width={420} height={932}><PhoneBoard /></DCArtboard>
+      </DCSection>
+
+      <DCSection id="map" title="08 · Course map — directional concept (future scope)" subtitle="One frame, as agreed: where the trellis metaphor eventually pays off.">
+        <DCArtboard id="coursemap" label="node graph — 'Your trellis'" width={900} height={778}><CourseMapBoard /></DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

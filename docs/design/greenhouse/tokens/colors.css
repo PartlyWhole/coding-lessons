@@ -1,0 +1,52 @@
+/* Trellis colors — "Greenhouse" v1 (approved). Accent: B · Bluebell. */
+:root {
+  /* warm neutrals */
+  --paper: #FBF9F5;
+  --surface: #FFFFFF;
+  --surface-sunken: #F4F0E9;
+  --ink: #3B362E;
+  --ink-soft: #6F675C;
+  --ink-faint: #A39A8B;
+  --line: #E9E3D8;
+  --line-strong: #D8D0C1;
+
+  /* semantic attribution palette (FINAL) — meaning is contractual:
+     pass=green, misconception=warm amber (NEVER error styling),
+     mismatch=quiet olive, syntax/runtime=calm crimson.
+     Mirror the -ink values into packages/client/src/attribution.ts. */
+  --attr-pass-ink: #1A7F4B;
+  --attr-pass-surface: #E9F6EE;
+  --attr-pass-border: #BFE3CD;
+  --attr-misconception-ink: #9C6310;
+  --attr-misconception-surface: #FCF2DF;
+  --attr-misconception-border: #EFD9AB;
+  --attr-mismatch-ink: #7E6A14;
+  --attr-mismatch-surface: #F7F3DD;
+  --attr-mismatch-border: #E4DAAA;
+  --attr-error-ink: #BE4039;
+  --attr-error-surface: #FBEDEB;
+  --attr-error-border: #F1CCC7;
+
+  /* accent — Bluebell (interactive-but-not-evaluative ONLY) */
+  --accent: #5263D8;
+  --accent-deep: #3F4FB8;
+  --accent-tint: #ECEFFC;
+  --accent-ink: #3A48A8;
+
+  /* code / editor — the dark terrarium (same in both page modes) */
+  --code-bg: #242B39;
+  --code-bg-deep: #1B212C;
+  --code-ink: #E9EDF6;
+  --code-line-number: #5C677E;
+  --code-keyword: #92B3FF;
+  --code-string: #FFD08E;
+  --code-number: #8BD9B9;
+  --code-builtin: #C0AFFF;
+  --code-comment: #8290A8;
+  --code-active-line: rgba(255,255,255,0.045);
+  --code-selection: rgba(146,179,255,0.28);
+  --code-locked-bg: rgba(255,255,255,0.055);
+  --code-locked-edge: #5C677E;
+  --codechip-bg: #F1EDE4;
+  --codechip-ink: #50483C;
+}

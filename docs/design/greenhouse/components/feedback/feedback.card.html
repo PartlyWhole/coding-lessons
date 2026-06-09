@@ -1,0 +1,20 @@
+<!-- @dsCard group="Components" viewport="700x600" subtitle="The four attributions + pulled hints + the level-4 gate" name="Feedback — bands, hint ladder, confirm" -->
+<!doctype html><html lang="en"><head><meta charset="utf-8"/><link rel="stylesheet" href="../../styles.css"/>
+<style>body{background:var(--paper);margin:0;padding:18px 22px}
+.cell-runner{max-width:none;margin:0;padding:0;gap:12px}
+/* static specimen: kill entrance animations so non-ticking thumbnail renders show end-state */
+*{animation:none!important}</style></head>
+<body><div class="cell-runner">
+<div class="feedback feedback--pass"><strong class="feedback-label">Correct</strong></div>
+<div class="feedback feedback--misconception"><strong class="feedback-label">Let's look closer</strong>
+  <span class="feedback-misconception-title">Glued text directly to a number — expected Python to auto-convert</span>
+  <p class="feedback-misconception">That's the big one! <code>"text" + number</code> crashes with a TypeError — Python will not secretly turn a number into text.</p></div>
+<div class="feedback feedback--mismatch"><strong class="feedback-label">Not quite</strong>
+  <p class="feedback-reveal">Expected: HiAlan</p></div>
+<div class="feedback feedback--runtime"><strong class="feedback-label">Runtime error</strong>
+  <span class="feedback-error-chip">ValueError · line 2</span>
+  <p class="feedback-error-message">invalid literal for int() with base 10: 'Alan'</p></div>
+<aside aria-label="hints" style="display:flex;flex-direction:column;gap:10px">
+  <ol class="hints"><li class="hint hint-1"><div class="hint-body">Read the error. What two kinds of things did you try to glue together with +?</div></li></ol>
+  <div class="confirm"><span>Show the full solution?</span><button type="button">Confirm</button><button type="button">Cancel</button></div>
+</aside></div></body></html>

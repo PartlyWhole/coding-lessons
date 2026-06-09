@@ -1,0 +1,12 @@
+/* Trellis type scale. Body is 17px on purpose: readers are new to
+   code-adjacent prose. Baloo 2 never sets body copy. */
+:root {
+  --text-display: 28px;   /* cell titles — Baloo 2 700 */
+  --text-title: 20px;     /* step prompts — Nunito Sans 800 */
+  --text-body: 17px;      /* prose, feedback, hints — 400 */
+  --text-small: 14.5px;   /* peek-back, captions — 600 */
+  --text-micro: 12.5px;   /* eyebrows, badges — 800 caps .12em */
+  --text-code: 15px;      /* editor + code blocks */
+  --leading-body: 1.65;
+  --leading-code: 1.7;
+}

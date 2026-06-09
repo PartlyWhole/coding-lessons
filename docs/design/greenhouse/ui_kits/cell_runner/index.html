@@ -1,0 +1,207 @@
+<!-- @dsCard group="Cell Runner" viewport="840x760" subtitle="Interactive single-screen kit — click Run & check, pull hints, try the level-4 gate" name="Cell Runner — interactive" -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trellis UI kit — Cell Runner</title>
+<link rel="stylesheet" href="../../styles.css" />
+<style>
+  /* kit chrome (not product UI) */
+  .kit-states { position: sticky; top: 0; z-index: 5; display: flex; gap: 6px; flex-wrap: wrap;
+    background: #EEF2FE; border-bottom: 2px dashed #B9C4F0; padding: 10px 16px;
+    font-family: var(--font-code); }
+  .kit-states b { font-size: 10.5px; letter-spacing: .08em; color: #39437E; align-self: center; margin-right: 6px; }
+  .kit-states button { font-family: var(--font-ui); font-weight: 800; font-size: 12.5px; color: #39437E;
+    background: #fff; border: 1.5px solid #B9C4F0; border-radius: 999px; padding: 5px 13px; cursor: pointer; }
+  .kit-states button[aria-pressed="true"] { background: #39437E; color: #fff; border-color: #39437E; }
+  [data-state] { display: none; }
+  [data-state].is-on { display: flex; }
+  .ed-line .ed-src { min-height: 1.7em; }
+</style>
+</head>
+<body>
+
+<div class="kit-states" aria-label="state switcher (kit chrome)">
+  <b>STATE</b>
+  <button type="button" data-go="build" aria-pressed="true">build</button>
+  <button type="button" data-go="evaluating" aria-pressed="false">evaluating</button>
+  <button type="button" data-go="misconception" aria-pressed="false">misconception</button>
+  <button type="button" data-go="pass" aria-pressed="false">pass</button>
+  <button type="button" data-go="complete" aria-pressed="false">complete</button>
+</div>
+
+<div class="cell-runner">
+  <div class="cell-eyebrow"><span>Step 4 of 4</span><span class="cell-kind-badge">Build</span></div>
+  <div class="cell-progress" id="pips">
+    <span class="pip is-done"></span><span class="pip is-done"></span><span class="pip is-done"></span><span class="pip is-now"></span>
+  </div>
+  <h2 class="cell-title">When text meets a number</h2>
+
+  <!-- BUILD (active) -->
+  <div data-state="build" class="is-on" style="flex-direction:column;gap:20px;">
+    <div class="active-step">
+      <section aria-label="build step">
+        <div class="prompt">Write announce(number) so it returns a line like&nbsp; <code>Your random number is: 7</code> — the label, then the number turned into text. Use <code>str(...)</code> or an f-string.</div>
+        <div class="editor-pane">
+          <div class="ed-body">
+            <div class="ed-line locked"><span class="ed-num">1</span><span class="ed-src"><span class="tok-kw">def</span> <span class="tok-fn">announce</span>(number):</span></div>
+            <div class="ed-line locked"><span class="ed-num">2</span><span class="ed-src">    <span class="tok-com"># join the label with the number (which is NOT text yet!)</span></span></div>
+            <div class="ed-line active"><span class="ed-num">3</span><span class="ed-src">    <span class="tok-kw">return</span> <span class="tok-str">"Your random number is: "</span> + number<span class="ed-caret"></span></span></div>
+          </div>
+        </div>
+        <button type="button" id="runBtn">Run &amp; check</button>
+      </section>
+    </div>
+  </div>
+
+  <!-- EVALUATING -->
+  <div data-state="evaluating" style="flex-direction:column;gap:20px;">
+    <div class="active-step">
+      <section aria-label="build step">
+        <div class="prompt">Write announce(number) so it returns a line like&nbsp; <code>Your random number is: 7</code> — the label, then the number turned into text. Use <code>str(...)</code> or an f-string.</div>
+        <div class="editor-pane is-disabled">
+          <div class="ed-body">
+            <div class="ed-line locked"><span class="ed-num">1</span><span class="ed-src"><span class="tok-kw">def</span> <span class="tok-fn">announce</span>(number):</span></div>
+            <div class="ed-line locked"><span class="ed-num">2</span><span class="ed-src">    <span class="tok-com"># join the label with the number (which is NOT text yet!)</span></span></div>
+            <div class="ed-line"><span class="ed-num">3</span><span class="ed-src">    <span class="tok-kw">return</span> <span class="tok-str">"Your random number is: "</span> + number</span></div>
+          </div>
+        </div>
+        <button type="button" disabled style="transform:translateY(2px);">Run &amp; check</button>
+      </section>
+    </div>
+  </div>
+
+  <!-- MISCONCEPTION + interactive hint ladder -->
+  <div data-state="misconception" style="flex-direction:column;gap:20px;">
+    <div class="active-step">
+      <section aria-label="build step">
+        <div class="prompt">Write announce(number) so it returns a line like&nbsp; <code>Your random number is: 7</code> — the label, then the number turned into text. Use <code>str(...)</code> or an f-string.</div>
+        <div class="editor-pane">
+          <div class="ed-body">
+            <div class="ed-line locked"><span class="ed-num">1</span><span class="ed-src"><span class="tok-kw">def</span> <span class="tok-fn">announce</span>(number):</span></div>
+            <div class="ed-line locked"><span class="ed-num">2</span><span class="ed-src">    <span class="tok-com"># join the label with the number (which is NOT text yet!)</span></span></div>
+            <div class="ed-line"><span class="ed-num">3</span><span class="ed-src">    <span class="tok-kw">return</span> <span class="tok-str">"Your random number is: "</span> + number</span></div>
+          </div>
+        </div>
+        <button type="button" disabled>Run &amp; check</button>
+      </section>
+    </div>
+    <div aria-label="feedback" class="feedback feedback--misconception">
+      <strong class="feedback-label">Let's look closer</strong>
+      <span class="feedback-misconception-title">Glued text directly to a number — expected Python to auto-convert</span>
+      <p class="feedback-misconception">That's the big one! <code>"text" + number</code> crashes with a TypeError — Python will not secretly turn a number into text. You have to convert it yourself: wrap the number in <code>str(...)</code>, or use an f-string: <code>f"Your random number is: {number}"</code>.</p>
+    </div>
+    <aside aria-label="hints">
+      <ol class="hints" id="hintList" style="display:none;"></ol>
+      <div class="confirm" id="confirmRow" style="display:none;">
+        <span>Show the full solution?</span>
+        <button type="button" id="confirmBtn">Confirm</button>
+        <button type="button" id="cancelBtn">Cancel</button>
+      </div>
+      <button type="button" id="pullBtn">Show a hint</button>
+    </aside>
+    <button type="button" id="retryBtn">Try again</button>
+  </div>
+
+  <!-- PASS -->
+  <div data-state="pass" style="flex-direction:column;gap:20px;">
+    <div class="active-step">
+      <section aria-label="build step">
+        <div class="prompt">Write announce(number) so it returns a line like&nbsp; <code>Your random number is: 7</code> — the label, then the number turned into text. Use <code>str(...)</code> or an f-string.</div>
+        <div class="editor-pane">
+          <div class="ed-body">
+            <div class="ed-line locked"><span class="ed-num">1</span><span class="ed-src"><span class="tok-kw">def</span> <span class="tok-fn">announce</span>(number):</span></div>
+            <div class="ed-line locked"><span class="ed-num">2</span><span class="ed-src">    <span class="tok-com"># join the label with the number (which is NOT text yet!)</span></span></div>
+            <div class="ed-line"><span class="ed-num">3</span><span class="ed-src">    <span class="tok-kw">return</span> <span class="tok-str">"Your random number is: "</span> + <span class="tok-fn">str</span>(number)</span></div>
+          </div>
+        </div>
+        <button type="button" disabled>Run &amp; check</button>
+      </section>
+    </div>
+    <div aria-label="feedback" class="feedback feedback--pass">
+      <strong class="feedback-label">Correct</strong>
+    </div>
+    <button type="button" id="continueBtn">Continue</button>
+  </div>
+
+  <!-- COMPLETE -->
+  <div data-state="complete" style="flex-direction:column;gap:20px;">
+    <div class="cell-complete">Cell complete ✓</div>
+  </div>
+
+  <aside aria-label="peek-back" class="peek-back">
+    <button type="button">Review earlier steps</button>
+  </aside>
+</div>
+
+<script>
+(function () {
+  var states = ["build", "evaluating", "misconception", "pass", "complete"];
+  var hints = [
+    "Read the error. What two kinds of things did you try to glue together with +?",
+    "Text and numbers are different types. + can join text-to-text, but not text-to-number. You must convert the number to text first.",
+    'Two ways to convert: "...: " + str(number) turns the number into text, or an f-string f"...: {number}" drops it straight in.'
+  ];
+  var solution = 'def announce(number):\n    return "Your random number is: " + str(number)';
+  var revealed = 0, solved = false;
+
+  function go(s) {
+    states.forEach(function (k) {
+      document.querySelector('[data-state="' + k + '"]').classList.toggle("is-on", k === s);
+    });
+    document.querySelectorAll(".kit-states button[data-go]").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-go") === s));
+    });
+    var pips = document.getElementById("pips").children;
+    for (var i = 0; i < pips.length; i++) {
+      pips[i].className = "pip " + (s === "complete" ? "is-done" : i < 3 ? "is-done" : "is-now");
+    }
+  }
+  function renderHints() {
+    var ol = document.getElementById("hintList");
+    ol.style.display = revealed > 0 ? "" : "none";
+    ol.innerHTML = "";
+    for (var i = 0; i < revealed; i++) {
+      var li = document.createElement("li");
+      li.className = "hint hint-" + (i + 1);
+      var body = document.createElement("div");
+      body.className = "hint-body";
+      body.textContent = i < 3 ? hints[i] : "Solution:";
+      li.appendChild(body);
+      if (i === 3) {
+        var pre = document.createElement("pre");
+        pre.className = "hint-solution";
+        pre.textContent = solution;
+        body.appendChild(pre);
+        li.style.borderColor = "var(--accent)";
+      }
+      ol.appendChild(li);
+    }
+    var pull = document.getElementById("pullBtn");
+    document.getElementById("confirmRow").style.display = "none";
+    if (revealed >= 4) { pull.style.display = "none"; }
+    else { pull.style.display = ""; pull.textContent = revealed >= 3 ? "Show full solution" : "Show a hint"; }
+  }
+  document.querySelectorAll(".kit-states button[data-go]").forEach(function (b) {
+    b.addEventListener("click", function () { go(b.getAttribute("data-go")); });
+  });
+  document.getElementById("runBtn").addEventListener("click", function () {
+    go("evaluating");
+    setTimeout(function () { go(solved ? "pass" : "misconception"); renderHints(); }, 450);
+  });
+  document.getElementById("retryBtn").addEventListener("click", function () { go("build"); });
+  document.getElementById("continueBtn").addEventListener("click", function () { go("complete"); });
+  document.getElementById("pullBtn").addEventListener("click", function () {
+    if (revealed >= 3) {
+      document.getElementById("confirmRow").style.display = "";
+      document.getElementById("pullBtn").style.display = "none";
+    } else { revealed++; renderHints(); }
+  });
+  document.getElementById("confirmBtn").addEventListener("click", function () { revealed = 4; renderHints(); });
+  document.getElementById("cancelBtn").addEventListener("click", function () { renderHints(); });
+  renderHints();
+})();
+</script>
+</body>
+</html>

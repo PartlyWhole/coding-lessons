@@ -1,0 +1,14 @@
+<!-- @dsCard group="Components" viewport="700x380" subtitle="Code display with docked stdout · editor with locked rails + active line" name="Code — terrarium block & editor" -->
+<!doctype html><html lang="en"><head><meta charset="utf-8"/><link rel="stylesheet" href="../../styles.css"/>
+<style>body{background:var(--paper);margin:0;padding:18px 22px}
+.cell-runner{max-width:none;margin:0;padding:0;gap:12px}</style></head>
+<body><div class="cell-runner">
+<div class="editor-pane">
+  <div class="ed-body">
+    <div class="ed-line locked"><span class="ed-num">1</span><span class="ed-src"><span class="tok-kw">def</span> <span class="tok-fn">greet</span>(name):</span></div>
+    <div class="ed-line locked"><span class="ed-num">2</span><span class="ed-src">    <span class="tok-com"># join "Hi", a space, the name, and "!"</span></span></div>
+    <div class="ed-line active"><span class="ed-num">3</span><span class="ed-src">    <span class="tok-kw">return</span> <span class="tok-str">"Hi "</span> + name + <span class="tok-str">"!"</span><span class="ed-caret"></span></span></div>
+  </div>
+  <div class="ed-console"><div class="ed-console-label">Output</div><pre class="ed-console-out">Hi Alan!</pre></div>
+</div>
+<pre class="code"><span class="tok-fn">print</span>(<span class="tok-str">"This "</span> + <span class="tok-str">"is"</span> + <span class="tok-str">" cool!"</span>)</pre></div></body></html>

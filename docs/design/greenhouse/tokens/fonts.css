@@ -1,0 +1,10 @@
+/* Trellis webfonts. PREVIEW: Google Fonts CDN. For the static-hosting repo,
+   self-host via Fontsource (baloo-2 / nunito-sans / jetbrains-mono, woff2)
+   and replace this @import with @font-face rules — flagged substitution. */
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap');
+
+:root {
+  --font-display: "Baloo 2", "Nunito Sans", system-ui, sans-serif;   /* personality moments only */
+  --font-ui: "Nunito Sans", system-ui, -apple-system, sans-serif;    /* all reading work */
+  --font-code: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace; /* ligatures OFF in use */
+}

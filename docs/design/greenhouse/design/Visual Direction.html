@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Trellis — Visual Direction v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&amp;family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&amp;family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&amp;display=swap" rel="stylesheet" />
+<style>
+/* ============================================================
+   TRELLIS DESIGN TOKENS — v1 "Greenhouse"
+   These :root custom properties ARE the deliverable. The page
+   below is rendered entirely from them.
+   ============================================================ */
+:root {
+  /* ---- Type families ---- */
+  --font-display: "Baloo 2", "Nunito Sans", system-ui, sans-serif;
+  --font-ui: "Nunito Sans", system-ui, -apple-system, sans-serif;
+  --font-code: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* ---- Type scale (px) ---- */
+  --text-display: 28px;   /* cell title */
+  --text-title: 20px;     /* step prompt */
+  --text-body: 17px;      /* prose, feedback body, hints */
+  --text-small: 14.5px;   /* captions, peek-back, meta */
+  --text-micro: 12.5px;   /* eyebrow labels, badges */
+  --text-code: 15px;      /* editor + code blocks */
+  --leading-body: 1.65;
+  --leading-code: 1.7;
+
+  /* ---- Neutrals (warm) ---- */
+  --paper: #FBF9F5;          /* page background */
+  --surface: #FFFFFF;        /* cards, inputs */
+  --surface-sunken: #F4F0E9; /* wells, peek-back, disabled */
+  --ink: #3B362E;            /* primary text */
+  --ink-soft: #6F675C;       /* secondary text */
+  --ink-faint: #A39A8B;      /* placeholders, disabled text */
+  --line: #E9E3D8;           /* hairline borders */
+  --line-strong: #D8D0C1;    /* input borders */
+
+  /* ---- Semantic attribution palette (FINAL, light mode) ---- */
+  --attr-pass-ink: #1A7F4B;
+  --attr-pass-surface: #E9F6EE;
+  --attr-pass-border: #BFE3CD;
+  --attr-misconception-ink: #9C6310;
+  --attr-misconception-surface: #FCF2DF;
+  --attr-misconception-border: #EFD9AB;
+  --attr-mismatch-ink: #7E6A14;
+  --attr-mismatch-surface: #F7F3DD;
+  --attr-mismatch-border: #E4DAAA;
+  --attr-error-ink: #BE4039;
+  --attr-error-surface: #FBEDEB;
+  --attr-error-border: #F1CCC7;
+
+  /* ---- Accent (candidate B "Bluebell" is the default; see §4) ---- */
+  --accent: #5263D8;
+  --accent-deep: #3F4FB8;   /* pressable button base / active */
+  --accent-tint: #ECEFFC;   /* selected-choice fill, focus halos */
+  --accent-ink: #3A48A8;    /* accent-colored text on light */
+
+  /* ---- Code / editor (dark "terrarium" on the light page) ---- */
+  --code-bg: #242B39;
+  --code-bg-deep: #1B212C;     /* output console strip */
+  --code-ink: #E9EDF6;
+  --code-line-number: #5C677E;
+  --code-keyword: #92B3FF;
+  --code-string: #FFD08E;
+  --code-number: #8BD9B9;
+  --code-builtin: #C0AFFF;
+  --code-comment: #8290A8;
+  --code-active-line: rgba(255,255,255,0.045);
+  --code-selection: rgba(146,179,255,0.28);
+  --code-locked-bg: rgba(255,255,255,0.055);
+  --code-locked-edge: #5C677E;
+  /* inline code chips in prose (light context) */
+  --codechip-bg: #F1EDE4;
+  --codechip-ink: #50483C;
+
+  /* ---- Spacing (4px base) ---- */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+  --space-12: 48px; --space-16: 64px;
+
+  /* ---- Shape ---- */
+  --radius-sm: 8px;    /* chips, inline code */
+  --radius-md: 12px;   /* buttons, inputs */
+  --radius-lg: 16px;   /* feedback bands, editor, hints */
+  --radius-xl: 22px;   /* step cards */
+  --radius-pill: 999px;
+
+  /* ---- Elevation ---- */
+  --shadow-1: 0 1px 2px rgba(59,54,46,.05), 0 2px 10px rgba(59,54,46,.06);
+  --shadow-2: 0 2px 6px rgba(59,54,46,.07), 0 10px 28px rgba(59,54,46,.10);
+
+  /* ---- Motion ---- */
+  --dur-fast: 140ms;
+  --dur-base: 240ms;
+  --dur-slow: 420ms;
+  --ease-out-soft: cubic-bezier(.22,.9,.3,1);
+  --ease-spring: cubic-bezier(.34,1.56,.64,1);
+}
+
+/* ============================================================
+   Doc chrome (the spec page itself, dogfooding the tokens)
+   ============================================================ */
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  padding: var(--space-12) var(--space-6) 120px;
+}
+.doc { max-width: 880px; margin: 0 auto; }
+.doc-header { margin-bottom: var(--space-12); }
+.wordmark { display: flex; align-items: center; gap: 12px; margin-bottom: var(--space-6); }
+.wordmark-glyph { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; width: 30px; height: 30px; transform: rotate(45deg); }
+.wordmark-glyph span { border-radius: 4px; background: var(--accent); }
+.wordmark-glyph span:nth-child(2) { background: #57A773; }
+.wordmark-glyph span:nth-child(3) { background: #57A773; opacity: .55; }
+.wordmark-glyph span:nth-child(4) { background: var(--accent); opacity: .55; }
+.wordmark-name { font-family: var(--font-display); font-weight: 700; font-size: 26px; letter-spacing: .2px; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: 40px; line-height: 1.15; margin: 0 0 var(--space-3); letter-spacing: -.2px; }
+.doc-meta { color: var(--ink-soft); font-size: var(--text-small); }
+h2 { font-family: var(--font-display); font-weight: 700; font-size: 27px; margin: var(--space-16) 0 var(--space-4); letter-spacing: -.1px; }
+h2 .sec-num { color: var(--ink-faint); margin-right: 10px; }
+h3 { font-family: var(--font-ui); font-weight: 800; font-size: 18px; margin: var(--space-8) 0 var(--space-3); }
+p { margin: 0 0 var(--space-4); }
+.lede { font-size: 19px; color: var(--ink-soft); max-width: 64ch; }
+.intent {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-xl);
+  padding: var(--space-6) var(--space-8); box-shadow: var(--shadow-1); margin: var(--space-8) 0;
+}
+.intent ul { margin: var(--space-2) 0 0; padding-left: 22px; }
+.intent li { margin-bottom: var(--space-2); }
+.eyebrow {
+  font-size: var(--text-micro); font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-faint); margin-bottom: var(--space-2);
+}
+.exhibit {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-xl);
+  padding: var(--space-8); box-shadow: var(--shadow-1); margin: var(--space-4) 0;
+}
+.note {
+  font-family: var(--font-code); font-size: 12.5px; color: var(--ink-soft);
+  background: var(--surface-sunken); border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4); margin-top: var(--space-4); line-height: 1.6;
+}
+.note b { color: var(--ink); font-weight: 700; }
+code.chip, .prose-demo code {
+  font-family: var(--font-code); font-size: .88em; background: var(--codechip-bg);
+  color: var(--codechip-ink); border-radius: 6px; padding: 1.5px 6px; font-weight: 500;
+}
+.token-list { font-family: var(--font-code); font-size: 13px; line-height: 1.9; color: var(--ink-soft); }
+.token-list b { color: var(--ink); font-weight: 500; }
+
+/* ---- Type specimen ---- */
+.spec-row { display: grid; grid-template-columns: 190px 1fr; gap: var(--space-6); align-items: baseline; padding: var(--space-4) 0; border-bottom: 1px solid var(--line); }
+.spec-row:last-child { border-bottom: 0; }
+.spec-token { font-family: var(--font-code); font-size: 12px; color: var(--ink-soft); line-height: 1.6; }
+.s-display { font-family: var(--font-display); font-weight: 700; font-size: var(--text-display); line-height: 1.25; }
+.s-title { font-weight: 800; font-size: var(--text-title); line-height: 1.4; }
+.s-body { font-size: var(--text-body); line-height: var(--leading-body); max-width: 60ch; }
+.s-small { font-size: var(--text-small); color: var(--ink-soft); }
+.s-micro { font-size: var(--text-micro); font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint); }
+.s-code { font-family: var(--font-code); font-size: var(--text-code); line-height: var(--leading-code); }
+
+/* ---- Editor mock ---- */
+.editor-mock { border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-2); }
+.editor-body { background: var(--code-bg); font-family: var(--font-code); font-size: var(--text-code); line-height: var(--leading-code); padding: var(--space-4) 0; font-variant-ligatures: none; }
+.ed-line { display: grid; grid-template-columns: 52px 1fr; }
+.ed-num { text-align: right; padding-right: 16px; color: var(--code-line-number); user-select: none; font-size: 13px; line-height: inherit; padding-top: 1px; }
+.ed-src { color: var(--code-ink); white-space: pre; padding-right: 16px; }
+.ed-line.active { background: var(--code-active-line); }
+.ed-line.locked { background: var(--code-locked-bg); position: relative; }
+.ed-line.locked .ed-src { opacity: .72; }
+.ed-line.locked::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: repeating-linear-gradient(to bottom, var(--code-locked-edge) 0 5px, transparent 5px 9px); }
+.ed-line.locked .ed-num::after { content: "🔒"; font-size: 9px; margin-left: 4px; position: relative; top: -1px; }
+.tok-kw { color: var(--code-keyword); } .tok-str { color: var(--code-string); }
+.tok-num { color: var(--code-number); } .tok-fn { color: var(--code-builtin); }
+.tok-com { color: var(--code-comment); font-style: italic; }
+.ed-sel { background: var(--code-selection); border-radius: 3px; }
+.console { background: var(--code-bg-deep); padding: var(--space-3) var(--space-4) var(--space-4) 52px; border-top: 1px solid rgba(255,255,255,.06); }
+.console-label { font-family: var(--font-ui); font-size: 11px; font-weight: 800; letter-spacing: .14em; color: var(--code-comment); margin-bottom: 4px; }
+.console-out { font-family: var(--font-code); font-size: var(--text-code); color: var(--code-ink); white-space: pre; }
+.cursor-caret { display: inline-block; width: 2px; height: 1.1em; background: var(--accent); vertical-align: text-bottom; border-radius: 1px; animation: blink 1.1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ---- Color swatches ---- */
+.swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: var(--space-3); }
+.swatch { border-radius: var(--radius-md); border: 1px solid var(--line); overflow: hidden; background: var(--surface); }
+.swatch-color { height: 56px; }
+.swatch-info { padding: 8px 10px; font-family: var(--font-code); font-size: 11px; line-height: 1.5; color: var(--ink-soft); }
+.swatch-info b { display: block; font-weight: 700; color: var(--ink); font-size: 11.5px; }
+
+/* ---- Feedback bands (the semantic exhibit) ---- */
+.band { border-radius: var(--radius-lg); border: 1px solid; padding: var(--space-4) var(--space-5); margin-bottom: var(--space-4); display: grid; grid-template-columns: 30px 1fr; gap: var(--space-3); align-items: start; }
+.band-icon { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: #fff; margin-top: 1px; }
+.band-icon svg { display: block; }
+.band-label { font-family: var(--font-display); font-weight: 700; font-size: 17px; line-height: 1.5; }
+.band-body { font-size: 15.5px; line-height: 1.6; color: var(--ink); margin-top: 2px; }
+.band-body code { font-family: var(--font-code); font-size: .88em; background: rgba(255,255,255,.65); border-radius: 5px; padding: 1px 5px; }
+.band-reveal { margin-top: var(--space-2); font-family: var(--font-code); font-size: 13.5px; color: var(--ink-soft); }
+.errchip { display: inline-block; font-family: var(--font-code); font-size: 12.5px; font-weight: 700; background: rgba(255,255,255,.7); border-radius: var(--radius-pill); padding: 2px 10px; margin: 4px 0 2px; }
+.b-pass { background: var(--attr-pass-surface); border-color: var(--attr-pass-border); }
+.b-pass .band-label { color: var(--attr-pass-ink); } .b-pass .band-icon { background: var(--attr-pass-ink); }
+.b-mis { background: var(--attr-misconception-surface); border-color: var(--attr-misconception-border); }
+.b-mis .band-label { color: var(--attr-misconception-ink); } .b-mis .band-icon { background: var(--attr-misconception-ink); }
+.b-mm { background: var(--attr-mismatch-surface); border-color: var(--attr-mismatch-border); }
+.b-mm .band-label { color: var(--attr-mismatch-ink); } .b-mm .band-icon { background: var(--attr-mismatch-ink); }
+.b-err { background: var(--attr-error-surface); border-color: var(--attr-error-border); }
+.b-err .band-label { color: var(--attr-error-ink); } .b-err .band-icon { background: var(--attr-error-ink); }
+.errchip { color: var(--attr-error-ink); }
+
+/* ---- Accent candidates ---- */
+.accent-switch { display: flex; gap: var(--space-2); margin-bottom: var(--space-6); }
+.accent-pill { font-family: var(--font-ui); font-weight: 800; font-size: 14px; border: 2px solid var(--line-strong); background: var(--surface); color: var(--ink-soft); border-radius: var(--radius-pill); padding: 8px 18px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: border-color var(--dur-fast), color var(--dur-fast); }
+.accent-pill .dot { width: 12px; height: 12px; border-radius: 50%; }
+.accent-pill.selected { border-color: var(--demo-accent); color: var(--ink); }
+.accent-demo { --demo-accent: var(--accent); --demo-deep: var(--accent-deep); --demo-tint: var(--accent-tint); --demo-ink: var(--accent-ink); }
+.demo-stage { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: var(--space-8); }
+.demo-progress { display: flex; gap: 6px; align-items: center; margin-bottom: var(--space-5); }
+.demo-progress .p-done { width: 22px; height: 8px; border-radius: var(--radius-pill); background: var(--demo-accent); }
+.demo-progress .p-now { width: 34px; height: 8px; border-radius: var(--radius-pill); background: var(--demo-accent); opacity: .45; }
+.demo-progress .p-todo { width: 22px; height: 8px; border-radius: var(--radius-pill); background: var(--line-strong); opacity: .6; }
+.demo-prompt { font-weight: 800; font-size: var(--text-title); margin-bottom: var(--space-4); }
+.choice { display: flex; align-items: center; gap: var(--space-3); width: 100%; text-align: left; font-family: var(--font-ui); font-size: 16px; color: var(--ink); background: var(--surface); border: 2px solid var(--line-strong); border-radius: var(--radius-lg); padding: var(--space-4) var(--space-5); margin-bottom: var(--space-3); cursor: pointer; transition: border-color var(--dur-fast), background var(--dur-fast), transform var(--dur-fast); }
+.choice:hover { border-color: var(--demo-accent); transform: translateY(-1px); }
+.choice .radio { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line-strong); flex: none; display: grid; place-items: center; }
+.choice.selected { border-color: var(--demo-accent); background: var(--demo-tint); }
+.choice.selected .radio { border-color: var(--demo-accent); }
+.choice.selected .radio::after { content: ""; width: 11px; height: 11px; border-radius: 50%; background: var(--demo-accent); }
+.choice code { font-family: var(--font-code); font-size: .9em; }
+.demo-actions { display: flex; gap: var(--space-3); align-items: center; margin-top: var(--space-5); }
+.btn-primary { font-family: var(--font-ui); font-weight: 800; font-size: 16px; letter-spacing: .01em; color: #fff; background: var(--demo-accent, var(--accent)); border: 0; border-radius: var(--radius-md); padding: 12px 26px; cursor: pointer; box-shadow: 0 3px 0 var(--demo-deep, var(--accent-deep)); transition: transform var(--dur-fast) var(--ease-out-soft), box-shadow var(--dur-fast); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 0 var(--demo-deep, var(--accent-deep)); }
+.btn-primary:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--demo-deep, var(--accent-deep)); }
+.btn-ghost { font-family: var(--font-ui); font-weight: 800; font-size: 15px; color: var(--demo-ink, var(--accent-ink)); background: transparent; border: 2px solid var(--line-strong); border-radius: var(--radius-md); padding: 10px 20px; cursor: pointer; transition: border-color var(--dur-fast), background var(--dur-fast); }
+.btn-ghost:hover { border-color: var(--demo-accent, var(--accent)); background: var(--demo-tint, var(--accent-tint)); }
+.candidate-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-4); margin-top: var(--space-6); }
+.cand { border: 1px solid var(--line); border-radius: var(--radius-lg); padding: var(--space-5); background: var(--surface); }
+.cand h4 { margin: 0 0 6px; font-family: var(--font-display); font-weight: 700; font-size: 17px; }
+.cand .cand-sw { display: flex; gap: 6px; margin-bottom: 10px; }
+.cand .cand-sw span { width: 30px; height: 30px; border-radius: 9px; }
+.cand p { font-size: 13.5px; color: var(--ink-soft); margin: 0; line-height: 1.55; }
+
+/* ---- Spacing & shape ---- */
+.space-bars { display: grid; gap: 10px; }
+.space-bar { display: grid; grid-template-columns: 130px 1fr; align-items: center; gap: var(--space-4); }
+.space-bar .lbl { font-family: var(--font-code); font-size: 12.5px; color: var(--ink-soft); }
+.space-bar .bar { height: 18px; border-radius: 5px; background: var(--accent-tint); border: 1px solid var(--accent); border-left: 4px solid var(--accent); }
+.radius-row { display: flex; gap: var(--space-5); flex-wrap: wrap; margin-top: var(--space-2); }
+.radius-demo { width: 108px; height: 76px; background: var(--surface-sunken); border: 2px solid var(--line-strong); display: grid; place-items: end start; padding: 8px; font-family: var(--font-code); font-size: 11px; color: var(--ink-soft); }
+.shadow-row { display: flex; gap: var(--space-6); flex-wrap: wrap; margin-top: var(--space-4); }
+.shadow-demo { width: 170px; height: 84px; background: var(--surface); border-radius: var(--radius-lg); display: grid; place-items: center; font-family: var(--font-code); font-size: 12px; color: var(--ink-soft); border: 1px solid var(--line); }
+
+/* ---- Motion demos ---- */
+.motion-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.motion-box { border: 1px solid var(--line); border-radius: var(--radius-lg); padding: var(--space-5); background: var(--paper); }
+.motion-box h4 { margin: 0 0 var(--space-3); font-family: var(--font-ui); font-weight: 800; font-size: 15px; }
+.motion-stage { height: 132px; position: relative; overflow: hidden; margin-bottom: var(--space-3); }
+.m-step { position: absolute; inset: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 14px 18px; font-size: 14px; box-shadow: var(--shadow-1); }
+.m-step .s-micro { margin-bottom: 4px; }
+.m-band { position: absolute; left: 0; right: 0; bottom: 0; border-radius: var(--radius-md); border: 1px solid var(--attr-pass-border); background: var(--attr-pass-surface); color: var(--attr-pass-ink); font-weight: 800; font-size: 14.5px; padding: 10px 14px; display: flex; gap: 10px; align-items: center; }
+.m-band .band-icon { width: 22px; height: 22px; margin: 0; background: var(--attr-pass-ink); }
+.replay { font-family: var(--font-ui); font-weight: 800; font-size: 13.5px; color: var(--accent-ink); background: var(--accent-tint); border: 0; border-radius: var(--radius-pill); padding: 7px 16px; cursor: pointer; }
+/* step-advance animation */
+@keyframes stepOut { to { opacity: 0; transform: translateY(-12px); } }
+@keyframes stepIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+.anim .m-old { animation: stepOut var(--dur-fast) var(--ease-out-soft) forwards; }
+.anim .m-new { opacity: 0; animation: stepIn var(--dur-base) var(--ease-out-soft) 120ms forwards; }
+.m-new { opacity: 0; }
+/* feedback arrival */
+@keyframes bandIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes checkPop { 0% { transform: scale(.3); } 70% { transform: scale(1.18); } 100% { transform: scale(1); } }
+.m-band { opacity: 0; }
+.anim2 .m-band { animation: bandIn var(--dur-base) var(--ease-out-soft) forwards; }
+.anim2 .m-band .band-icon { animation: checkPop var(--dur-slow) var(--ease-spring) 120ms backwards; }
+
+table.mt { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+table.mt th { text-align: left; font-size: var(--text-micro); font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); padding: 8px 12px 8px 0; border-bottom: 1px solid var(--line); }
+table.mt td { padding: 9px 12px 9px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.mt td:first-child { font-family: var(--font-code); font-size: 13px; white-space: nowrap; }
+
+.questions { background: var(--accent-tint); border: 1px solid var(--accent); border-radius: var(--radius-xl); padding: var(--space-6) var(--space-8); }
+.questions h3 { margin-top: 0; }
+.questions ol { padding-left: 22px; margin: 0; }
+.questions li { margin-bottom: var(--space-3); }
+@media (max-width: 760px) {
+  .candidate-cards, .motion-grid { grid-template-columns: 1fr; }
+  .spec-row { grid-template-columns: 1fr; gap: var(--space-2); }
+}
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <!-- ================= HEADER ================= -->
+  <header class="doc-header">
+    <div class="wordmark">
+      <div class="wordmark-glyph" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+      <span class="wordmark-name">Trellis</span>
+    </div>
+    <h1>Visual Direction v1 — “Greenhouse”</h1>
+    <p class="doc-meta">Typography · code treatment · color system incl. semantic attribution palette · spacing tokens · motion. For approval before Cell Runner layout. June 9, 2026.</p>
+  </header>
+
+  <!-- ================= 0. REASONING ================= -->
+  <div class="intent">
+    <div class="eyebrow">Assumptions &amp; design reasoning</div>
+    <p style="margin-bottom:8px;">Working name <strong>“Greenhouse”</strong>: a warm, light page where prose lives, and a dark <em>terrarium</em> panel where code lives — code reads as a distinct, special place you peer into. Soft rounded shapes and pressable buttons give the teen-friendly energy; restraint in color keeps it calm and low-anxiety.</p>
+    <ul>
+      <li><strong>The semantic palette is the loudest color on screen.</strong> Everything else (warm neutrals, one accent) stays quiet so attribution color always reads instantly — and amber never has to compete with decorative orange.</li>
+      <li><strong>Misconception ≠ error</strong> is carried three ways at once: hue (warm amber vs. crimson), icon (magnifier “let’s look closer” vs. factual “!”), and label typography — never color alone (§5 a11y).</li>
+      <li><strong>Determinism in tone:</strong> motion is short, mechanical and settles fast; nothing pulses or “thinks.” The only flourish is a brief check-pop on <em>pass</em>, as approved.</li>
+      <li>Fonts are Google-Fonts loaded here for preview but all three families are self-hostable (Fontsource/woff2) per the static-hosting constraint.</li>
+      <li>Dark mode: I propose shipping <strong>dark token values as a spec table</strong> with the final system, with full mockups light-only — keeps the deliverable tight. Flag if you want more.</li>
+    </ul>
+  </div>
+
+  <!-- ================= 1. TYPOGRAPHY ================= -->
+  <h2><span class="sec-num">1</span>Typography</h2>
+  <p class="lede">Three families, three jobs. <strong>Baloo 2</strong> (display) brings the rounded warmth for titles and feedback labels; <strong>Nunito Sans</strong> (UI) does all reading work — humanist, generous x-height, friendly without being childish; <strong>JetBrains Mono</strong> (code) is the most beginner-legible mono we can self-host: tall x-height, unambiguous <code class="chip">0O</code> / <code class="chip">1lI</code> — with <strong>ligatures disabled</strong> so beginners always see the real characters they typed.</p>
+
+  <div class="exhibit">
+    <div class="spec-row">
+      <div class="spec-token">--text-display · 28px<br/>Baloo 2 · 700<br/><i>cell title</i></div>
+      <div class="s-display">Tying strings together with +</div>
+    </div>
+    <div class="spec-row">
+      <div class="spec-token">--text-title · 20px<br/>Nunito Sans · 800<br/><i>step prompt</i></div>
+      <div class="s-title">The computer is about to greet Alan. What gets printed?</div>
+    </div>
+    <div class="spec-row">
+      <div class="spec-token">--text-body · 17px / 1.65<br/>Nunito Sans · 400<br/><i>watch body, feedback, hints</i></div>
+      <div class="s-body prose-demo">The computer is greedy — it does <strong>not</strong> sprinkle in spaces for you. Every space you want in the output has to live inside the quotes. Inline code sits in a warm chip: <code>"Hi " + name</code> reads at 88% of body size.</div>
+    </div>
+    <div class="spec-row">
+      <div class="spec-token">--text-small · 14.5px<br/>Nunito Sans · 600<br/><i>peek-back, captions</i></div>
+      <div class="s-small">Reviewed earlier: “The + that glues text” · completed</div>
+    </div>
+    <div class="spec-row">
+      <div class="spec-token">--text-micro · 12.5px<br/>800 · caps · .12em<br/><i>eyebrows, badges</i></div>
+      <div class="s-micro">Step 2 of 4 · Predict</div>
+    </div>
+    <div class="spec-row">
+      <div class="spec-token">--text-code · 15px / 1.7<br/>JetBrains Mono · 400<br/><i>editor, code blocks</i></div>
+      <div class="s-code">print("This " + "is" + " cool!")</div>
+    </div>
+    <div class="note"><b>Rationale:</b> body is 17px (not 16) because our readers are new to reading code-adjacent prose; line-height 1.65 keeps watch-step paragraphs airy. Baloo 2 is reserved for moments of personality (titles, feedback labels, big numbers) — it never sets body copy. Nunito Sans weights: 400 body · 600 small/meta · 800 prompts &amp; buttons.</div>
+  </div>
+
+  <!-- ================= 2. CODE TREATMENT ================= -->
+  <h2><span class="sec-num">2</span>Code treatment — the dark terrarium</h2>
+  <p class="lede">One dark surface, used everywhere code appears: the CodeMirror editor, <code class="chip">watch</code>/<code class="chip">predict</code> code blocks, and revealed solutions. Deep blue-slate (never pure black) so it feels like glass, not a void. Captured stdout docks beneath the code in a darker console strip — output is visually <em>“what came out the bottom.”</em></p>
+
+  <div class="exhibit">
+    <div class="eyebrow">Build step editor · locked region + active line + selection + output</div>
+    <div class="editor-mock">
+      <div class="editor-body">
+        <div class="ed-line locked"><span class="ed-num">1</span><span class="ed-src"><span class="tok-kw">def</span> <span class="tok-fn">greet</span>(name):</span></div>
+        <div class="ed-line locked"><span class="ed-num">2</span><span class="ed-src">    <span class="tok-com"># join "Hi", a space, the name, and "!" into one string</span></span></div>
+        <div class="ed-line active"><span class="ed-num">3</span><span class="ed-src">    <span class="tok-kw">return</span> <span class="ed-sel"><span class="tok-str">"Hi "</span> + name</span> + <span class="tok-str">"!"</span><span class="cursor-caret"></span></span></div>
+        <div class="ed-line"><span class="ed-num">4</span><span class="ed-src"></span></div>
+        <div class="ed-line"><span class="ed-num">5</span><span class="ed-src"><span class="tok-fn">print</span>(<span class="tok-fn">greet</span>(<span class="tok-str">"Alan"</span>), <span class="tok-num">7</span>)</span></div>
+      </div>
+      <div class="console">
+        <div class="console-label">OUTPUT</div>
+        <div class="console-out">Hi Alan! 7</div>
+      </div>
+    </div>
+    <div class="note"><b>Locked regions</b> (scaffolding the learner can’t edit): dimmed to 72%, faint fill, a <b>dashed left rail</b> + tiny lock beside the line number — reads as “rails of the trellis,” present but clearly not yours to change. Cursor over a locked line: default arrow, not text-beam.<br/><br/><b>Syntax colors</b> (4 + comment, deliberately few for beginners): keyword <b style="color:#92B3FF;">#92B3FF</b> · string <b style="color:#FFD08E;">#FFD08E</b> · number <b style="color:#8BD9B9;">#8BD9B9</b> · builtin/function <b style="color:#C0AFFF;">#C0AFFF</b> · comment <b style="color:#8290A8;">#8290A8</b> italic. All ≥ 4.5:1 on --code-bg <b>#242B39</b>. Strings are the warmest token on purpose — strings are the hero type in week one.</div>
+  </div>
+
+  <!-- ================= 3. COLOR SYSTEM ================= -->
+  <h2><span class="sec-num">3</span>Color system</h2>
+
+  <h3>Warm neutrals</h3>
+  <div class="exhibit">
+    <div class="swatch-grid">
+      <div class="swatch"><div class="swatch-color" style="background:var(--paper); border-bottom:1px solid var(--line);"></div><div class="swatch-info"><b>--paper</b>#FBF9F5 · page</div></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--surface); border-bottom:1px solid var(--line);"></div><div class="swatch-info"><b>--surface</b>#FFFFFF · cards</div></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--surface-sunken);"></div><div class="swatch-info"><b>--surface-sunken</b>#F4F0E9 · wells</div></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--line);"></div><div class="swatch-info"><b>--line</b>#E9E3D8 · hairlines</div></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--line-strong);"></div><div class="swatch-info"><b>--line-strong</b>#D8D0C1 · inputs</div></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--ink-faint);"></div><div class="swatch-info"><b>--ink-faint</b>#A39A8B · disabled</div></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--ink-soft);"></div><div class="swatch-info"><b>--ink-soft</b>#6F675C · secondary</div></div>
+      <div class="swatch"><div class="swatch-color" style="background:var(--ink);"></div><div class="swatch-info"><b>--ink</b>#3B362E · text</div></div>
+    </div>
+    <div class="note">Warm-toned throughout (a hint of cream, chroma ≈ 0.01–0.02) — pairs with amber feedback instead of fighting it, and makes the cool dark editor pop as “a different material.”</div>
+  </div>
+
+  <h3>The semantic attribution palette — final proposal</h3>
+  <p>Each attribution gets a triad: <code class="chip">-ink</code> (label, icon, ≥4.5:1 on its surface), <code class="chip">-surface</code> (band fill), <code class="chip">-border</code>. Bands are soft-filled rounded panels — <strong>no harsh left-border-only treatment, no pure saturated fills</strong>. Meaning is always carried by color + icon + label together. Real authored copy below.</p>
+
+  <div class="exhibit">
+    <div class="band b-pass" role="presentation">
+      <span class="band-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.2 3.2L13 5" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <div>
+        <div class="band-label">Correct</div>
+        <div class="band-body">Celebrate briefly, then get out of the way — one line max, then the Continue button takes focus.</div>
+      </div>
+    </div>
+    <div class="band b-mis" role="presentation">
+      <span class="band-icon"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="6.7" cy="6.7" r="4.2" stroke="#fff" stroke-width="2.1"/><path d="M10.2 10.2L14 14" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg></span>
+      <div>
+        <div class="band-label">Let’s look closer</div>
+        <div class="band-body">That’s the big one! <code>"text" + number</code> crashes with a TypeError — Python will not secretly turn a number into text. You have to convert it yourself: wrap the number in <code>str(...)</code>, or use an f-string: <code>f"Your random number is: {number}"</code>.</div>
+      </div>
+    </div>
+    <div class="band b-mm" role="presentation">
+      <span class="band-icon" style="font-weight:800; font-size:13px; font-family:var(--font-code);">≈</span>
+      <div>
+        <div class="band-label">Not quite</div>
+        <div class="band-body">Wrong, but no specific diagnosis — neutral, no blame, no theatrics.</div>
+        <div class="band-reveal">Expected: HiAlan</div>
+      </div>
+    </div>
+    <div class="band b-err" role="presentation">
+      <span class="band-icon" style="font-weight:800; font-size:14px; font-family:var(--font-ui);">!</span>
+      <div>
+        <div class="band-label">Runtime error</div>
+        <span class="errchip">TypeError · line 2</span>
+        <div class="band-body" style="font-family:var(--font-code); font-size:13.5px;">can only concatenate str (not "int") to str</div>
+      </div>
+    </div>
+    <div class="note"><b>How amber stays warm, not “warning”:</b> (1) hue #9C6310 sits clearly orange-of-yellow, far from crimson; (2) its surface #FCF2DF is the creamiest of the four — closest to the page itself, so it feels like the page leaning in, not an alert landing on it; (3) the magnifier icon + Baloo label “Let’s look closer” read as an invitation. Mismatch is deliberately the <b>quietest</b> band (olive, smallest visual temperature). Error is factual: calm crimson + a mono error chip with type and line — never an icon of alarm (no triangles).<br/><br/><b>Tokens:</b><br/>pass &nbsp;#1A7F4B / #E9F6EE / #BFE3CD<br/>misconception &nbsp;#9C6310 / #FCF2DF / #EFD9AB<br/>mismatch &nbsp;#7E6A14 / #F7F3DD / #E4DAAA<br/>syntax+runtime &nbsp;#BE4039 / #FBEDEB / #F1CCC7</div>
+  </div>
+
+  <!-- ================= 4. ACCENT CANDIDATES ================= -->
+  <h2><span class="sec-num">4</span>Brand accent — three candidates</h2>
+  <p class="lede">The accent is everything <em>interactive but not evaluative</em>: primary buttons, selected choices, focus rings, progress. Click a candidate to apply it to the live sample below.</p>
+
+  <div class="exhibit accent-demo" id="accentDemo">
+    <div class="accent-switch" role="group" aria-label="accent candidates">
+      <button type="button" class="accent-pill" data-a="sprout" style="--demo-accent:#348F5C;"><span class="dot" style="background:#348F5C;"></span>A · Sprout</button>
+      <button type="button" class="accent-pill selected" data-a="bluebell" style="--demo-accent:#5263D8;"><span class="dot" style="background:#5263D8;"></span>B · Bluebell</button>
+      <button type="button" class="accent-pill" data-a="grape" style="--demo-accent:#8050C8;"><span class="dot" style="background:#8050C8;"></span>C · Grape</button>
+    </div>
+
+    <div class="demo-stage">
+      <div class="demo-progress" aria-label="step 3 of 4">
+        <span class="p-done"></span><span class="p-done"></span><span class="p-now"></span><span class="p-todo"></span>
+      </div>
+      <div class="demo-prompt">Which line keeps the answer?</div>
+      <button type="button" class="choice selected"><span class="radio"></span><span><code>name = input("What's your name? ")</code></span></button>
+      <button type="button" class="choice"><span class="radio"></span><span><code>input("What's your name? ")</code></span></button>
+      <div class="demo-actions">
+        <button type="button" class="btn-primary">Submit</button>
+        <button type="button" class="btn-ghost">Show a hint</button>
+      </div>
+    </div>
+
+    <div class="candidate-cards">
+      <div class="cand">
+        <h4>A · Sprout</h4>
+        <div class="cand-sw"><span style="background:#348F5C;"></span><span style="background:#27714A;"></span><span style="background:#E7F4EC;border:1px solid #BFE3CD;"></span></div>
+        <p>#348F5C · deep #27714A · tint #E7F4EC. Owns the trellis/growth metaphor fully. <strong>Risk:</strong> sits close to pass-green #1A7F4B — “selected” and “correct” could blur for new learners.</p>
+      </div>
+      <div class="cand">
+        <h4>B · Bluebell &nbsp;★ recommended</h4>
+        <div class="cand-sw"><span style="background:#5263D8;"></span><span style="background:#3F4FB8;"></span><span style="background:#ECEFFC;border:1px solid #C9D1F5;"></span></div>
+        <p>#5263D8 · deep #3F4FB8 · tint #ECEFFC. Periwinkle — friendly, clearly distinct from all four semantic hues, and harmonizes with the editor’s keyword blue. Green still lives in the brand glyph &amp; future course-map foliage.</p>
+      </div>
+      <div class="cand">
+        <h4>C · Grape</h4>
+        <div class="cand-sw"><span style="background:#8050C8;"></span><span style="background:#683FA8;"></span><span style="background:#F3EEFB;border:1px solid #DFD2F2;"></span></div>
+        <p>#8050C8 · deep #683FA8 · tint #F3EEFB. The most playful/teen of the three; also semantically clean. Slightly trickier to keep calm at large sizes.</p>
+      </div>
+    </div>
+    <div class="note"><b>Pressable buttons:</b> primary actions carry a 3px hard under-shadow in the accent’s deep value and physically depress on click (translateY 2px) — tactile, game-like, zero animation cost. Focus ring everywhere: 3px <code>--accent-tint</code> halo + 2px accent border (visible on the warm paper).</div>
+  </div>
+
+  <!-- ================= 5. SPACING & SHAPE ================= -->
+  <h2><span class="sec-num">5</span>Spacing, shape &amp; elevation</h2>
+  <div class="exhibit">
+    <h3 style="margin-top:0;">Spacing — 4px base</h3>
+    <div class="space-bars">
+      <div class="space-bar"><span class="lbl">--space-1 · 4px</span><span class="bar" style="width:4px;"></span></div>
+      <div class="space-bar"><span class="lbl">--space-2 · 8px</span><span class="bar" style="width:8px;"></span></div>
+      <div class="space-bar"><span class="lbl">--space-3 · 12px</span><span class="bar" style="width:12px;"></span></div>
+      <div class="space-bar"><span class="lbl">--space-4 · 16px</span><span class="bar" style="width:16px;"></span></div>
+      <div class="space-bar"><span class="lbl">--space-5 · 20px</span><span class="bar" style="width:20px;"></span></div>
+      <div class="space-bar"><span class="lbl">--space-6 · 24px</span><span class="bar" style="width:24px;"></span></div>
+      <div class="space-bar"><span class="lbl">--space-8 · 32px</span><span class="bar" style="width:32px;"></span></div>
+      <div class="space-bar"><span class="lbl">--space-10 · 40px</span><span class="bar" style="width:40px;"></span></div>
+      <div class="space-bar"><span class="lbl">--space-12 · 48px</span><span class="bar" style="width:48px;"></span></div>
+      <div class="space-bar"><span class="lbl">--space-16 · 64px</span><span class="bar" style="width:64px;"></span></div>
+    </div>
+
+    <h3>Radii — round, but grown-up</h3>
+    <div class="radius-row">
+      <div class="radius-demo" style="border-radius:var(--radius-sm);">sm · 8</div>
+      <div class="radius-demo" style="border-radius:var(--radius-md);">md · 12</div>
+      <div class="radius-demo" style="border-radius:var(--radius-lg);">lg · 16</div>
+      <div class="radius-demo" style="border-radius:var(--radius-xl);">xl · 22</div>
+      <div class="radius-demo" style="border-radius:var(--radius-pill);">pill</div>
+    </div>
+    <div class="token-list" style="margin-top:12px;">sm → chips, inline code &nbsp;·&nbsp; md → buttons, inputs &nbsp;·&nbsp; lg → bands, editor, hints &nbsp;·&nbsp; xl → step cards &nbsp;·&nbsp; pill → badges, progress</div>
+
+    <h3>Elevation — two levels only</h3>
+    <div class="shadow-row">
+      <div class="shadow-demo" style="box-shadow:var(--shadow-1);">--shadow-1 · resting cards</div>
+      <div class="shadow-demo" style="box-shadow:var(--shadow-2);">--shadow-2 · editor, dialogs</div>
+    </div>
+    <div class="note">Soft, warm-tinted shadows (umber, not black). The editor sits at <b>--shadow-2</b> permanently — the heaviest object on the page, anchoring the build step.</div>
+  </div>
+
+  <!-- ================= 6. MOTION ================= -->
+  <h2><span class="sec-num">6</span>Motion</h2>
+  <p class="lede">Short, settles fast, never loops. Replays below are real CSS using the motion tokens.</p>
+  <div class="exhibit">
+    <div class="motion-grid">
+      <div class="motion-box">
+        <h4>Step advance (full replacement, §4.4)</h4>
+        <div class="motion-stage" id="mStage1">
+          <div class="m-step m-old"><div class="s-micro">Step 2 · Predict</div>What gets printed?</div>
+          <div class="m-step m-new"><div class="s-micro">Step 3 · Recognize</div>Which line does that?</div>
+        </div>
+        <button type="button" class="replay" data-replay="1">Replay</button>
+      </div>
+      <div class="motion-box">
+        <h4>Feedback arrival + pass celebration</h4>
+        <div class="motion-stage" id="mStage2">
+          <div class="m-step"><div class="s-micro">Step 4 · Build</div>Run &amp; check…</div>
+          <div class="m-band"><span class="band-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.2 3.2L13 5" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Correct</div>
+        </div>
+        <button type="button" class="replay" data-replay="2">Replay</button>
+      </div>
+    </div>
+    <table class="mt" style="margin-top:24px;">
+      <thead><tr><th>Token / recipe</th><th>Spec</th></tr></thead>
+      <tbody>
+        <tr><td>--dur-fast · 140ms</td><td>Hover/press states; old step exits (fade + rise −12px)</td></tr>
+        <tr><td>--dur-base · 240ms</td><td>New step enters (fade + rise from +14px, 120ms after old exits); feedback band arrival (fade + rise from +8px)</td></tr>
+        <tr><td>--dur-slow · 420ms</td><td>Pass check-pop only: icon scales .3 → 1.18 → 1 on --ease-spring</td></tr>
+        <tr><td>--ease-out-soft</td><td>cubic-bezier(.22,.9,.3,1) — everything except the check-pop</td></tr>
+        <tr><td>--ease-spring</td><td>cubic-bezier(.34,1.56,.64,1) — pass celebration only</td></tr>
+        <tr><td>hint reveal</td><td>new hint level: height auto-expand + fade, --dur-base; earlier levels do not move</td></tr>
+        <tr><td>reduced motion</td><td>@media (prefers-reduced-motion: reduce) → all recipes become plain opacity fades, durations halved</td></tr>
+      </tbody>
+    </table>
+    <div class="note"><b>Tone check (§4.6 determinism):</b> the evaluating state gets <i>no spinner and no pulse</i> — grading is sub-second and mechanical. The Submit button simply depresses and the band arrives. The only waiting UI in the product is the one-time runtime warm-up, which gets honest copy (“Getting Python ready…”) — designed in the next deliverable.</div>
+  </div>
+
+  <!-- ================= 7. QUESTIONS ================= -->
+  <h2><span class="sec-num">7</span>Decisions I need from you</h2>
+  <div class="questions">
+    <ol>
+      <li><strong>Accent:</strong> A Sprout / B Bluebell (my recommendation) / C Grape?</li>
+      <li><strong>Misconception band extra:</strong> the bundle contains each misconception’s <em>title</em> (e.g. “Glued text directly to a number — expected Python to auto-convert”). Showing it as a small chip in the band would make the diagnosis feel <em>named</em> — but it’s content the current FeedbackPanel doesn’t render, so it’s a (tiny) behavior addition. Want me to design it in, or stay strictly within current props?</li>
+      <li><strong>Dark mode scope:</strong> OK to deliver dark as a token-value table only (no full dark mockups)?</li>
+      <li>Anything in the semantic hues you want warmer/cooler before I propagate them into every state of the Cell Runner?</li>
+    </ol>
+  </div>
+
+</div>
+
+<script>
+// Accent candidate switcher
+(function () {
+  var demo = document.getElementById("accentDemo");
+  var palettes = {
+    sprout:   { accent: "#348F5C", deep: "#27714A", tint: "#E7F4EC", ink: "#27714A" },
+    bluebell: { accent: "#5263D8", deep: "#3F4FB8", tint: "#ECEFFC", ink: "#3A48A8" },
+    grape:    { accent: "#8050C8", deep: "#683FA8", tint: "#F3EEFB", ink: "#683FA8" }
+  };
+  var pills = demo.querySelectorAll(".accent-pill");
+  pills.forEach(function (pill) {
+    pill.addEventListener("click", function () {
+      pills.forEach(function (p) { p.classList.remove("selected"); });
+      pill.classList.add("selected");
+      var pal = palettes[pill.getAttribute("data-a")];
+      demo.style.setProperty("--demo-accent", pal.accent);
+      demo.style.setProperty("--demo-deep", pal.deep);
+      demo.style.setProperty("--demo-tint", pal.tint);
+      demo.style.setProperty("--demo-ink", pal.ink);
+    });
+  });
+})();
+// Motion replays
+(function () {
+  var s1 = document.getElementById("mStage1");
+  var s2 = document.getElementById("mStage2");
+  function replay(el, cls) {
+    el.classList.remove(cls);
+    void el.offsetWidth; // reflow to restart animation
+    el.classList.add(cls);
+  }
+  document.querySelectorAll("[data-replay]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      if (btn.getAttribute("data-replay") === "1") replay(s1, "anim");
+      else replay(s2, "anim2");
+    });
+  });
+  // auto-play once on load
+  setTimeout(function () { s1.classList.add("anim"); s2.classList.add("anim2"); }, 600);
+})();
+</script>
+</body>
+</html>
