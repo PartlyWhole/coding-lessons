@@ -39,6 +39,30 @@ describe("GenSpec", () => {
   it("rejects an unknown generator type (closed union)", () => {
     expect(validate(GenSpec, { param: "x", type: "dict" }).ok).toBe(false);
   });
+
+  it("accepts a top-level list generator whose elem omits param (§6.4: param binds an entrypoint arg; an element has none — the loops guessing-game case)", () => {
+    const g = {
+      param: "guesses",
+      type: "list",
+      min: 1,
+      max: 8,
+      elem: { type: "choice", choices: [1, 25, 50, 75, 82, 90, 99, 100] },
+    };
+    expect(validate(GenSpec, g).ok).toBe(true);
+  });
+
+  it("still requires param on a top-level generator (the element-only relaxation must not loosen the root)", () => {
+    expect(validate(GenSpec, { type: "int", min: 0, max: 9 }).ok).toBe(false);
+  });
+
+  it("accepts a nested list-of-lists element generator (ElemSpec stays recursive)", () => {
+    const g = {
+      param: "matrix",
+      type: "list",
+      elem: { type: "list", elem: { type: "int", min: 0, max: 9 } },
+    };
+    expect(validate(GenSpec, g).ok).toBe(true);
+  });
 });
 
 describe("EvaluatorConfig", () => {

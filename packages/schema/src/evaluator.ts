@@ -68,17 +68,21 @@ export const AstConfig = Type.Object({
 export type AstConfig = Static<typeof AstConfig>;
 
 // §6.4
-export const GenSpec = Type.Recursive((Self) =>
+const GenKind = Type.Union([
+  Type.Literal("int"),
+  Type.Literal("float"),
+  Type.Literal("str"),
+  Type.Literal("list"),
+  Type.Literal("bool"),
+  Type.Literal("choice"),
+]);
+
+// An element generator (the `elem` of a `list`). It has NO `param`: per §6.4 `param`
+// names an entrypoint argument, and a list element binds to no such argument. Recursive
+// so a list-of-lists element nests cleanly.
+export const ElemSpec = Type.Recursive((Self) =>
   Type.Object({
-    param: Type.String(),
-    type: Type.Union([
-      Type.Literal("int"),
-      Type.Literal("float"),
-      Type.Literal("str"),
-      Type.Literal("list"),
-      Type.Literal("bool"),
-      Type.Literal("choice"),
-    ]),
+    type: GenKind,
     min: Type.Optional(Type.Number()),
     max: Type.Optional(Type.Number()),
     alphabet: Type.Optional(Type.String()),
@@ -86,6 +90,20 @@ export const GenSpec = Type.Recursive((Self) =>
     choices: Type.Optional(Type.Array(Json)),
   }),
 );
+export type ElemSpec = Static<typeof ElemSpec>;
+
+// A top-level generator: `param` is REQUIRED (it binds the generated value to a named
+// entrypoint argument). Its `elem` is a paramless ElemSpec — the root invariant stays
+// strict while element generators are correctly param-free.
+export const GenSpec = Type.Object({
+  param: Type.String(),
+  type: GenKind,
+  min: Type.Optional(Type.Number()),
+  max: Type.Optional(Type.Number()),
+  alphabet: Type.Optional(Type.String()),
+  elem: Type.Optional(ElemSpec),
+  choices: Type.Optional(Type.Array(Json)),
+});
 export type GenSpec = Static<typeof GenSpec>;
 
 export const PropertyConfig = Type.Object({
