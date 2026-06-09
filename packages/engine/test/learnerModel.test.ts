@@ -67,6 +67,33 @@ describe("applyDiagnosis", () => {
     expect(after.skills["skill.var.assign"]!.mastery).toBe(0);
     expect(after.skills["skill.var.assign"]!.attempts).toBe(1);
   });
+
+  it("does not mutate the input model's misconceptionCounts map", () => {
+    const before = model({ "skill.random.randint": 0.5 });
+    before.skills["skill.random.randint"]!.misconceptionCounts["mis.random.no_import"] = 3;
+    const d = diag({
+      correct: false,
+      attribution: "misconception",
+      misconceptionId: "mis.random.no_import",
+      skillDeltas: [{ skill: "skill.random.randint", kind: "misconception", weight: 0.4 }],
+    });
+    const after = applyDiagnosis(before, d, DEFAULT_CONFIG);
+    expect(after.skills["skill.random.randint"]!.misconceptionCounts["mis.random.no_import"]).toBe(4);
+    // input untouched (deep purity of the nested count map)
+    expect(before.skills["skill.random.randint"]!.misconceptionCounts["mis.random.no_import"]).toBe(3);
+  });
+
+  it("a misconception delta with no misconceptionId lowers mastery but bumps no count", () => {
+    const before = model({ "skill.random.randint": 0.5 });
+    const d = diag({
+      correct: false,
+      attribution: "misconception",
+      skillDeltas: [{ skill: "skill.random.randint", kind: "misconception", weight: 0.4 }],
+    });
+    const after = applyDiagnosis(before, d, DEFAULT_CONFIG);
+    expect(after.skills["skill.random.randint"]!.mastery).toBeCloseTo(0.44, 10);
+    expect(after.skills["skill.random.randint"]!.misconceptionCounts).toEqual({});
+  });
 });
 
 describe("targetUpstream", () => {
@@ -78,5 +105,14 @@ describe("targetUpstream", () => {
   it("returns null when all upstream skills are at/above threshold", () => {
     const m = model({ "skill.var.assign": 0.9, "skill.output.print_literal": 0.9 });
     expect(targetUpstream(m, "skill.random.randint", bundle, DEFAULT_CONFIG)).toBeNull();
+  });
+
+  it("breaks ties by id ascending when two upstream skills share the lowest mastery", () => {
+    // random.randint upstream = [var.assign, print_literal]; both at 0.3 (tie).
+    // "skill.output.print_literal" < "skill.var.assign" lexicographically → it wins.
+    const m = model({ "skill.var.assign": 0.3, "skill.output.print_literal": 0.3 });
+    expect(targetUpstream(m, "skill.random.randint", bundle, DEFAULT_CONFIG)).toBe(
+      "skill.output.print_literal",
+    );
   });
 });
