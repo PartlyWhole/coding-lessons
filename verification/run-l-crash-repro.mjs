@@ -24,7 +24,8 @@ await page.addInitScript(() => {
   });
 });
 
-await page.goto("http://localhost:8765/packages/client/index.html");
+const PORT = process.env.TRELLIS_PORT ?? "8765";
+await page.goto(`http://localhost:${PORT}/packages/client/index.html`);
 
 // ── reach the predict step ───────────────────────────────────────────────
 const watch = page.locator('section[aria-label="watch step"]');
