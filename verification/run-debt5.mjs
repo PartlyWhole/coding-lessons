@@ -45,7 +45,10 @@ const readIdb = () =>
       }),
   );
 
-await page.goto("http://localhost:8765/verification/app/index.html");
+// The REAL static host: packages/client/index.html + dist/app/* built by
+// `pnpm --filter @trellis/client build` (scripts/build-app.mjs), served by
+// `python -m http.server 8765` from the repo root — no server logic.
+await page.goto("http://localhost:8765/packages/client/index.html");
 
 // ── 1. watch step renders (app booted from the static host) ─────────────
 const watch = page.locator('section[aria-label="watch step"]');
@@ -67,7 +70,9 @@ record("2-keyed-step-replacement", markerGone && watchGone, { newNodeHasNoMarker
 await predict.locator('input[type="radio"][value="b"]').check();
 await predict.getByRole("button", { name: "Submit" }).click();
 await page.locator('[aria-label="feedback"]').waitFor({ timeout: 10000 });
-const predictFeedbackColor = await page.locator('[aria-label="feedback"]').evaluate((el) => getComputedStyle(el).color);
+// Greenhouse styles attribution via the band's border/surface (--fb-* custom props keyed
+// off feedback--{attribution}), not element color — probe borderColor.
+const predictFeedbackColor = await page.locator('[aria-label="feedback"]').evaluate((el) => getComputedStyle(el).borderColor);
 await page.getByRole("button", { name: "Continue" }).click();
 
 // ── 3. recognize step: correct choice → pass feedback → continue ────────
@@ -89,7 +94,7 @@ await build.getByRole("button", { name: /run.*check/i }).click();
 const feedback = page.locator('[aria-label="feedback"]');
 await feedback.waitFor({ timeout: 120000 }); // first grade may cold-load Pyodide from the CDN
 const fbText = await feedback.innerText();
-const fbColor = await feedback.evaluate((el) => getComputedStyle(el).color);
+const fbColor = await feedback.evaluate((el) => getComputedStyle(el).borderColor);
 record(
   "4-real-pyodide-grades-misconception",
   /str\(|f-string/i.test(fbText), // the authored mis.concat.str_num feedback text rendered
@@ -126,7 +131,7 @@ await page.keyboard.type('def announce(number): return f"Your random number is: 
 await build.getByRole("button", { name: /run.*check/i }).click();
 await feedback.waitFor({ timeout: 60000 });
 const fbText2 = await feedback.innerText();
-const fbColor2 = await feedback.evaluate((el) => getComputedStyle(el).color);
+const fbColor2 = await feedback.evaluate((el) => getComputedStyle(el).borderColor);
 await page.getByRole("button", { name: "Continue" }).click();
 const complete = await page.locator(".cell-complete").count();
 record(

@@ -19,9 +19,9 @@
       "name": "4-real-pyodide-grades-misconception",
       "pass": true,
       "evidence": {
-        "feedbackText": "Let's look closer\n\nThat's the big one! `\"text\" + number` crashes with a TypeError — Python will not secretly turn a number into text. You have to convert it yourself: wrap the number in `str(...)`, as in `\"Your random number is: \" + str(number)`, or use an f-string: `f\"Your random number is: {number}\"`. Both turn the number into text first.",
-        "feedbackColor": "rgb(191, 135, 0)",
-        "passFeedbackColorOnPredict": "rgb(26, 127, 55)",
+        "feedbackText": "Let's look closer\nGlued text directly to a number — expected Python to auto-convert\n\nThat's the big one! `\"text\" + number` crashes with a TypeError — Python will not secretly turn a number into text. You have to convert it yourself: wrap the number in `str(...)`, as in `\"Your random number is: \" + str(number)`, or use an f-string: `f\"Your random number is: {number}\"`. Both turn the number into tex",
+        "feedbackColor": "rgb(239, 217, 171)",
+        "passFeedbackColorOnPredict": "rgb(191, 227, 205)",
         "pyodideCdnAssetsFetched": [
           "pyodide.mjs",
           "python_stdlib.zip",
@@ -51,8 +51,8 @@
       "pass": true,
       "evidence": {
         "passFeedback": "Correct",
-        "passColor": "rgb(26, 127, 55)",
-        "misconceptionColor": "rgb(191, 135, 0)",
+        "passColor": "rgb(191, 227, 205)",
+        "misconceptionColor": "rgb(239, 217, 171)",
         "attributionColorsDiffer": true,
         "cellComplete": true
       }
