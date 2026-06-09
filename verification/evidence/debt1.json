@@ -1,0 +1,191 @@
+{
+  "url": "http://localhost:8765/verification/debt1.html",
+  "results": [
+    {
+      "name": "1-cdn-pin-resolves",
+      "pass": true,
+      "evidence": {
+        "PYODIDE_VERSION": "0.27.2",
+        "PINNED_PYODIDE_URL": "https://cdn.jsdelivr.net/pyodide/v0.27.2/full/",
+        "httpStatus": 200
+      }
+    },
+    {
+      "name": "2-cold-start-warming-observable",
+      "pass": true,
+      "evidence": {
+        "statusAtCreate": {
+          "warming": 2,
+          "ready": 0,
+          "running": 0,
+          "total": 2
+        },
+        "statusAfterWarmup": {
+          "warming": 1,
+          "ready": 1,
+          "running": 0,
+          "total": 2
+        },
+        "warmupMs": 1241,
+        "budgetMs": 30000
+      }
+    },
+    {
+      "name": "3-basic-run-stdout",
+      "pass": true,
+      "evidence": {
+        "ran": true,
+        "stdout": "hello from real pyodide\n",
+        "wallMs": 1.0999999940395355,
+        "timedOut": false
+      }
+    },
+    {
+      "name": "4-fresh-namespace-per-call",
+      "pass": true,
+      "evidence": {
+        "firstRun": {
+          "ran": true,
+          "stdout": "set 42\n",
+          "wallMs": 0.5,
+          "timedOut": false
+        },
+        "secondRun": {
+          "ran": true,
+          "stdout": "",
+          "wallMs": 0.5,
+          "timedOut": false,
+          "error": {
+            "type": "runtime",
+            "message": "NameError: name 'x' is not defined",
+            "line": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "5-js-ffi-probe",
+      "pass": null,
+      "evidence": {
+        "import_js": {
+          "ran": true,
+          "stdout": "<class 'pyodide.ffi.JsProxy'>\n",
+          "wallMs": 0.5,
+          "timedOut": false
+        },
+        "import_pyodide_js": {
+          "ran": true,
+          "stdout": "<class 'pyodide.ffi.JsProxy'>\n",
+          "wallMs": 0.4000000059604645,
+          "timedOut": false
+        }
+      }
+    },
+    {
+      "name": "6-syntax-error-line",
+      "pass": true,
+      "evidence": {
+        "ran": false,
+        "stdout": "",
+        "wallMs": 1.199999988079071,
+        "timedOut": false,
+        "error": {
+          "type": "syntax",
+          "message": "invalid syntax",
+          "line": 1
+        }
+      }
+    },
+    {
+      "name": "7-runtime-error-line",
+      "pass": true,
+      "evidence": {
+        "ran": true,
+        "stdout": "",
+        "wallMs": 0.7999999821186066,
+        "timedOut": false,
+        "error": {
+          "type": "runtime",
+          "message": "ZeroDivisionError: division by zero",
+          "line": 2
+        }
+      }
+    },
+    {
+      "name": "8-entrypoint-return-value",
+      "pass": true,
+      "evidence": {
+        "ran": true,
+        "stdout": "",
+        "wallMs": 0.5,
+        "timedOut": false,
+        "returnValue": 5
+      }
+    },
+    {
+      "name": "9-stdin",
+      "pass": true,
+      "evidence": {
+        "ran": true,
+        "stdout": "abc\n",
+        "wallMs": 0.5999999940395355,
+        "timedOut": false
+      }
+    },
+    {
+      "name": "10-watchdog-terminate-and-respawn",
+      "pass": true,
+      "evidence": {
+        "timedOutResult": {
+          "ran": false,
+          "stdout": "",
+          "wallMs": 2000.699999988079,
+          "timedOut": true
+        },
+        "watchdogMs": 2001,
+        "followUpRun": {
+          "ran": true,
+          "stdout": "alive after kill\n",
+          "wallMs": 1.4000000059604645,
+          "timedOut": false
+        },
+        "statusAfterKill": {
+          "warming": 1,
+          "ready": 1,
+          "running": 0,
+          "total": 2
+        }
+      }
+    },
+    {
+      "name": "11-memory-cap-probe",
+      "pass": null,
+      "evidence": {
+        "ran": true,
+        "stdout": "allocated 629145600\n",
+        "wallMs": 171.80000001192093,
+        "timedOut": false
+      }
+    },
+    {
+      "name": "12-warm-run-latency",
+      "pass": true,
+      "evidence": {
+        "warmRunMs": 3,
+        "coldWarmupMs": 1241
+      }
+    },
+    {
+      "name": "13-pygame-ce-wheel-smoke",
+      "pass": true,
+      "evidence": {
+        "pygameVersion": "2.4.1"
+      }
+    }
+  ],
+  "consoleLines": [
+    "[log] Loading pygame-ce",
+    "[log] Loaded pygame-ce",
+    "[log] pygame-ce 2.4.1 (SDL 2.28.4, Python 3.12.7)"
+  ]
+}
