@@ -14,4 +14,11 @@ describe("attribution styling (§5.1 FEEDBACK)", () => {
   it("distinguishes pass from failures by color", () => {
     expect(attributionStyle("pass").color).not.toBe(attributionStyle("syntax").color);
   });
+  it("uses the approved Greenhouse --attr-*-ink hexes (design handback 2026-06-09)", () => {
+    expect(attributionStyle("pass").color).toBe("#1A7F4B");
+    expect(attributionStyle("misconception").color).toBe("#9C6310");
+    expect(attributionStyle("mismatch").color).toBe("#7E6A14");
+    expect(attributionStyle("syntax").color).toBe("#BE4039");
+    expect(attributionStyle("runtime").color).toBe("#BE4039");
+  });
 });
