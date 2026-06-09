@@ -9,6 +9,9 @@ function predOk(where: Pred, node: JsonNode, parents: Map<JsonNode, JsonNode>): 
   if ("attr" in where) {
     const attr = where["attr"] as string;
     const val = where["eq"];
+    // NOTE: strict equality (===), unlike harness.py's Python `==`. The corpus only compares
+    // strings and `eq: true` vs a literal `True`, so they agree (the differential gate confirms);
+    // an authored `eq: 1` vs a `True` constant (or `1.0` vs `1`) WOULD diverge — re-check parity.
     if (attr === "value" && node._type === "Constant") return deepEqual(node["value"], val);
     if (attr === "ops" && node._type === "Compare") {
       const ops = (node["ops"] as JsonNode[]).map((o) => o._type);
