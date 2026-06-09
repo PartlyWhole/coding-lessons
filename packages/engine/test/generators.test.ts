@@ -37,8 +37,21 @@ describe("genValue", () => {
     const p = makePrng(1234);
     expect(["x", "y", "z"]).toContain(genValue(spec, p));
   });
-  it("bool yields a boolean", () => {
-    expect(typeof genValue({ param: "b", type: "bool" }, makePrng(1))).toBe("boolean");
+  it("float stays within [min,max]", () => {
+    const spec: GenSpec = { param: "f", type: "float", min: -2.5, max: 7.5 };
+    const p = makePrng(1234);
+    for (let i = 0; i < 500; i++) {
+      const v = genValue(spec, p) as number;
+      expect(typeof v).toBe("number");
+      expect(v).toBeGreaterThanOrEqual(-2.5);
+      expect(v).toBeLessThanOrEqual(7.5);
+    }
+  });
+  it("bool yields a boolean and reaches both values", () => {
+    const p = makePrng(1);
+    const seen = new Set<boolean>();
+    for (let i = 0; i < 50; i++) seen.add(genValue({ param: "b", type: "bool" }, p) as boolean);
+    expect(seen).toEqual(new Set([true, false]));
   });
   it("is deterministic for a fixed seed", () => {
     const spec: GenSpec = { param: "n", type: "int", min: 1, max: 100 };
