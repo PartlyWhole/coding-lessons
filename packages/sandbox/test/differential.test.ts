@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { assembleBuildSignals, evalSignature } from "@trellis/engine";
+import { assembleBuildSignals, detect } from "@trellis/engine";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
@@ -17,6 +17,32 @@ const sandbox = createLocalSandbox();
 // never changes a signature outcome — so it is harmless and still agrees with harness.
 async function signalsForBuild(step: Any, code: string) {
   return assembleBuildSignals(step, code, sandbox);
+}
+
+// §7 attribution context: build fixtures are judged the way the live engine judges them —
+// the misconception must WIN (trigger) or NOT WIN (notTrigger) detect()'s specificity-ranked
+// first-match among the step's candidates. Mirrors harness.py's detect_winner (gate 5),
+// updated together with the mis.loop.infinite_true { timedOut: true } re-key: a never-updating
+// `while cond:` also times out and matches the timedOut branch in isolation, but structural
+// mis.loop.no_update outranks it. (Design-note §5 option (a), 2026-06-09 verification session.)
+function bundleForStep(step: Any): Any {
+  const skills: Any = {};
+  const misconceptions: Any = {};
+  for (const sid of (step.skills ?? []) as string[]) {
+    const s = content.skills[sid];
+    if (!s) continue;
+    skills[sid] = {
+      id: s.id, title: s.title ?? sid, description: s.description ?? "",
+      misconceptions: (s.misconceptions ?? []).map((m: Any) => m.id), upstream: s.upstream ?? [],
+    };
+    for (const m of (s.misconceptions ?? []) as Any[]) {
+      misconceptions[m.id] = {
+        ...m, skill: m.skill ?? m._skill,
+        hintLadder: m.hintLadder ?? [], feedback: m.feedback ?? "", skillDeltas: m.skillDeltas ?? [],
+      };
+    }
+  }
+  return { contentVersion: "differential@1", skills, misconceptions, nodes: {}, cells: {}, producers: {}, requirements: {} };
 }
 
 describe("21-fixture differential: evaluate+parseAndMatch agree with harness.py gate 5", () => {
@@ -38,7 +64,7 @@ describe("21-fixture differential: evaluate+parseAndMatch agree with harness.py 
           if (fix.stepKind !== "build") continue;
           exercised++;
           const signals = await signalsForBuild(step, fix.code as string);
-          const got = evalSignature(mis.signature, { signals });
+          const got = detect(step, { signals }, bundleForStep(step)) === mis.id;
           expect(
             got,
             `${mis.id} ${label} code=${JSON.stringify(fix.code)} signals=${JSON.stringify(signals)}`,

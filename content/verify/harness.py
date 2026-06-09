@@ -4,8 +4,17 @@
 For every misconception in the bundle this harness:
   1. computes RawSignals for each `triggers`/`notTriggers` fixture by ACTUALLY running
      the code (subprocess CPython, scripted stdin) and walking the real `ast`, and
-  2. evaluates the misconception's `signature` against those signals, asserting every
-     trigger fires and every non-trigger stays silent.
+  2. evaluates the fixture the way the live engine would:
+       - BUILD fixtures assert §7 ATTRIBUTION — the misconception must WIN (trigger) or
+         NOT WIN (notTrigger) the specificity-ranked first-match among all candidate
+         misconceptions of the step's skills (detect_winner mirrors engine detect()).
+         This is what makes `{ timedOut: true }` testable offline: a never-updating
+         `while cond:` also times out, but structural mis.loop.no_update outranks the
+         bare-timeout branch of mis.loop.infinite_true, exactly as in the engine.
+       - non-build fixtures stay isolated signature matches (choice ids are step-local).
+     (Decision 2026-06-09, real-Pyodide verification session, design-note §5 option (a):
+     teach the harness §7 precedence so it remains a faithful attribution oracle, rather
+     than carving the timedOut case out of the differential.)
 And for every `build` step it runs the `property.referenceImpl` oracle against the
 step's own fixed test cases (gate 6).
 
@@ -154,9 +163,12 @@ def run(code, stdin):
         p = subprocess.run([sys.executable, "-c", code], input=stdin,
                            capture_output=True, text=True, timeout=5)
     except subprocess.TimeoutExpired:
-        # non-terminating: the product would hit the worker watchdog (§6.1). We model
-        # it as a runtime non-completion (see design note re: a `timedOut` signal).
-        return "", {"type": "runtime", "msg": "timeout (non-terminating)"}
+        # non-terminating: the product's worker watchdog kills the run (§6.1) and the
+        # engine surfaces it as the dedicated `timedOut` signal — NOT a runtime error
+        # (assembleBuildSignals sets timedOut, never runError, on a watchdog kill).
+        # Mirror that: a distinct "timeout" sentinel that build_signals maps to
+        # signals["timedOut"] and that never satisfies a `runError: runtime` leaf.
+        return "", {"type": "timeout", "msg": "timeout (non-terminating)"}
     err = None
     if p.returncode != 0:
         tail = p.stderr.strip().splitlines()[-1] if p.stderr.strip() else ""
@@ -170,7 +182,8 @@ def sig_kinds(sig, acc=None):
         if k in sig:
             for s in sig[k]: sig_kinds(s, acc)
     if "not" in sig: sig_kinds(sig["not"], acc)
-    for k in ("astTag", "runError", "testFailure", "propertyFailed", "choice", "recallEquals"):
+    for k in ("astTag", "runError", "testFailure", "propertyFailed", "choice", "recallEquals",
+              "timedOut"):
         if k in sig: acc.add(k)
     return acc
 
@@ -221,9 +234,10 @@ def build_signals(code, step, needs):
         return sig
     # Only execute if the signature actually depends on run/test signals — this both
     # speeds things up and avoids running AST-tag-only infinite-loop fixtures.
-    if not ({"runError", "testFailure", "propertyFailed"} & needs):
+    # `timedOut` is a run-dependent signal too (the watchdog can only fire on a run).
+    if not ({"runError", "testFailure", "propertyFailed", "timedOut"} & needs):
         return sig
-    failures, runtime_err = [], None
+    failures, runtime_err, timed_out = [], None, False
     for i, c in enumerate(cases):
         exp = c.get("expected")
         if entry:  # call entrypoint(input) and compare its RETURN value (§6.2)
@@ -244,10 +258,15 @@ def build_signals(code, step, needs):
             got_ok = (not err) and out == exp
         if err and err["type"] == "runtime":
             runtime_err = err
+        if err and err["type"] == "timeout":
+            timed_out = True
         if not got_ok:
             failures.append(i)
     if runtime_err:
         sig["runError"] = {"type": "runtime"}
+    if timed_out:
+        # §6.1/§7: the watchdog kill is the dedicated timedOut signal, never a runError.
+        sig["timedOut"] = True
     sig["tests"] = {"failed": len(failures), "failures": failures}
     return sig
 
@@ -270,9 +289,54 @@ def sig_match(sig, signals):
         if "caseIndex" in tf: return tf["caseIndex"] in t.get("failures", [])
         return True
     if "propertyFailed" in sig: return signals.get("propertyFailed") is True
+    if "timedOut" in sig: return signals.get("timedOut") is True
     if "choice" in sig: return signals.get("chosenChoiceId") == sig["choice"]
     if "recallEquals" in sig: return norm(signals.get("recallInput", "\0")) == norm(sig["recallEquals"])
     return False
+
+# --------------------------------------------------- §7 precedence (mirrors engine detect)
+# The engine's detect() (packages/engine/src/detect.ts) does NOT test signatures in
+# isolation: all matching misconceptions of the step's skills compete, ranked by
+# matchedSpecificity (the MOST specific leaf that actually fired: structural/direct 0,
+# behavioral 1, generic runtime 2), then static specificityRank, then id. Gate 5 mirrors
+# that for build fixtures, so the oracle asserts ATTRIBUTION (who wins), not isolated
+# signature match. This is what disambiguates `timedOut` — a never-updating `while cond:`
+# also times out, matching mis.loop.infinite_true's {timedOut} branch (rank 2), but
+# structural mis.loop.no_update (astTag, rank 0) outranks it and wins. The discriminating
+# no_update-shaped notTrigger on infinite_true therefore passes for the engine's reason.
+
+def static_rank(sig):
+    if any(k in sig for k in ("astTag", "choice", "recallEquals")): return 0
+    if any(k in sig for k in ("testFailure", "propertyFailed")): return 1
+    if any(k in sig for k in ("runError", "timedOut")): return 2
+    if "all" in sig: return min([static_rank(s) for s in sig["all"]], default=3)
+    if "any" in sig: return min([static_rank(s) for s in sig["any"]], default=3)
+    if "not" in sig: return static_rank(sig["not"])
+    return 3
+
+def matched_specificity(sig, signals):
+    if not sig_match(sig, signals): return float("inf")
+    if any(k in sig for k in ("astTag", "choice", "recallEquals")): return 0
+    if any(k in sig for k in ("testFailure", "propertyFailed")): return 1
+    if any(k in sig for k in ("runError", "timedOut")): return 2
+    if "any" in sig: return min(matched_specificity(s, signals) for s in sig["any"])
+    if "all" in sig: return min([matched_specificity(s, signals) for s in sig["all"]], default=3)
+    # A matched `not` has no positive leaf: rank by the STATIC specificity of the negated
+    # signature (mirrors matchedSpecificity in detect.ts).
+    if "not" in sig: return static_rank(sig["not"])
+    return 3
+
+def detect_winner(step, signals):
+    """first-match within the step's skills, ranked like engine detect()."""
+    cand = set()
+    for sk in step.get("skills", []):
+        for m in skills.get(sk, {}).get("misconceptions", []):
+            if sig_match(m["signature"], signals):
+                cand.add(m["id"])
+    if not cand:
+        return None
+    return sorted(cand, key=lambda mid: (matched_specificity(miscons[mid]["signature"], signals),
+                                         static_rank(miscons[mid]["signature"]), mid))[0]
 
 def signals_for(fix, mis):
     kind = fix["stepKind"]
@@ -284,7 +348,16 @@ def signals_for(fix, mis):
         step = pick_step(mis, sig_tags(mis["signature"]))
         if step is None:
             return {"_error": f"no build step certifies {mis['_skill']}"}
-        return build_signals(fix["code"], step, sig_kinds(mis["signature"]))
+        # Union the signal needs across ALL candidate misconceptions of the step's
+        # skills: the live engine always assembles the full RawSignals, and gate 5's
+        # attribution check (detect_winner) must see what every candidate would see.
+        needs = sig_kinds(mis["signature"])
+        for sk in step.get("skills", []):
+            for m in skills.get(sk, {}).get("misconceptions", []):
+                needs |= sig_kinds(m["signature"])
+        s = build_signals(fix["code"], step, needs)
+        s["_step"] = step
+        return s
     return {"_error": f"unknown stepKind {kind}"}
 
 # ------------------------------------------------------------------- run gate 5
@@ -298,7 +371,11 @@ for mid in sorted(miscons):
             s = signals_for(fix, m)
             if "_error" in s:
                 line.append(f"ERR({s['_error']})"); fails += 1; continue
-            got = sig_match(sig, s)
+            step = s.pop("_step", None)
+            # Build fixtures assert ATTRIBUTION (the misconception wins §7 precedence
+            # among the step's candidates), mirroring engine detect(). Non-build
+            # fixtures stay isolated signature matches (choice ids are step-local).
+            got = (detect_winner(step, s) == mid) if step is not None else sig_match(sig, s)
             ok = (got == want)
             if not ok:
                 fails += 1

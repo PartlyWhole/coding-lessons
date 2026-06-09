@@ -12,14 +12,22 @@ skill:
   upstream: [ skill.bool.compare, skill.cond.elif_chain ]
   misconceptions:
 
-    # The marquee loop misconception. Primary signature is the AST shape (While test is the
-    # constant True with no Break); the worker watchdog timeout is the backstop, not the detector.
+    # The marquee loop misconception. Re-keyed (design-note §5 M4 action item, executed by the
+    # real-Pyodide verification session): the PRIMARY branch is the runtime fact — the worker
+    # watchdog killed a non-terminating run ({ timedOut: true }) — with the field-scoped AST
+    # shape as corroboration. timedOut is ambiguous across infinite-loop misconceptions (a
+    # never-updating `while cond:` also times out); §7 matchedSpecificity precedence resolves
+    # it: structural mis.loop.no_update (astTag, rank 0) outranks a bare timeout (rank 2).
+    # harness.py mirrors that precedence for build fixtures (gate 5 = attribution, not
+    # isolated signature match).
     - id: mis.loop.infinite_true
       skill: skill.loop.while
       title: "Thinks `while True:` stops on its own"
-      # while True with no break (build AST), OR the recognize distractor naming it.
+      # watchdog timeout (runtime), OR while True with no break (build AST), OR the
+      # recognize distractor naming it.
       signature:
         any:
+          - { timedOut: true }
           - { astTag: infinite_true_no_break }
           - { choice: b }
       feedback: |

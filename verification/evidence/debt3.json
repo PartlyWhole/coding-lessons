@@ -1,0 +1,84 @@
+{
+  "url": "http://localhost:8765/verification/debt3.html",
+  "results": [
+    {
+      "name": "0-rekeyed-signature-in-bundle",
+      "pass": true,
+      "evidence": {
+        "signature": {
+          "any": [
+            {
+              "timedOut": true
+            },
+            {
+              "astTag": "infinite_true_no_break"
+            },
+            {
+              "choice": "b"
+            }
+          ]
+        },
+        "stepSkills": [
+          "skill.loop.termination",
+          "skill.loop.while"
+        ]
+      }
+    },
+    {
+      "name": "1-while-true-watchdog-kill-attributes-infinite_true",
+      "pass": true,
+      "evidence": {
+        "signals": {
+          "ran": false,
+          "wallMs": 2001.7000000178814,
+          "astTags": [
+            "infinite_true_no_break",
+            "while_cond_no_update"
+          ],
+          "timedOut": true
+        },
+        "detectWinner": "mis.loop.infinite_true"
+      }
+    },
+    {
+      "name": "2-bare-timeout-no-structural-tags-attributes-infinite_true",
+      "pass": true,
+      "evidence": {
+        "signals": {
+          "ran": false,
+          "wallMs": 2000.7999999821186,
+          "astTags": [],
+          "timedOut": true
+        },
+        "detectWinner": "mis.loop.infinite_true"
+      }
+    },
+    {
+      "name": "3-no_update-shaped-timeout-loses-to-structural-no_update",
+      "pass": true,
+      "evidence": {
+        "signals": {
+          "ran": false,
+          "wallMs": 2002,
+          "astTags": [
+            "while_cond_no_update"
+          ],
+          "timedOut": true
+        },
+        "detectWinner": "mis.loop.no_update",
+        "infiniteTrueLost": true
+      }
+    },
+    {
+      "name": "4-evaluate-routing-gap-documented",
+      "pass": null,
+      "evidence": {
+        "attribution": "runtime",
+        "misconceptionId": null,
+        "timedOutSignal": true,
+        "note": "evaluate() does not route !ran/timedOut through detect(); detect() itself attributes correctly (checks 1-3)"
+      }
+    }
+  ],
+  "consoleLines": []
+}
