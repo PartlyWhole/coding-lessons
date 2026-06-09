@@ -51,6 +51,10 @@ divergent local copy of a shared type.
 | **A** | M1 — `@trellis/authoring` compiler | `m1-authoring` | `packages/authoring/**` | `@trellis/schema`, `content/**`, `content/verify/harness.py`, `content/validate.py` |
 | **B** | M2 — `@trellis/engine` pure core | `m2-engine` | `packages/engine/**` | `@trellis/schema` |
 | **C** *(optional)* | M3a — `@trellis/sandbox` host | `m3a-sandbox` | `packages/sandbox/**` | `@trellis/schema` (`Sandbox`/`RunResult`) |
+| **D** | M3b — build ladder | `m3b-build-ladder` | `packages/engine/**` (`evaluate`) + `packages/sandbox/**` (`parseAndMatch`) | `@trellis/schema`, `content/**`, `content/verify/harness.py` |
+| **E** | M4 — misconceptions + hints | `m4-misconceptions-hints` | `packages/engine/**` (§9 ladder) + `packages/authoring/**` (gates 5–7) | `@trellis/schema`, `content/**`, `content/verify/harness.py`. ⚠️ `timedOut` re-key of `content/**`+`harness.py` is **orchestrator-owned** (coordinated — see §7) |
+| **F** | M5-persist — `@trellis/persist` | `m5-persist` | `packages/persist/**` (new) | `@trellis/schema` ONLY |
+| **G** | M5-client — `@trellis/client` | `m5-client` *(not yet launched)* | `packages/client/**` (new) | `@trellis/schema`, `@trellis/engine` (+M4 ladder), `@trellis/persist` |
 
 Shared, do-not-touch from a stream: `packages/schema/**`, `TECHNICAL_DESIGN.md`, `docs/**`,
 root config (`turbo.json`, `.eslintrc.cjs`, `package.json`, `pnpm-workspace.yaml`, CI), `content/**`
@@ -64,8 +68,20 @@ main (M0 ✅ + frozen contract) ──┬─► A: M1 authoring ──┐
                                  └─► C: M3a sandbox ───┘
                                           │
                   (after integration)     ▼
-                              M3b build-ladder ─► M4 misconceptions/hints ─► M5 presentation
+                              D: M3b build-ladder ✅ integrated ee79120
+                                          │
+            ┌─────────────────────────────┴─────────────────────────────┐
+            ▼ (run concurrently — disjoint paths, both off main now)     ▼
+   E: M4 misconceptions/hints (engine+authoring)            F: M5-persist @trellis/persist (schema-only dep)
+            └─────────────────────────────┬─────────────────────────────┘
+                                          ▼ (after E + F integrate)
+                              G: M5-client @trellis/client (React; needs engine+M4 ladder + persist)
 ```
+
+**Why E ∥ F is safe:** M5 splits into two new packages with different deps — `@trellis/persist` needs
+ONLY the frozen M0 schema (no engine, no M4), so it parallelizes with M4; `@trellis/client` needs the
+engine step-machine + M4's hint ladder + persist, so it follows both. E and F have **disjoint write paths**
+(engine+authoring vs. a new `packages/persist/**`); the only shared file is `pnpm-lock.yaml`.
 
 - A, B, (C) are independent and merge to `main` in any order (disjoint packages).
 - Each adds its package to `pnpm-workspace.yaml`? **No** — the glob `packages/*` already covers new
@@ -168,6 +184,9 @@ networked browser (same posture as M3a — built/verified against the local CPyt
 | A · M1 authoring | ✅ **integrated** @ `a04c082` | merged to `main` | Compiler + seven §13.2 gates (1–6 live, 7 M4-stub). **The TS matcher ↔ `harness.py` differential agrees on all 21 fixtures incl. the field forms** (real 12s run, no stub) — §6.3 rule 1 confirmed identical across implementations. CLI runs under plain node (`RESULT: PASS`, exit 0). 76 tests. Worktree `../trellis-m1` now mergeable/removable. |
 | B · M2 engine | ✅ **integrated** @ `f5a1ad8` | merged to `main` | Gating diff (`var.assign` 0.59→locked, 0.60→available) + determinism proven; engine purity confirmed; 76 tests. |
 | C · M3a sandbox | ✅ **integrated** @ `1c05031` · real-Pyodide verify **deferred** | merged to `main` | Host/watchdog/warm-pool proven vs a mock worker (23 tests). **Real Pyodide load, live `worker.terminate()`, line extraction, mem-cap, and `PYODIDE_VERSION` (0.27.2) CDN pin MUST be verified in a networked browser before M3a is verification-COMPLETE.** |
+| E · M4 misconceptions+hints | 🆕 **launching** @ `a056037` | `../trellis-m4` / `m4-misconceptions-hints` | Extends engine (§9 hint ladder) + authoring (turn on §13.2 gates 5–7). Wires the concat taxonomy `implicit_coercion`→`misconception`→feedback→4-level ladder end-to-end. Defining gate: right id + right feedback + one-level-per-press ladder, gates 5–7 live, deterministic `Diagnosis`. **⚠️ `timedOut` re-key coordination:** `content/**`+`harness.py` are orchestrator-owned — E builds the engine §7 `detect` precedence; when ready it escalates and the orchestrator applies the content/harness re-key on `main`; E rebases + verifies end-to-end. Real-Pyodide verify deferred (mock sandbox + local-CPython twin). |
+| F · M5-persist | 🆕 **launching** @ `a056037` (∥ to E) | `../trellis-m5-persist` / `m5-persist` | NEW `@trellis/persist` package — IndexedDB stores (`learner_skill`/`diagnosis`/`behavioral_event`/`content_cache`), the single atomic `commitSubmission` txn (§3.10), `appendEvents`/`recentEvents` (M6 seam), static-fetch + `contentVersion` cache. **Depends ONLY on M0 schema** → true-parallel with E. ⚠️ **Dependency pre-flight:** `idb`/`fake-indexeddb` may not be in the offline store — stream checks first, escalates if unresolvable (fallback: hand-rolled IDB wrapper + in-memory fake). |
+| G · M5-client | ⏸ **pending E + F** | `../trellis-m5-client` / `m5-client` (not yet created) | NEW `@trellis/client` — React `CellRunner`, 5 step views, CodeMirror, feedback states, hint panel, peek-back, `EventBus` stub. Launches once E + F integrate. |
 | D · M3b build ladder | ✅ **integrated** @ `ee79120` · real-Pyodide verify **deferred** | merged to `main` (worktree `../trellis-m3b` removable) | The build-evaluation ladder. **Not a disjoint package — EXTENDS `@trellis/engine` (adds `evaluate`: Run→Test→AST→Property, comparators, seeded property gen+shrink, build-path diagnose) AND `@trellis/sandbox` (the §6.3 `AstQuery` `parseAndMatch` in the worker).** Both already integrated, so it's the sequential build-out on M2+M3a; disjoint from M1 (authoring). **Does NOT depend on M1** — uses hand-authored fixtures + raw `content/`. Defining gate: the real detector agrees with `content/verify/harness.py` on all 21 fixtures. No network → real-Pyodide verify **deferred** (build vs mock sandbox + local CPython). |
 
 ## 8. Reference index

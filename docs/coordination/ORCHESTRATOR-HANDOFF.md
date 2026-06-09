@@ -142,12 +142,24 @@ they never edit `docs/coordination/**`. You merge to `main`.
 | A | M1 `@trellis/authoring` compiler | ✅ integrated `a04c082` (worktree removed) | — | `packages/authoring/**` |
 | B | M2 `@trellis/engine` pure core | ✅ integrated `f5a1ad8` (worktree removed) | — | `packages/engine/**` |
 | C | M3a `@trellis/sandbox` host | ✅ integrated `1c05031` · **Pyodide verify deferred** (worktree removed) | — | `packages/sandbox/**` |
-| **D** | **M3b build ladder** | **🔄 in flight** | `../trellis-m3b` / `m3b-build-ladder` | `packages/engine/**` (adds `evaluate`) + `packages/sandbox/**` (adds `parseAndMatch`) |
+| D | M3b build ladder | ✅ integrated `ee79120` (worktree removable) | `../trellis-m3b` / `m3b-build-ladder` | `packages/engine/**` (`evaluate`) + `packages/sandbox/**` (`parseAndMatch`) |
+| **E** | **M4 misconceptions + hints** | **🆕 launching** `a056037` | `../trellis-m4` / `m4-misconceptions-hints` | `packages/engine/**` (§9 ladder) + `packages/authoring/**` (gates 5–7) |
+| **F** | **M5-persist `@trellis/persist`** | **🆕 launching** `a056037` (∥ E) | `../trellis-m5-persist` / `m5-persist` | `packages/persist/**` (new) |
+| G | M5-client `@trellis/client` | ⏸ pending E+F | (not yet created) | `packages/client/**` (new) |
 
-A/B/C were independent disjoint packages and merged in any order; their worktrees + branches are cleaned up
-(all in `main`). **D (M3b) is the live worktree** — it extends two *already-integrated* packages (the
-sequential build-out), reads schema + `content/` + `harness.py`, and does **not** depend on M1. After D
-comes M4 then M5 (new streams/plans each, when their inputs land — see §7).
+A/B/C/D were independent/sequential and are all in `main` (A/B/C worktrees cleaned; D's removable). **The
+live front is now E ∥ F** — two NEW concurrent streams off `main` @ `a056037`, set up this session with
+worktrees + git-excluded `START-HERE.md` briefs. They have **disjoint write paths** (E = engine+authoring,
+F = a new `packages/persist/**`), so they integrate independently; only `pnpm-lock.yaml` is shared. **Key
+parallelization insight:** M5 splits into `@trellis/persist` (schema-only dep → parallel with M4 NOW) and
+`@trellis/client` (needs engine+M4+persist → Stream G, after E+F). The spec's `M4 → M5` arrow understated
+this. **Intra-stream parallelism:** each stream EXECUTES via `subagent-driven-development` (fan out over
+disjoint files; serialize the `index.ts` barrel) — briefed in each `START-HERE.md`.
+
+**⚠️ M4 `timedOut` re-key is a coordinated orchestrator task:** `content/**`+`harness.py` are shared/
+orchestrator-owned. Stream E builds the engine §7 `detect` precedence; when ready it escalates and YOU
+(orchestrator) apply the content+harness re-key on `main` (same protocol as the `field`-selector migration),
+then E rebases + verifies end-to-end. Don't let E edit shared content directly.
 
 ## 4. Your job (the orchestrator loop)
 - **Keep the sync doc current.** `docs/coordination/PARALLEL-STREAMS.md` §7 status board is yours to
