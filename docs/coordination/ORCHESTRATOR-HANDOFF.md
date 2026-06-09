@@ -18,16 +18,17 @@ This is the live picture as of the handoff. Everything below it (§0–§9) is t
 this section is the "you are here." Re-verify with `git log --oneline -15` + the §0 baseline on arrival.
 
 ### Where the build stands
-The **deterministic build core M0–M3b is COMPLETE and integrated on `main`** — 4 packages, **288 tests
+The **build core M0–M3b PLUS M4 (misconceptions+hints) is integrated on `main`** — 4 packages, **331 tests
 green** (typecheck/lint/build all clean; native-ESM imports of every `dist` clean):
 
 | Milestone | Package | Integration SHA | Tests | Notes |
 |---|---|---|---|---|
 | M0 | `@trellis/schema` | (base) | 37 | frozen contract + two session fixes (below) |
-| M1 | `@trellis/authoring` | `a04c082` | 76 | compiler + 7 §13.2 gates (1–6 live, 7 = M4 stub) + CLI |
-| M2 | `@trellis/engine` | `f5a1ad8` | 76→**120** | pure core + **M3b `evaluate` ladder** (Run→Test→AST→Property, comparators, seeded gen+shrink) |
+| M1 | `@trellis/authoring` | `a04c082` | 76→**80** | compiler + 7 §13.2 gates — **all 1–7 now live** (M4 turned on 5–7) + CLI |
+| M2 | `@trellis/engine` | `f5a1ad8` | 76→**159** | pure core + **M3b `evaluate` ladder** + **M4 §9 hint ladder + §7 match-aware precedence** |
 | M3a | `@trellis/sandbox` | `1c05031` | 23→**55** | Pyodide worker host + **M3b `parseAndMatch` + local-CPython twin**; **real-Pyodide verify DEFERRED (no network)** |
 | M3b | (extends engine+sandbox) | `ee79120` | (in the above) | build ladder; **NO frozen-contract change** — additive `BuildSandbox = Sandbox & { parseAndMatch }` (§15 `LanguageAnalyzer` seam) |
+| M4 | (extends engine+authoring) | `406b069` (+`cf7daa7`) | (in the above) | concat misconception→feedback→hint ladder end-to-end; gates 5–7 live + gate-7 golden; **NO schema change**; ⚠️ `timedOut` re-key HELD → real-Pyodide session |
 
 **M3b (Stream D) integrated `ee79120`** via the §4.1 runbook (Phase 0 pre-flight: scope = engine+sandbox
 + plan doc + 1-line lockfile delta only; schema/content/coordination-docs byte-clean; FF-merge). Both
@@ -71,16 +72,18 @@ build stream can run in parallel right now. Deferred entirely: M6 (telemetry), M
 ### Open debts & immediate next actions
 1. ~~**Await M3b's green report, then integrate via the §4.1 runbook.**~~ **DONE** — M3b integrated `ee79120`
    (288 tests; both defining gates green; no contract change). The build core M0–M3b is complete.
-2. **NOW: M4** — the live front of the single-threaded critical path. Wire concat misconception→feedback→hint
-   ladder end-to-end, turn on §13.2 gates 5–7, AND do the deferred `timedOut` re-key against the real sandbox +
-   live `detect()` precedence. Needs its own plan (`writing-plans`) on a fresh worktree. (M3b's `evaluate` +
-   `diagnose` build-path + the local-CPython twin are now its inputs, all on `main`.)
-3. **Real-Pyodide browser verification (M3a AND M3b)** — both deferred for the same reason: `parseAndMatch`,
-   the live `evaluate` ladder, real Pyodide load, live `worker.terminate()`, line extraction, mem-cap,
-   `PYODIDE_VERSION` 0.27.2 CDN pin, pygame-ce compat. Blocked only on a *networked browser* env
-   (real Pyodide load, live `worker.terminate()`, line extraction, mem-cap, `PYODIDE_VERSION` 0.27.2 CDN pin,
-   pygame-ce compat). Parallelizable any time someone has the env. M3a is "code-complete + mock-verified," NOT
-   verification-complete until this runs.
+2. ~~**M4** — wire the concat ladder end-to-end, turn on gates 5–7, do the `timedOut` re-key.~~ **DONE**
+   (integrated `406b069` + `cf7daa7`): ladder + gates 5–7 + gate-7 golden all live; **`timedOut` re-key HELD**
+   → moved to the real-Pyodide session (item 3). **NOW the live front is F (M5-persist), then Stream G
+   (M5-client) once F lands.** Critical path: F ∥ (E done) → G.
+3. **Networked-browser real-Pyodide session (clears M3a + M3b + M5 + the M4 `timedOut` re-key together).**
+   All deferred on the same blocker — a *networked browser* (real Pyodide load): M3a (`worker.terminate()`,
+   line extraction, mem-cap, `PYODIDE_VERSION` 0.27.2 CDN pin, pygame-ce), M3b (`parseAndMatch` + live
+   `evaluate` ladder under real Pyodide; 21-fixture differential with real-Pyodide executor), M5 (whole-slice
+   in-browser walkthrough + real IndexedDB reload), and now **M4's `timedOut` re-key** (apply `{timedOut:true}`
+   to `loops.taxonomy.yaml` + decide harness-precedence vs. carve-out + verify end-to-end vs. the watchdog —
+   the engine `matchedSpecificity` precedence is already on `main`). A drafted launch prompt for this session
+   exists (see session history). Parallelizable any time someone has the env.
 4. ~~**Optional tidy:** `packages/authoring/ORCHESTRATOR-REPORT.md` rode onto `main` via the M1 merge.~~
    **DONE** — removed (it was fully superseded by the §7 board + this handoff's integration record).
 
@@ -143,8 +146,8 @@ they never edit `docs/coordination/**`. You merge to `main`.
 | B | M2 `@trellis/engine` pure core | ✅ integrated `f5a1ad8` (worktree removed) | — | `packages/engine/**` |
 | C | M3a `@trellis/sandbox` host | ✅ integrated `1c05031` · **Pyodide verify deferred** (worktree removed) | — | `packages/sandbox/**` |
 | D | M3b build ladder | ✅ integrated `ee79120` (worktree removable) | `../trellis-m3b` / `m3b-build-ladder` | `packages/engine/**` (`evaluate`) + `packages/sandbox/**` (`parseAndMatch`) |
-| **E** | **M4 misconceptions + hints** | **🆕 launching** `a056037` | `../trellis-m4` / `m4-misconceptions-hints` | `packages/engine/**` (§9 ladder) + `packages/authoring/**` (gates 5–7) |
-| **F** | **M5-persist `@trellis/persist`** | **🆕 launching** `a056037` (∥ E) | `../trellis-m5-persist` / `m5-persist` | `packages/persist/**` (new) |
+| E | M4 misconceptions + hints | ✅ integrated `406b069` (+ Escalation B `cf7daa7`; worktree removable) | `../trellis-m4` / `m4-misconceptions-hints` | `packages/engine/**` (§9 ladder) + `packages/authoring/**` (gates 5–7) |
+| **F** | **M5-persist `@trellis/persist`** | **🔄 in flight** `a056037` | `../trellis-m5-persist` / `m5-persist` | `packages/persist/**` (new) |
 | G | M5-client `@trellis/client` | ⏸ pending E+F | (not yet created) | `packages/client/**` (new) |
 
 A/B/C/D were independent/sequential and are all in `main` (A/B/C worktrees cleaned; D's removable). **The
@@ -156,10 +159,16 @@ parallelization insight:** M5 splits into `@trellis/persist` (schema-only dep �
 this. **Intra-stream parallelism:** each stream EXECUTES via `subagent-driven-development` (fan out over
 disjoint files; serialize the `index.ts` barrel) — briefed in each `START-HERE.md`.
 
-**⚠️ M4 `timedOut` re-key is a coordinated orchestrator task:** `content/**`+`harness.py` are shared/
-orchestrator-owned. Stream E builds the engine §7 `detect` precedence; when ready it escalates and YOU
-(orchestrator) apply the content+harness re-key on `main` (same protocol as the `field`-selector migration),
-then E rebases + verifies end-to-end. Don't let E edit shared content directly.
+**✅ M4 integrated `406b069`; ⚠️ the `timedOut` re-key is now a real-Pyodide-session task (NOT done).**
+Stream E delivered the engine §7 `matchedSpecificity` precedence (the prerequisite — `detect-precedence.test.ts`,
+on `main`, 21-fixture differential unchanged) and turned on gates 5–7 (Escalation B golden landed `cf7daa7`,
+non-vacuous). **Escalation A — the content re-key of `mis.loop.infinite_true` onto `{timedOut:true}` — was
+HELD, not applied.** Per design-note §5 (its own pinned requirement) the re-key must be verified end-to-end
+against the **real Pyodide watchdog**; M4 only had the local-CPython twin (no network), and applying it
+offline would force papering-over the harness (it over-matches the `no_update`-shaped notTrigger, which also
+times out). **The re-key is reassigned to the networked-browser verification session** — fold it into that
+session's scope alongside the M3a/M3b/M5 Pyodide debts. The engine side is ready and waiting; zero
+corpus-detection change in the interim.
 
 ## 4. Your job (the orchestrator loop)
 - **Keep the sync doc current.** `docs/coordination/PARALLEL-STREAMS.md` §7 status board is yours to

@@ -98,6 +98,21 @@ exactly the discrimination the offline isolated-signature harness cannot reprodu
 content signature before then: in the offline harness it is untestable-or-wrong (see above), and it
 changes detection on the current corpus by exactly zero. Owner: M4 stream. Cross-ref: ORCHESTRATOR-HANDOFF §7.
 
+**▶ STATUS UPDATE (2026-06-09, M4 integrated `406b069`).** M4 (Stream E) BUILT the prerequisite — the
+engine's §7 match-aware `detect` precedence (`matchedSpecificity`: the branch that actually fired ranks the
+match), proven in `engine/test/detect-precedence.test.ts` (10 tests): a re-keyed `infinite_true` with a
+`{timedOut:true}` branch correctly LOSES to structural `no_update` on a never-updating loop and WINS on a
+true `while True:`. That machinery is on `main` and the 21-fixture differential is unchanged (backward-compatible).
+**The content re-key itself remains HELD** — orchestrator decision, upholding this note's own requirement.
+M4 was verified against the **local-CPython twin only (no network)**; this note demands the re-key be
+verified end-to-end against the **real Pyodide watchdog**, and applying it offline would force exactly the
+papering-over the §4.1 runbook forbids (the isolated-signature harness over-matches `infinite_true`'s
+`no_update`-shaped notTrigger, which times out). **The re-key is therefore reassigned from "M4 stream" to
+the networked-browser verification session** (real Pyodide present): apply `{ timedOut: true }` to
+`content/skills/loops.taxonomy.yaml`, decide whether to teach `harness.py` precedence vs. carve out the
+precedence-resolved case, and verify end-to-end against a watchdog-killed non-terminating submission. The
+engine side is ready and waiting; zero corpus-detection change in the interim.
+
 ## 6. `Compare.ops` (list-valued attribute) matching is unspecified
 
 How does `{ attr: "ops", eq: [...] }` match a `Compare` node whose `ops` is a *list* of operator
