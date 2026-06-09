@@ -148,20 +148,27 @@ Both prior open decisions are now **RESOLVED** (orchestrator + user, 2026-06-08)
 
 ## 7. Status board (orchestrator updates this — streams report, don't edit)
 
-`main` @ `51a08e0`. **M1 + M2 + M3a all integrated — the M0–M3a foundation is COMPLETE.** Merged result
-re-verified green this session: **212 tests** (schema 37 + engine 76 + sandbox 23 + authoring 76);
-typecheck/lint/build clean; native-ESM `import()` of each `dist/src/index.js` OK; `content/validate.py`
-+ `content/verify/harness.py` PASS. Frozen-schema fixes (ElemSpec `fec6b8f`, dist-exports `f9bcef6`) +
-the §6.3 `field`-selector content migration (`3a8bf73`) all landed. **M3b (Stream D) launched but has
-produced no commits yet** — its worktree sits at base `a84b8d4`, integration queue empty; M4/M5 blocked
-behind it on the single-threaded critical path. Worktrees each have a git-excluded `START-HERE.md` scaffold.
+`main` @ `ee79120`. **M1 + M2 + M3a + M3b all integrated — the deterministic build core is COMPLETE.**
+Merged result verified green this session: **288 tests** (schema 37 + engine 120 + authoring 76 +
+sandbox 55); typecheck/lint/build clean; native-ESM `import()` of each `dist/src/index.js` OK (the new
+test-only sandbox→engine devDep adds no runtime cycle); `content/validate.py` + `content/verify/harness.py`
+PASS. **M3b's two defining gates green & proven non-vacuous:** the 21-fixture differential (engine
+`evaluate` + `parseAndMatch` over the local-CPython twin agrees with `harness.py` on all 15 build-bearing
+misconceptions, oracle exits 0) and §4 acceptance (f-string + `str()` both pass; `str+number`→
+`mis.concat.str_num`; byte-identical `Diagnosis` under fixed seed). Frozen-schema fixes (ElemSpec
+`fec6b8f`, dist-exports `f9bcef6`) + the §6.3 `field`-selector content migration (`3a8bf73`) all landed;
+**M3b made NO frozen-contract change** (it consumes an additive `BuildSandbox = Sandbox & { parseAndMatch }`,
+the §15 `LanguageAnalyzer` seam realized without editing schema). **Next on the single-threaded critical
+path: M4** (misconceptions/hints end-to-end; turn on §13.2 gates 5–7; the deferred `timedOut` re-key).
+⚠️ Standing debt: real-Pyodide-in-WASM verification of `parseAndMatch` + the live ladder still needs a
+networked browser (same posture as M3a — built/verified against the local CPython twin only).
 
 | Stream | Status | Worktree / branch | Notes |
 |---|---|---|---|
 | A · M1 authoring | ✅ **integrated** @ `a04c082` | merged to `main` | Compiler + seven §13.2 gates (1–6 live, 7 M4-stub). **The TS matcher ↔ `harness.py` differential agrees on all 21 fixtures incl. the field forms** (real 12s run, no stub) — §6.3 rule 1 confirmed identical across implementations. CLI runs under plain node (`RESULT: PASS`, exit 0). 76 tests. Worktree `../trellis-m1` now mergeable/removable. |
 | B · M2 engine | ✅ **integrated** @ `f5a1ad8` | merged to `main` | Gating diff (`var.assign` 0.59→locked, 0.60→available) + determinism proven; engine purity confirmed; 76 tests. |
 | C · M3a sandbox | ✅ **integrated** @ `1c05031` · real-Pyodide verify **deferred** | merged to `main` | Host/watchdog/warm-pool proven vs a mock worker (23 tests). **Real Pyodide load, live `worker.terminate()`, line extraction, mem-cap, and `PYODIDE_VERSION` (0.27.2) CDN pin MUST be verified in a networked browser before M3a is verification-COMPLETE.** |
-| D · M3b build ladder | 🔄 **launched — 0 commits yet** (worktree @ base `a84b8d4`) | `../trellis-m3b` / `m3b-build-ladder` | The build-evaluation ladder. **Not a disjoint package — EXTENDS `@trellis/engine` (adds `evaluate`: Run→Test→AST→Property, comparators, seeded property gen+shrink, build-path diagnose) AND `@trellis/sandbox` (the §6.3 `AstQuery` `parseAndMatch` in the worker).** Both already integrated, so it's the sequential build-out on M2+M3a; disjoint from M1 (authoring). **Does NOT depend on M1** — uses hand-authored fixtures + raw `content/`. Defining gate: the real detector agrees with `content/verify/harness.py` on all 21 fixtures. No network → real-Pyodide verify **deferred** (build vs mock sandbox + local CPython). |
+| D · M3b build ladder | ✅ **integrated** @ `ee79120` · real-Pyodide verify **deferred** | merged to `main` (worktree `../trellis-m3b` removable) | The build-evaluation ladder. **Not a disjoint package — EXTENDS `@trellis/engine` (adds `evaluate`: Run→Test→AST→Property, comparators, seeded property gen+shrink, build-path diagnose) AND `@trellis/sandbox` (the §6.3 `AstQuery` `parseAndMatch` in the worker).** Both already integrated, so it's the sequential build-out on M2+M3a; disjoint from M1 (authoring). **Does NOT depend on M1** — uses hand-authored fixtures + raw `content/`. Defining gate: the real detector agrees with `content/verify/harness.py` on all 21 fixtures. No network → real-Pyodide verify **deferred** (build vs mock sandbox + local CPython). |
 
 ## 8. Reference index
 

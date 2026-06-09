@@ -12,29 +12,32 @@ doc is the durable role manual.**
 
 ---
 
-## State snapshot — read this first (2026-06-08, `main` @ `6787dff`)
+## State snapshot — read this first (2026-06-08, `main` @ `ee79120`)
 
 This is the live picture as of the handoff. Everything below it (§0–§9) is the durable role manual;
 this section is the "you are here." Re-verify with `git log --oneline -15` + the §0 baseline on arrival.
 
 ### Where the build stands
-The **deterministic foundation M0–M3a is COMPLETE and integrated on `main`** — 4 packages, **212 tests
-green** (typecheck/lint/build all clean):
+The **deterministic build core M0–M3b is COMPLETE and integrated on `main`** — 4 packages, **288 tests
+green** (typecheck/lint/build all clean; native-ESM imports of every `dist` clean):
 
 | Milestone | Package | Integration SHA | Tests | Notes |
 |---|---|---|---|---|
 | M0 | `@trellis/schema` | (base) | 37 | frozen contract + two session fixes (below) |
 | M1 | `@trellis/authoring` | `a04c082` | 76 | compiler + 7 §13.2 gates (1–6 live, 7 = M4 stub) + CLI |
-| M2 | `@trellis/engine` | `f5a1ad8` | 76 | pure core: resolver/stepMachine/detect/non-build diagnose/learnerModel |
-| M3a | `@trellis/sandbox` | `1c05031` | 23 | Pyodide worker host; **real-Pyodide verify DEFERRED (no network)** |
+| M2 | `@trellis/engine` | `f5a1ad8` | 76→**120** | pure core + **M3b `evaluate` ladder** (Run→Test→AST→Property, comparators, seeded gen+shrink) |
+| M3a | `@trellis/sandbox` | `1c05031` | 23→**55** | Pyodide worker host + **M3b `parseAndMatch` + local-CPython twin**; **real-Pyodide verify DEFERRED (no network)** |
+| M3b | (extends engine+sandbox) | `ee79120` | (in the above) | build ladder; **NO frozen-contract change** — additive `BuildSandbox = Sandbox & { parseAndMatch }` (§15 `LanguageAnalyzer` seam) |
 
-**In flight:** **M3b (Stream D)** — the build-evaluation ladder, the *only* live worktree
-(`../trellis-m3b` / `m3b-build-ladder`, off `a84b8d4`). Unlike A/B/C it is **not a new disjoint
-package** — it EXTENDS `@trellis/engine` (adds `evaluate`: Run→Test→AST→Property, comparators, seeded
-property gen + shrinking, build-path diagnose) AND `@trellis/sandbox` (the §6.3 `AstQuery` `parseAndMatch`
-in the worker). Both are integrated, so it's the sequential build-out on a proven core; disjoint from
-nothing live. Its defining gate: the real detector must agree with `content/verify/harness.py` on all 21
-fixtures. Launch = a fresh Desktop session rooted at `../trellis-m3b` following its `START-HERE.md`.
+**M3b (Stream D) integrated `ee79120`** via the §4.1 runbook (Phase 0 pre-flight: scope = engine+sandbox
++ plan doc + 1-line lockfile delta only; schema/content/coordination-docs byte-clean; FF-merge). Both
+defining gates green & proven non-vacuous: the **21-fixture differential** (engine `evaluate` +
+`parseAndMatch` over the local-CPython twin agrees with `harness.py` on all 15 build-bearing
+misconceptions; oracle exits 0) and **§4 acceptance** (f-string + `str()` both pass; `str+number`→
+`mis.concat.str_num`; byte-identical `Diagnosis` under fixed seed). The new sandbox→engine dependency is
+a **test-only devDep** (engine never imports sandbox → runtime graph stays acyclic; native-ESM import
+confirms no deadlock). ⚠️ Still deferred (same as M3a): real-Pyodide-in-WASM verification of
+`parseAndMatch` + the live ladder — needs a networked browser.
 
 **Not started:** M4 (misconceptions + hints end-to-end; turn on gates 5–7) → M5 (presentation slice).
 **Critical path is single-threaded:** `M3b → M4 → M5`. M4 needs M3b's detector; M5 needs M4. No second
@@ -66,10 +69,15 @@ build stream can run in parallel right now. Deferred entirely: M6 (telemetry), M
   detection change on the current corpus). It's an explicit **M4 action item** — design-note §5 + §7 below.
 
 ### Open debts & immediate next actions
-1. **Await M3b's green report, then integrate via the §4.1 runbook** (Phase 0 scope/contract pre-flight first).
-2. **Then M4** — wire concat misconception→feedback→hint ladder end-to-end, turn on §13.2 gates 5–7, AND do
-   the deferred `timedOut` re-key against the real sandbox + live `detect()` precedence.
-3. **M3a real-Pyodide browser verification** — independent of M3b, blocked only on a *networked browser* env
+1. ~~**Await M3b's green report, then integrate via the §4.1 runbook.**~~ **DONE** — M3b integrated `ee79120`
+   (288 tests; both defining gates green; no contract change). The build core M0–M3b is complete.
+2. **NOW: M4** — the live front of the single-threaded critical path. Wire concat misconception→feedback→hint
+   ladder end-to-end, turn on §13.2 gates 5–7, AND do the deferred `timedOut` re-key against the real sandbox +
+   live `detect()` precedence. Needs its own plan (`writing-plans`) on a fresh worktree. (M3b's `evaluate` +
+   `diagnose` build-path + the local-CPython twin are now its inputs, all on `main`.)
+3. **Real-Pyodide browser verification (M3a AND M3b)** — both deferred for the same reason: `parseAndMatch`,
+   the live `evaluate` ladder, real Pyodide load, live `worker.terminate()`, line extraction, mem-cap,
+   `PYODIDE_VERSION` 0.27.2 CDN pin, pygame-ce compat. Blocked only on a *networked browser* env
    (real Pyodide load, live `worker.terminate()`, line extraction, mem-cap, `PYODIDE_VERSION` 0.27.2 CDN pin,
    pygame-ce compat). Parallelizable any time someone has the env. M3a is "code-complete + mock-verified," NOT
    verification-complete until this runs.
