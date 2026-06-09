@@ -126,13 +126,14 @@ Both prior open decisions are now **RESOLVED** (orchestrator + user, 2026-06-08)
 
 ## 7. Status board (orchestrator updates this — streams report, don't edit)
 
-`main` @ `1c05031`. M2 + M3a integrated (merged result green: 136 tests across schema/engine/sandbox;
-typecheck/lint/test/build all pass; lockfile reconciled with `re2js` + `pyodide`). M1 blocked on a
-post-fix rebase. Worktrees each have a git-excluded `START-HERE.md` scaffold.
+`main` @ `f9bcef6`. M2 + M3a integrated (merged result green: 136 tests across schema/engine/sandbox;
+typecheck/lint/test/build all pass; lockfile reconciled with `re2js` + `pyodide`). Two frozen-schema
+fixes landed (ElemSpec `fec6b8f`, dist-exports `f9bcef6`; §6) — both manifest/type-compatible, M2/M3a
+unaffected. M1 blocked on a post-fix rebase. Worktrees each have a git-excluded `START-HERE.md` scaffold.
 
 | Stream | Status | Worktree / branch | Notes |
 |---|---|---|---|
-| A · M1 authoring | ⏳ **rebase needed** | `../trellis-m1` / `m1-authoring` | Complete & 76/76 green, but pinned to the pre-fix schema. **Re-engage the M1 session:** rebase on `main` (≥ `fec6b8f`, ElemSpec fix landed) + flip the 4 pinned tests (`compile`/`gates-run`/`cli`/`corpus.smoke`) from "exactly one gate-1 error" to full validity, then re-report for integration. |
+| A · M1 authoring | ⏳ **rebase needed** | `../trellis-m1` / `m1-authoring` | Complete & 76/76 green, but pinned to the pre-fix schema. **Re-engage the M1 session:** rebase on `main` (≥ `f9bcef6` — ElemSpec fix + dist-exports). Two effects: (1) flip the 4 pinned tests (`compile`/`gates-run`/`cli`/`corpus.smoke`) from "exactly one gate-1 error" to full validity (ElemSpec); (2) the CLI's `@trellis/schema` value-import now resolves under node automatically (dist-exports) — no M1 code change for it. Re-run the full gate, re-report for integration. |
 | B · M2 engine | ✅ **integrated** @ `f5a1ad8` | merged to `main` | Gating diff (`var.assign` 0.59→locked, 0.60→available) + determinism proven; engine purity confirmed; 76 tests. |
 | C · M3a sandbox | ✅ **integrated** @ `1c05031` · real-Pyodide verify **deferred** | merged to `main` | Host/watchdog/warm-pool proven vs a mock worker (23 tests). **Real Pyodide load, live `worker.terminate()`, line extraction, mem-cap, and `PYODIDE_VERSION` (0.27.2) CDN pin MUST be verified in a networked browser before M3a is verification-COMPLETE.** |
 
