@@ -41,6 +41,13 @@ Pages works because of two frozen design facts: static-only M5 contract, and the
 schema 37 · persist 19 · authoring 97 · engine 168 · sandbox 65 · client 72. All gates green
 (typecheck/lint/test/build, native-ESM probes, `validate.py`, `harness.py`, authoring CLI lint).
 
+**CI workflow fixed @ `83cc9ab` (2026-06-09 night, on-arrival finding):** the CI workflow had
+NEVER passed — its root scripts routed through turbo, whose `^build` graph hard-fails on the
+dev-only engine↔sandbox test-dependency cycle (present since M3b/M4; benign at runtime, probes
+prove the production graph acyclic). Fix: CI now runs the validated `pnpm -r` gate, **build
+first** (fresh checkouts need schema's `dist` types), rehearsed green in a fresh clone before
+pushing. First-ever green CI run confirmed (3m38s). Follow-ups queued in §2.
+
 Today's five streams, all integrated + worktrees pruned (full rows: `PARALLEL-STREAMS.md` §7):
 - **H** — `evaluate` routes `!ran`/`timedOut` through `detect()` (watchdog kills + module-level
   errors now get misconception coaching); `canonicalDiagnosis` (determinism = byte-identical
@@ -163,7 +170,14 @@ the held M4 re-key (archived 2026-06-09 handoff, "Decisions" section).
    error (frozen-behavior UX question for the user, eventually).
 3. **Port gates 8/9 into `validate.py`** — yours (oracle seam), cheap, keeps Python coverage
    matched to the TS gates.
-4. **§7 downstream chain:** **M6 telemetry** (seams ready: client EventBus emit sites + persist
+4. **Break the engine↔sandbox test-dep cycle properly** — move the 3 cross-package test files
+   (`engine/test/m4-concat-e2e.test.ts`, `sandbox/test/differential.test.ts`,
+   `sandbox/test/acceptance.test.ts`) into an integration-test package depending on both;
+   restores turbo's task graph (root `pnpm typecheck/lint/test/build` scripts work again).
+   Small, parallel-safe, low priority.
+5. **Bump CI actions off Node 20 runtime** — GitHub forces Node 24 from 2026-06-16 (annotation
+   on every run); non-breaking, but bump `actions/*`+`pnpm/action-setup` majors when convenient.
+6. **§7 downstream chain:** **M6 telemetry** (seams ready: client EventBus emit sites + persist
    `behavioral_event`/`appendEvents`; a Recorder subscriber attaches with zero emit-site changes;
    define the ownership seam before launching parallel to anything client-side) → **M6.5 pygame**
    (wheel smoke proven in debt1; `runtime?:"pygame"` + `lockedRegions` seams preserved) →
