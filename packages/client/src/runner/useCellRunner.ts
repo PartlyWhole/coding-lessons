@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useReducer } from "react";
-import type { Bundle, Cell, Step, Diagnosis, Hint } from "@trellis/schema";
+import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import type { Bundle, Cell, Step, StepKind, Diagnosis, Hint } from "@trellis/schema";
 import {
   initialState,
   step as stepMachine,
@@ -7,7 +7,9 @@ import {
   ladderFor,
   syncLadder,
   pullHint as enginePullHint,
+  StepTransitionError,
   type MachineState,
+  type StepEvent,
   type HintState,
   type BuildSandbox,
 } from "@trellis/engine";
@@ -131,8 +133,32 @@ export function useCellRunner(args: UseCellRunnerArgs): CellRunnerView {
 
   const active = cell.steps[state.activeStepIndex]!;
 
+  // ⚑ Hotfix (live-site crash): mirror of the committed machine state, resynced every render.
+  // User-triggerable dispatchers must consult/claim THIS (not a closure) so a second event in
+  // the same tick — or after the phase moved (double-click, Enter-spam) — sees the current
+  // phase. The engine's stepMachine stays the single source of legality: we PROBE it.
+  const machineRef = useRef(state.machine);
+  machineRef.current = state.machine;
+
+  // Probe the engine's own transition rules against the CURRENT machine state and, if legal,
+  // claim the transition synchronously (so a same-tick double-fire of the same event no-ops).
+  // Returns false when the machine would reject the event — caller must not dispatch.
+  // This never swallows machine errors: the reducer still runs the real transition; we only
+  // prevent illegal events from ever being dispatched (engine fail-fast stays intact).
+  const claimTransition = useCallback((kind: StepKind, event: StepEvent): boolean => {
+    try {
+      machineRef.current = stepMachine(kind, machineRef.current, event);
+      return true;
+    } catch (e) {
+      if (e instanceof StepTransitionError) return false;
+      throw e;
+    }
+  }, []);
+
   // Auto-enter the first step (PENDING → ACTIVE) on mount; emit session_start + step_enter.
+  // Guarded: a double-run of this effect (e.g. StrictMode remount) must not re-enter ACTIVE.
   useEffect(() => {
+    if (!claimTransition(active.kind, { type: "enter" })) return;
     bus.emit({ t: "session_start" });
     rawDispatch({ type: "enter" });
     bus.emit({ t: "step_enter", stepId: active.id, kind: active.kind });
@@ -143,17 +169,34 @@ export function useCellRunner(args: UseCellRunnerArgs): CellRunnerView {
 
   const grade = useCallback(
     async (answer: StepAnswer): Promise<void> => {
+      // Boundary guard (the live-site crash): only proceed if the machine accepts "submit"
+      // RIGHT NOW. A second submit in FEEDBACK (double-click; Enter in the still-mounted
+      // input) or in EVALUATING (same-tick race) is a learner-level no-op, never a dispatch.
+      if (!claimTransition(active.kind, { type: "submit" })) return;
       rawDispatch({ type: "evaluating" });
       const submission = answer.kind === "build" ? ({ kind: "build", code: state.buildCode } as const) : answer;
       const diagnosis = await gradeStep(active, submission, sandbox, bundle, effects);
+      // Re-check after the await: if the machine moved out of EVALUATING underneath us
+      // (e.g. a reset), drop this stale result instead of dispatching an illegal event.
+      if (!claimTransition(active.kind, { type: "diagnosis", correct: diagnosis.correct })) return;
       rawDispatch({ type: "diagnosed", diagnosis });
       bus.emit({ t: "submission", stepId: active.id, diagnosis });
       if (active.kind === "predict") {
         bus.emit({ t: "predict_answer", stepId: active.id, correct: diagnosis.correct });
       }
-      if (db) await persistDiagnosis(db, bundle, diagnosis, []);
+      if (db) {
+        try {
+          await persistDiagnosis(db, bundle, diagnosis, []);
+        } catch (e) {
+          // Teardown race: unmount closes IndexedDB while this grade is still in flight →
+          // `transaction` throws InvalidStateError. Callers fire-and-forget (`void grade()`),
+          // so rethrowing would be an UNHANDLED rejection. Losing one diagnosis write on
+          // teardown is acceptable; surface it honestly and move on.
+          console.warn("trellis: diagnosis not persisted (db closing or unavailable)", e);
+        }
+      }
     },
-    [active, sandbox, bundle, effects, bus, db, state.buildCode],
+    [active, sandbox, bundle, effects, bus, db, state.buildCode, claimTransition],
   );
 
   const submitNonBuild = useCallback(
@@ -162,9 +205,19 @@ export function useCellRunner(args: UseCellRunnerArgs): CellRunnerView {
   );
   const submitBuild = useCallback(() => grade({ kind: "build", code: state.buildCode }), [grade, state.buildCode]);
   const setBuildCode = useCallback((code: string) => rawDispatch({ type: "setBuildCode", code }), []);
-  const retry = useCallback(() => rawDispatch({ type: "retry" }), []);
+  // Guarded: "retry" is only legal in FEEDBACK — a double-fire (second lands in ACTIVE)
+  // must be a no-op, not a reducer throw.
+  const retry = useCallback(() => {
+    if (!claimTransition(active.kind, { type: "retry" })) return;
+    rawDispatch({ type: "retry" });
+  }, [claimTransition, active.kind]);
 
+  // Guarded: a double-fired advance (second lands on the NEXT step's machine) must be a
+  // no-op — for a non-watch next step it would throw; for a watch step it would silently
+  // skip it. The claim leaves machineRef at RELEASED until the reducer's next-step "enter"
+  // commits, so the same-tick second call is rejected by the machine's own rules.
   const advance = useCallback(() => {
+    if (!claimTransition(active.kind, { type: "advance" })) return;
     const entry = makePeekEntry(active, state.lastDiagnosis);
     const isLast = state.activeStepIndex >= cell.steps.length - 1;
     const nextStarter = isLast ? state.buildCode : starterFor(cell.steps[state.activeStepIndex + 1]!);
@@ -174,8 +227,11 @@ export function useCellRunner(args: UseCellRunnerArgs): CellRunnerView {
       const next = cell.steps[state.activeStepIndex + 1]!;
       bus.emit({ t: "step_enter", stepId: next.id, kind: next.kind });
     }
-  }, [active, state.lastDiagnosis, state.activeStepIndex, state.buildCode, cell, bus]);
+  }, [active, state.lastDiagnosis, state.activeStepIndex, state.buildCode, cell, bus, claimTransition]);
 
+  // Audited (no guard needed): pullHint never dispatches a machine event — it only updates
+  // hintState via the engine's phase-independent ladder logic, so it cannot throw for a
+  // phase reason. Same for setBuildCode (pure editor state).
   const pullHint = useCallback(
     (opts?: { confirmRevealCode: true }) => {
       const next = enginePullHint(state.hintState, ladder, opts);

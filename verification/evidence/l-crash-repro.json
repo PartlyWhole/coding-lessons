@@ -1,0 +1,38 @@
+{
+  "results": [
+    {
+      "name": "1-same-tick-double-submit-survives",
+      "pass": true,
+      "evidence": {
+        "pageErrors": [],
+        "feedbackPanels": 1
+      }
+    },
+    {
+      "name": "2-feedback-submit-spam-no-crash",
+      "pass": true,
+      "evidence": {
+        "submitDisabledInFeedback": true,
+        "appStillMounted": true,
+        "pageErrors": []
+      }
+    },
+    {
+      "name": "3-double-click-continue-advances-once",
+      "pass": true,
+      "evidence": {
+        "landedOnRecognize": true,
+        "pageErrors": []
+      }
+    },
+    {
+      "name": "4-zero-pageerrors-zero-unhandled-rejections",
+      "pass": true,
+      "evidence": {
+        "pageErrors": [],
+        "unhandledRejections": []
+      }
+    }
+  ],
+  "pageErrors": []
+}

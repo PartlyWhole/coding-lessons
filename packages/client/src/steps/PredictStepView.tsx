@@ -16,6 +16,9 @@ export function PredictStepView({ step, disabled, onSubmit }: PredictStepViewPro
   const canSubmit = hasChoices ? choiceId !== null : true;
 
   const submit = (): void => {
+    // Defense in depth (live-site crash): never forward a submit while disabled — synthetic
+    // clicks / key events can reach a disabled control even though the browser won't.
+    if (disabled) return;
     if (hasChoices) {
       if (choiceId !== null) onSubmit({ kind: "predict", choiceId });
     } else {

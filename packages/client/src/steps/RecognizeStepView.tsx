@@ -30,7 +30,7 @@ export function RecognizeStepView({ step, disabled, onSubmit }: RecognizeStepVie
       <button
         type="button"
         disabled={disabled || choiceId === null}
-        onClick={() => choiceId !== null && onSubmit({ kind: "recognize", choiceId })}
+        onClick={() => !disabled && choiceId !== null && onSubmit({ kind: "recognize", choiceId })}
       >
         Submit
       </button>

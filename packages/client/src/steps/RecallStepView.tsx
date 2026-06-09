@@ -22,7 +22,8 @@ export function RecallStepView({ step, disabled, onSubmit }: RecallStepViewProps
         disabled={disabled}
         onChange={(e) => setText(e.target.value)}
       />
-      <button type="button" disabled={disabled} onClick={() => onSubmit({ kind: "recall", text })}>
+      {/* Guard mirrors PredictStepView: no submit may fire while disabled (synthetic events). */}
+      <button type="button" disabled={disabled} onClick={() => !disabled && onSubmit({ kind: "recall", text })}>
         Submit
       </button>
     </section>

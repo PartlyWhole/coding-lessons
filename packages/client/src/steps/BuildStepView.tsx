@@ -14,7 +14,8 @@ export function BuildStepView({ step, code, disabled, onChange, onSubmit }: Buil
     <section aria-label="build step">
       <div className="prompt">{step.prompt}</div>
       <EditorPane value={code} onChange={onChange} {...(step.lockedRegions ? { lockedRegions: step.lockedRegions } : {})} readOnly={disabled} />
-      <button type="button" disabled={disabled} onClick={onSubmit}>
+      {/* Guard mirrors PredictStepView: no submit may fire while disabled (synthetic events). */}
+      <button type="button" disabled={disabled} onClick={() => !disabled && onSubmit()}>
         Run &amp; check
       </button>
     </section>

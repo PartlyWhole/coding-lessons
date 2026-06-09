@@ -20,7 +20,10 @@ export interface CellRunnerProps {
 
 export function CellRunner(props: CellRunnerProps): React.ReactElement {
   const r = useCellRunner(props);
-  const disabled = r.phase === "EVALUATING";
+  // ⚑ Hotfix: inputs/submit are live ONLY while the step is ACTIVE. The old check
+  // (`phase === "EVALUATING"`) re-enabled the Submit button in FEEDBACK — the second click
+  // of a double-click landed there and crashed the engine machine ("retry" re-enables).
+  const disabled = r.phase !== "ACTIVE";
   const inFeedback = r.phase === "FEEDBACK";
 
   const diagnosedMisconception =
