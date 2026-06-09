@@ -112,10 +112,17 @@ Both prior open decisions are now **RESOLVED** (orchestrator + user, 2026-06-08)
   `Value.Check(Bundle)`. Fix (decision A): a paramless recursive **`ElemSpec`** for `elem`; top-level
   `GenSpec.param` stays required. Compatible loosening — M2/M3a unaffected; **M1 must rebase + flip its
   pinned validity tests** (see §7). Test-first; schema 37/37 green.
-- **DEFERRED follow-up — shared-package node-runnable exports.** `@trellis/schema`'s `main`/`exports`
-  point at TS source, so a *runtime value-import* of the bare specifier from a built consumer (e.g.
-  M1's CLI) fails under plain `node`. Type-only consumers (M2/M3a) are unaffected; nothing is blocked
-  now. Revisit at M3b/M5 once the consumption mode (dev CLI vs distributable vs browser-only) is fixed.
+- **~~DEFERRED follow-up~~ RESOLVED — shared-package node-runnable exports.** `@trellis/schema`'s
+  `main`/`types`/`exports` now point at built `dist` with a `development`→`src` condition. Plain `node`
+  (conditions `node`/`import`/`default`) resolves the bare specifier `@trellis/schema` to
+  `dist/src/index.js` — a runtime value-import from a built consumer (e.g. M1's CLI) now works; only
+  Vite/vitest inject `development`, so the test loop still runs live TS source (proved via a src-only
+  sentinel). Verified clean-room across all three packages: `pnpm -r build` + native-ESM `import()` of
+  each `dist/src/index.js` + plain-`node` bare value-import + `pnpm -r test` (136) + `pnpm -r typecheck`,
+  all green; no ESM cycle (schema is a linear DAG). Only `packages/schema/package.json` changed. **M1
+  benefit:** its `gates/schema-gate.js` CLI value-import resolves on rebase onto this `main` — no M1 code
+  change needed. `tsconfig` `customConditions` deliberately untouched (editor types read `dist/*.d.ts`,
+  kept fresh by Turbo `^build`); revisit at M5 if packaging needs live-source editor types.
 
 ## 7. Status board (orchestrator updates this — streams report, don't edit)
 
