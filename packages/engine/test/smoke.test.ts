@@ -1,8 +1,20 @@
 import { describe, it, expect } from "vitest";
-import { ENGINE_VERSION } from "../src/index.js";
+import * as engine from "../src/index.js";
 
-describe("@trellis/engine scaffold", () => {
-  it("exports a version constant", () => {
-    expect(ENGINE_VERSION).toBe("0.0.0");
+describe("@trellis/engine public API", () => {
+  it("exports the documented surface", () => {
+    for (const name of [
+      "resolveAvailability",
+      "nextSpineCell",
+      "availabilityDiff",
+      "step",
+      "detect",
+      "diagnoseNonBuild",
+      "applyDiagnosis",
+      "targetUpstream",
+    ] as const) {
+      expect(typeof engine[name]).toBe("function");
+    }
+    expect(engine.DEFAULT_CONFIG.learnRate).toBeGreaterThan(0);
   });
 });
