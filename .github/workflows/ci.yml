@@ -21,7 +21,11 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm typecheck
-      - run: pnpm lint
-      - run: pnpm build
-      - run: pnpm test
+      # pnpm -r, not the root turbo scripts: turbo's ^build graph hard-fails on the
+      # dev-only engine<->sandbox test-dependency cycle (benign at runtime; the native-ESM
+      # probes prove the production graph acyclic). Mirrors the validated local gate.
+      # Build FIRST: on a fresh checkout @trellis/schema's types resolve to dist/*.d.ts.
+      - run: pnpm -r build
+      - run: pnpm -r typecheck
+      - run: pnpm -r lint
+      - run: pnpm -r test
