@@ -13,6 +13,13 @@ describe("floatClose", () => {
     expect(floatClose([1.0], [1.0 + 1e-12])).toBe(true);
     expect(floatClose({ x: 1.0 }, { x: 1.0 + 1e-12 })).toBe(true);
   });
+  it("NaN is never close, including to itself (IEEE semantics)", () => {
+    expect(floatClose(Number.NaN, Number.NaN)).toBe(false);
+    expect(floatClose(Number.NaN, 1)).toBe(false);
+  });
+  it("empty arrays are close", () => {
+    expect(floatClose([], [])).toBe(true);
+  });
 });
 
 describe("setEqual", () => {
@@ -21,6 +28,12 @@ describe("setEqual", () => {
     expect(setEqual([1, 2, 2], [2, 1, 2])).toBe(true); // multiset
     expect(setEqual([1, 2, 2], [1, 2])).toBe(false);
     expect(setEqual([1, 2], [1, 3])).toBe(false);
+  });
+  it("empty arrays are equal; non-arrays fall back to deepEqual", () => {
+    expect(setEqual([], [])).toBe(true);
+    expect(setEqual({ a: 1 }, { a: 1 })).toBe(true);
+    expect(setEqual("x", "x")).toBe(true);
+    expect(setEqual("x", "y")).toBe(false);
   });
 });
 

@@ -8,6 +8,9 @@ const REL = 1e-6;
 
 export function floatClose(a: Json, b: Json): boolean {
   if (typeof a === "number" && typeof b === "number") {
+    // NaN is never close to anything, including itself — intentional IEEE semantics
+    // (JSON has no NaN, so this only guards non-spec inputs deterministically).
+    if (Number.isNaN(a) || Number.isNaN(b)) return false;
     if (a === b) return true;
     const diff = Math.abs(a - b);
     return diff <= ABS || diff <= REL * Math.max(Math.abs(a), Math.abs(b));
@@ -28,8 +31,9 @@ export function floatClose(a: Json, b: Json): boolean {
   return deepEqual(a, b);
 }
 
-// §6.2 set-equal: order-insensitive multiset equality for arrays (top level only).
-// Non-arrays fall back to deepEqual.
+// §6.2 set-equal: order-insensitive multiset equality for arrays. Elements are compared
+// with deepEqual (NOT floatClose) and nested arrays stay order-sensitive. Non-arrays fall
+// back to deepEqual.
 export function setEqual(a: Json, b: Json): boolean {
   if (!Array.isArray(a) || !Array.isArray(b)) return deepEqual(a, b);
   if (a.length !== b.length) return false;
@@ -39,7 +43,8 @@ export function setEqual(a: Json, b: Json): boolean {
     if (idx === -1) return false;
     remaining.splice(idx, 1);
   }
-  return remaining.length === 0;
+  // Equal lengths + every element of `a` consumed once → multisets match.
+  return true;
 }
 
 export type Comparator = "deep-equal" | "float-close" | "set-equal";
