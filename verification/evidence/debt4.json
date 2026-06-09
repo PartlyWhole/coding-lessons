@@ -1,0 +1,87 @@
+{
+  "url": "http://localhost:8765/verification/debt4.html",
+  "results": [
+    {
+      "name": "1-open-real-indexeddb",
+      "pass": true,
+      "evidence": {
+        "learnerId": "a2b1c51f-2eb6-4369-aa0b-87cb18e3e432",
+        "driver": "nativeDriver(globalThis.indexedDB)"
+      }
+    },
+    {
+      "name": "2-commit-three-stores-one-txn",
+      "pass": true,
+      "evidence": {
+        "learner_skill": [
+          {
+            "skillId": "skill.output.print_literal",
+            "mastery": 0.6,
+            "attempts": 1,
+            "passes": 1,
+            "lastSeen": "2026-06-09T00:00:00Z",
+            "misconceptionCounts": {}
+          }
+        ],
+        "diagnosis": [
+          "diag-1"
+        ],
+        "behavioral_event": [
+          "evt-1"
+        ]
+      }
+    },
+    {
+      "name": "3-mid-txn-fault-rolls-back-all-three",
+      "pass": true,
+      "evidence": {
+        "thrown": "DataError: Failed to execute 'put' on 'IDBObjectStore': Evaluating the object store's key path did not yield a value.",
+        "learner_skill": 0,
+        "diagnosis": 0,
+        "behavioral_event": 0
+      }
+    },
+    {
+      "name": "4-no-unhandled-rejection-on-abort",
+      "pass": true,
+      "evidence": {
+        "unhandledRejections": []
+      }
+    },
+    {
+      "name": "5-events-round-trip",
+      "pass": true,
+      "evidence": {
+        "newestFirstAll": [
+          "evt-r3",
+          "evt-r2",
+          "evt-r1",
+          "evt-r0"
+        ],
+        "stepAOnly": [
+          "evt-r2",
+          "evt-r1",
+          "evt-r0"
+        ]
+      }
+    },
+    {
+      "name": "6-contentVersion-cache-hit-then-bust",
+      "pass": true,
+      "evidence": {
+        "fetchesAfterFirst": 1,
+        "fetchesAfterCacheHit": 1,
+        "fetchesAfterVersionChange": 2
+      }
+    },
+    {
+      "name": "7-close-reopen-data-survives",
+      "pass": true,
+      "evidence": {
+        "learnerIdStable": true,
+        "eventsAfterReopen": 4
+      }
+    }
+  ],
+  "consoleLines": []
+}
