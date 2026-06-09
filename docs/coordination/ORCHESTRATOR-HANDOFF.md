@@ -73,8 +73,8 @@ build stream can run in parallel right now. Deferred entirely: M6 (telemetry), M
    (real Pyodide load, live `worker.terminate()`, line extraction, mem-cap, `PYODIDE_VERSION` 0.27.2 CDN pin,
    pygame-ce compat). Parallelizable any time someone has the env. M3a is "code-complete + mock-verified," NOT
    verification-complete until this runs.
-4. **Optional tidy:** `packages/authoring/ORCHESTRATOR-REPORT.md` rode onto `main` via the M1 merge — a harmless
-   stream-internal report; remove it whenever convenient.
+4. ~~**Optional tidy:** `packages/authoring/ORCHESTRATOR-REPORT.md` rode onto `main` via the M1 merge.~~
+   **DONE** — removed (it was fully superseded by the §7 board + this handoff's integration record).
 
 ### Hard-won gotchas surfaced this session (save yourself the rediscovery)
 - The differential oracle `harness.py` **silently ignores unknown AstQuery keys** — keep it in lockstep with
