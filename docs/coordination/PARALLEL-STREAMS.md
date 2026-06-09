@@ -164,7 +164,11 @@ Both prior open decisions are now **RESOLVED** (orchestrator + user, 2026-06-08)
 
 ## 7. Status board (orchestrator updates this — streams report, don't edit)
 
-`main` @ `19d8eea`. **🎉 THE FULL M0–M5 DETERMINISTIC SLICE IS INTEGRATED — A–G all done** (6 packages).
+`main` @ `fdf0abb`. **🎉 THE FULL M0–M5 DETERMINISTIC SLICE IS INTEGRATED — A–G all done** (6 packages).
+**Post-slice tooling cleanup landed** (`fdf0abb`): all four offline-era ambient `shims.d.ts` dropped for
+real `@types/node`/`@types/js-yaml` (network now available); `local-cpython.ts` `isTimeout` narrowed via
+`NodeJS.ErrnoException` (was masked by a shim mistyping `spawnSync.error`). Full gate re-verified green
+against the real types — no masked errors surfaced.
 Merged result verified green: **392 tests** (schema 37 + engine 159 + authoring 80 + sandbox 55 + persist
 19 + **client 42**); typecheck/lint/build clean; native-ESM imports of all 6 `dist` clean (client barrel
 has no init cycle); content oracle PASS. The marquee offline walkthrough runs end-to-end (UI → engine +
