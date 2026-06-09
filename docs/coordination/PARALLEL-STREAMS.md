@@ -148,14 +148,15 @@ Both prior open decisions are now **RESOLVED** (orchestrator + user, 2026-06-08)
 
 ## 7. Status board (orchestrator updates this — streams report, don't edit)
 
-`main` @ `a84b8d4`. M2 + M3a integrated (merged result green: 136 tests; typecheck/lint/test/build pass;
-lockfile reconciled with `re2js` + `pyodide`). Frozen-schema fixes landed (ElemSpec `fec6b8f`, dist-exports
-`f9bcef6`; §6) + the §6.3 `field`-selector content migration (`3a8bf73`). M1 is mid-rebase (nearly ready);
-M3b (Stream D) is launching. Worktrees each have a git-excluded `START-HERE.md` scaffold.
+`main` @ `a04c082`. **M1 + M2 + M3a all integrated — the M0–M3a foundation is COMPLETE.** Merged result
+green: **212 tests** (schema 37 + engine 76 + sandbox 23 + authoring 76); typecheck/lint/build clean;
+lockfile reconciled (`re2js` + `pyodide` + authoring importer). Frozen-schema fixes (ElemSpec `fec6b8f`,
+dist-exports `f9bcef6`) + the §6.3 `field`-selector content migration (`3a8bf73`) all landed. M3b
+(Stream D) in flight. Worktrees each have a git-excluded `START-HERE.md` scaffold.
 
 | Stream | Status | Worktree / branch | Notes |
 |---|---|---|---|
-| A · M1 authoring | 🔄 **rebased + tests flipped; finishing gate** | `../trellis-m1` / `m1-authoring` | Rebased onto `c129d4d` (has ElemSpec fix, dist-exports, AND the field migration → its differential ran on the field forms ✓); pinned gate-1 tests flipped to full validity (`f78f111`). Only missing `a84b8d4` (docs-only) — a clean `--no-ff` integration, no bounce needed. Awaiting its green re-report, then orchestrator runs §4.1 runbook. |
+| A · M1 authoring | ✅ **integrated** @ `a04c082` | merged to `main` | Compiler + seven §13.2 gates (1–6 live, 7 M4-stub). **The TS matcher ↔ `harness.py` differential agrees on all 21 fixtures incl. the field forms** (real 12s run, no stub) — §6.3 rule 1 confirmed identical across implementations. CLI runs under plain node (`RESULT: PASS`, exit 0). 76 tests. Worktree `../trellis-m1` now mergeable/removable. |
 | B · M2 engine | ✅ **integrated** @ `f5a1ad8` | merged to `main` | Gating diff (`var.assign` 0.59→locked, 0.60→available) + determinism proven; engine purity confirmed; 76 tests. |
 | C · M3a sandbox | ✅ **integrated** @ `1c05031` · real-Pyodide verify **deferred** | merged to `main` | Host/watchdog/warm-pool proven vs a mock worker (23 tests). **Real Pyodide load, live `worker.terminate()`, line extraction, mem-cap, and `PYODIDE_VERSION` (0.27.2) CDN pin MUST be verified in a networked browser before M3a is verification-COMPLETE.** |
 | D · M3b build ladder | 🆕 **launching** @ `a84b8d4` | `../trellis-m3b` / `m3b-build-ladder` | The build-evaluation ladder. **Not a disjoint package — EXTENDS `@trellis/engine` (adds `evaluate`: Run→Test→AST→Property, comparators, seeded property gen+shrink, build-path diagnose) AND `@trellis/sandbox` (the §6.3 `AstQuery` `parseAndMatch` in the worker).** Both already integrated, so it's the sequential build-out on M2+M3a; disjoint from M1 (authoring). **Does NOT depend on M1** — uses hand-authored fixtures + raw `content/`. Defining gate: the real detector agrees with `content/verify/harness.py` on all 21 fixtures. No network → real-Pyodide verify **deferred** (build vs mock sandbox + local CPython). |

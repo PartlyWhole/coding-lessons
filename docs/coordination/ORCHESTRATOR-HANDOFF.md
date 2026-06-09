@@ -26,7 +26,15 @@ them test-first. We do NOT re-litigate the design. Methodology = the **superpowe
 
 ## 2. What's DONE and on `main`
 - **M0 — `@trellis/schema`**: all `TECHNICAL_DESIGN` §3 types + the frozen cross-stream contract
-  (`Bundle`/`Graph`/`RunResult`/`Sandbox` in `src/bundle.ts`) as TypeBox. 34 tests, CI green.
+  (`Bundle`/`Graph`/`RunResult`/`Sandbox`) as TypeBox. 37 tests. Two integration-era fixes: the
+  paramless `ElemSpec` split (§6.4) and `exports`→`dist` (node-runnable consumers).
+- **M1 — `@trellis/authoring`** ✅ (`a04c082`): YAML→Bundle compiler + the seven §13.2 gates (1–6 live,
+  cross-checked against `harness.py` on all 21 fixtures; 7 = M4 stub) + the §6.3/spine/RE2 lints +
+  `trellis lint|build|grade` CLI. 76 tests.
+- **M2 — `@trellis/engine`** ✅ (`f5a1ad8`): pure core — resolver/navigation/stepMachine/`detect`/
+  non-build `diagnose`/`applyDiagnosis`/targeting. Purity ESLint-enforced. 76 tests.
+- **M3a — `@trellis/sandbox`** ✅ (`1c05031`): Pyodide worker host — watchdog `terminate()` kill switch +
+  warm pool, mock-verified. **Real-Pyodide verification deferred (no network).** 23 tests.
 - **Frozen contract**: the integration seam. Treat as immutable; a change lands HERE on `main` first,
   then streams rebase. (See §5.)
 - **Content workstream** (authored by a parallel session, committer "PartlyWhole", now idle): the
