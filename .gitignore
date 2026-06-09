@@ -6,3 +6,5 @@ coverage/
 
 # stray CLI build output (trellis build writes to cwd)
 bundle.json
+
+.DS_Store
