@@ -1,7 +1,9 @@
 # Real-Pyodide Verification Session — launch prompt + debt ledger
 
-**Owner:** orchestrator. **Status:** SCHEDULED — run **after Stream G (M5-client) integrates**, in a
-**networked environment with a real browser**. A single pass clears all five deferred real-Pyodide debts.
+**Owner:** orchestrator. **Status:** ✅ FULLY UNBLOCKED & READY TO RUN — Stream G integrated `19d8eea`
+(2026-06-09), so all five debts (incl. Debt 5, the M5-client whole-slice) are now on `main`. Run in a
+**networked environment with a real browser**; a single pass clears all five. Root the session at `main`
+@ `19d8eea` or later (6 packages, 392 tests).
 
 ## Why this session exists
 Every prior Trellis session ran **offline** (no network → no real Pyodide/WASM, no real browser
