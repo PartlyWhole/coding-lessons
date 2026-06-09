@@ -82,8 +82,11 @@ build stream can run in parallel right now. Deferred entirely: M6 (telemetry), M
    `evaluate` ladder under real Pyodide; 21-fixture differential with real-Pyodide executor), M5 (whole-slice
    in-browser walkthrough + real IndexedDB reload), and now **M4's `timedOut` re-key** (apply `{timedOut:true}`
    to `loops.taxonomy.yaml` + decide harness-precedence vs. carve-out + verify end-to-end vs. the watchdog —
-   the engine `matchedSpecificity` precedence is already on `main`). A drafted launch prompt for this session
-   exists (see session history). Parallelizable any time someone has the env.
+   the engine `matchedSpecificity` precedence is already on `main`). **Full launch prompt + debt ledger:
+   `docs/coordination/REAL-PYODIDE-VERIFICATION.md`** (now 5 debts incl. M5-persist's `nativeDriver`).
+   **Recommended timing: one pass AFTER Stream G integrates** (Debt 5 = the M5-client whole-slice needs G
+   on `main`); Debts 1–4 are runnable the moment a networked browser exists. Bump the prompt's rooting SHA
+   to the post-G `main` when launched.
 4. ~~**Optional tidy:** `packages/authoring/ORCHESTRATOR-REPORT.md` rode onto `main` via the M1 merge.~~
    **DONE** — removed (it was fully superseded by the §7 board + this handoff's integration record).
 
