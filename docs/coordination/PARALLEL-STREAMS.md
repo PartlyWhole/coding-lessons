@@ -134,11 +134,14 @@ Both prior open decisions are now **RESOLVED** (orchestrator + user, 2026-06-08)
   silently over-match, so the harness update was mandatory, not cosmetic). Verified: validate.py PASS,
   harness gate 5+6 PASS, plus a direct precision check (old forms over-matched a nested-if/body-`True`;
   new forms don't). See `docs/design-notes/2026-06-08-astquery-grammar-gaps.md` §1.
-- **`mis.loop.infinite_true` deliberately NOT re-keyed onto `{ timedOut: true }`** (the third item Stream A
-  flagged). `timedOut` is ambiguous across infinite-loop misconceptions (a `while True:` and a
-  never-updating `while cond:` both hang); the real engine disambiguates via §7 precedence, but the
-  offline differential harness tests signatures in isolation, so the field-scoped AST shape stays the
-  detector and the watchdog timeout stays the product backstop. Full reasoning in the design note §5.
+- **`mis.loop.infinite_true` re-key onto `{ timedOut: true }` — SCHEDULED for M4** (not done now; the third
+  item Stream A flagged). `timedOut` is ambiguous across infinite-loop misconceptions (a `while True:` and a
+  never-updating `while cond:` both hang); the real engine disambiguates via §7 precedence, but the offline
+  differential harness tests signatures in isolation — so doing it now is untestable-or-wrong **and** changes
+  detection on the current corpus by exactly zero. It belongs at M4, where the real sandbox emits genuine
+  `timedOut` and live `detect()` precedence makes it end-to-end verifiable. Tracked as an explicit M4 action
+  item: design note §5 + ORCHESTRATOR-HANDOFF §7. For now the field-scoped AST shape is the detector and the
+  watchdog timeout is the product backstop.
 - Touches only `content/**` + `content/verify/harness.py` (orchestrator-owned tooling). **M1 rebase note:**
   its TS matcher already supports `field`; the rebase differential (TS vs harness on all 21 fixtures) is
   the cross-check that both implement §6.3 rule 1 identically.

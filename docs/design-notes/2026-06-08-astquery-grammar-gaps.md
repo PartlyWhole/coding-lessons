@@ -87,7 +87,16 @@ on the `no_update` notTrigger. Conversely the realistic input-reading `infinite_
 under finite scripted stdin and never times out offline, so `{ all: [timedOut, astTag] }` would fail to
 fire there. Net: the **field-scoped AST shape is the correct offline-testable detector**; the runtime
 timeout stays the product backstop, resolved by §7 precedence in the live engine — not by the content
-signature. (Revisit only if the harness is taught to model §7 precedence for build fixtures.)
+signature.
+
+**▶ M4 ACTION ITEM (scheduled, not dropped).** Re-key `mis.loop.infinite_true` onto the runtime fact
+once M4 stands up the real sandbox + live `detect()` precedence (§13.2 gates 5–7 on the real detector):
+add `{ timedOut: true }` as the primary `any` branch (AST shape as corroboration), and verify it
+**end-to-end** against a genuinely non-terminating submission that the real Pyodide watchdog kills —
+where §7 precedence (structural `no_update` outranks a bare runtime timeout) correctly disambiguates,
+exactly the discrimination the offline isolated-signature harness cannot reproduce. Do NOT add it to the
+content signature before then: in the offline harness it is untestable-or-wrong (see above), and it
+changes detection on the current corpus by exactly zero. Owner: M4 stream. Cross-ref: ORCHESTRATOR-HANDOFF §7.
 
 ## 6. `Compare.ops` (list-valued attribute) matching is unspecified
 

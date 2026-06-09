@@ -81,8 +81,11 @@ then have every stream rebase. Never let a stream fork a divergent copy of a sha
 ## 7. Downstream chain (you write + run these after M1/M2/(M3a) integrate)
 `M3b` build ladder (`evaluate`: Run→Test→AST→Property; the REAL TS detector — **differential-test it
 against `content/verify/harness.py` on all 21 fixtures**) → `M4` misconceptions + hints end-to-end
-(turn on §13.2 gates 5–7) → `M5` presentation slice (React `CellRunner` + IndexedDB persist + static
-fetch). Each gets its own plan (`writing-plans`) on its own branch/worktree. M6 (telemetry), M6.5
+(turn on §13.2 gates 5–7; **also re-key `mis.loop.infinite_true` onto `{ timedOut: true }`** against the
+real sandbox + live `detect()` precedence — deferred from the AST-query hardening, see
+`docs/design-notes/2026-06-08-astquery-grammar-gaps.md` §5 "M4 ACTION ITEM") → `M5` presentation slice
+(React `CellRunner` + IndexedDB persist + static fetch). Each gets its own plan (`writing-plans`) on its
+own branch/worktree. M6 (telemetry), M6.5
 (pygame), M7 (offline/a11y) are deferred.
 
 ## 8. Environment gotchas (will waste your time if missed)
