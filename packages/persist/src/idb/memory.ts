@@ -6,6 +6,7 @@ import type {
   IdbTxnHandle,
   IndexSpec,
   KeyRange,
+  Mode,
   StoreSpec,
 } from "./types.js";
 import { compareKeys, inRange } from "./keys.js";
@@ -85,7 +86,7 @@ function makeConnection(db: DbData, faults?: FaultController): IdbConnection {
     close() {
       open = false; // data remains in the factory's `dbs` map → survives reopen
     },
-    async tx<T>(stores: readonly string[], mode: "readonly" | "readwrite", body: (tx: IdbTxnHandle) => Promise<T>): Promise<T> {
+    async tx<T>(stores: readonly string[], mode: Mode, body: (tx: IdbTxnHandle) => Promise<T>): Promise<T> {
       if (!open) throw new Error("memoryDriver: connection is closed");
       // Overlay = staged writes/deletes per store, applied to base only on successful commit.
       const overlay = new Map<string, Map<string, unknown>>();

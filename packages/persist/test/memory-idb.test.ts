@@ -75,4 +75,23 @@ describe("memoryDriver", () => {
     );
     expect((s1 as { id: string }[]).map((e) => e.id)).toEqual(["e1", "e2"]);
   });
+
+  it("commits a delete (visible to a later txn) but discards it on rollback", async () => {
+    const driver = memoryDriver();
+    const db = await driver.open("trellis", 1, SPECS);
+    await db.tx(["a"], "readwrite", async (tx) => tx.store("a").put({ id: "1", v: "x" }));
+
+    // A delete that is rolled back (body throws) leaves the row intact (tombstone discarded).
+    await expect(
+      db.tx(["a"], "readwrite", async (tx) => {
+        await tx.store("a").delete("1");
+        throw new Error("boom");
+      }),
+    ).rejects.toThrow("boom");
+    expect(await db.tx(["a"], "readonly", async (tx) => tx.store("a").get("1"))).toEqual({ id: "1", v: "x" });
+
+    // A committed delete is visible to a later txn.
+    await db.tx(["a"], "readwrite", async (tx) => tx.store("a").delete("1"));
+    expect(await db.tx(["a"], "readonly", async (tx) => tx.store("a").get("1"))).toBeUndefined();
+  });
 });
