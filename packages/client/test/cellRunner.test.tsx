@@ -41,6 +41,43 @@ describe("CellRunner (§5.2 keyed step replacement)", () => {
     expect(screen.getByText("pick one")).toBeTruthy();
   });
 
+  it("renders the Greenhouse cell header: eyebrow, kind badge, and progress pips", async () => {
+    n = 0;
+    const { bundle, cell } = fixture();
+    const { container } = render(
+      <CellRunner cell={cell} bundle={bundle} sandbox={noSandbox} bus={createEventBus()} effects={fx} />,
+    );
+    expect(await screen.findByText("WATCH BODY MARKER")).toBeTruthy();
+    expect(container.querySelector(".cell-eyebrow")!.textContent).toContain("Step 1 of 2");
+    expect(container.querySelector(".cell-kind-badge")!.textContent).toBe("watch");
+    let pips = container.querySelectorAll(".cell-progress .pip");
+    expect(pips.length).toBe(2);
+    expect(pips[0]!.className).toBe("pip is-now");
+    expect(pips[1]!.className).toBe("pip");
+
+    await userEvent.click(screen.getByRole("button", { name: /continue/i }));
+    await waitFor(() => expect(container.querySelector(".cell-eyebrow")!.textContent).toContain("Step 2 of 2"));
+    expect(container.querySelector(".cell-kind-badge")!.textContent).toBe("recognize");
+    pips = container.querySelectorAll(".cell-progress .pip");
+    expect(pips[0]!.className).toBe("pip is-done");
+    expect(pips[1]!.className).toBe("pip is-now");
+  });
+
+  it("passes the diagnosed misconception title to the feedback chip", async () => {
+    n = 0;
+    const { bundle, cell } = fixture();
+    const { container } = render(
+      <CellRunner cell={cell} bundle={bundle} sandbox={noSandbox} bus={createEventBus()} effects={fx} />,
+    );
+    await userEvent.click(await screen.findByRole("button", { name: /continue/i }));
+    await userEvent.click(await screen.findByLabelText("Wrong"));
+    await userEvent.click(screen.getByRole("button", { name: /submit/i }));
+    await screen.findByText("MISCONCEPTION FEEDBACK MARKER");
+    const chip = container.querySelector(".feedback-misconception-title");
+    expect(chip).not.toBeNull();
+    expect(chip!.textContent).toBe("m");
+  });
+
   it("shows attribution feedback + the hint ladder after a wrong answer", async () => {
     n = 0;
     const { bundle, cell } = fixture();
