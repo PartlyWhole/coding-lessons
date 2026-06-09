@@ -11,17 +11,11 @@ describe("compile", () => {
   const loaded = loadContent(CONTENT);
   const bundle = compile(loaded);
 
-  // KNOWN-ISSUE PIN (see ESCALATION: @trellis/schema GenSpec requires `param` on nested `elem`,
-  // but cell.loops.guessing_game#5 in loops.yaml correctly omits it). The transform is otherwise
-  // fully schema-clean. TypeBox collapses the nested generator/elem failure to the enclosing
-  // union path, so the single error surfaces at the step boundary
-  // `/cells/cell.loops.guessing_game/steps/4` (step #5 is index 4). After the schema fix lands on
-  // main and we rebase, change this to assert `Value.Check(Bundle, bundle)` is true (zero errors).
-  it("emits a bundle that is schema-valid except the one escalated GenSpec.elem.param defect", () => {
-    const errors = [...Value.Errors(Bundle, bundle)];
-    // exactly one error, confined to the single known step — nothing else is wrong anywhere.
-    expect(errors).toHaveLength(1);
-    expect(errors[0]!.path).toBe("/cells/cell.loops.guessing_game/steps/4");
+  // The emitted bundle is fully schema-valid (the former GenSpec.elem.param defect was resolved on
+  // main via the paramless ElemSpec split, fec6b8f, and rebased in).
+  it("emits a Bundle that passes Value.Check with zero errors", () => {
+    expect([...Value.Errors(Bundle, bundle)]).toEqual([]);
+    expect(Value.Check(Bundle, bundle)).toBe(true);
   });
 
   it("flattens misconceptions and rewrites Skill.misconceptions to an id-list", () => {
