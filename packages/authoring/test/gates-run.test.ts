@@ -22,11 +22,11 @@ describe("runAllGates", () => {
     expect(report.stats.cells).toBeGreaterThan(0);
   });
 
-  it("runs gates 8/9 (pure, never skipped): the four escalated 9-correct-miscon warns surface", () => {
+  it("runs gates 8/9 (pure, never skipped): corpus is clean for both (aacf0ce fixed the 4 findings)", () => {
     const fast = runAllGates(loaded, compile(loaded), { runExecGates: false });
-    expect(fast.issues.filter((i) => i.gate === "9-correct-miscon" && i.level === "warn")).toHaveLength(4);
+    expect(fast.issues.filter((i) => i.gate === "9-correct-miscon")).toEqual([]);
     expect(fast.issues.filter((i) => i.gate === "8-answerable")).toEqual([]);
-    expect(fast.ok).toBe(true); // warns do not fail the gate run
+    expect(fast.ok).toBe(true);
   });
 
   it("can skip the exec gates (5/6) via runExecGates:false", () => {

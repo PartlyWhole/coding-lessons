@@ -20,19 +20,11 @@ function loadedWith(steps: RawStep[]): Loaded {
 }
 
 describe("gate 9: no misconception tag on a correct choice/answer", () => {
-  it("has no errors on the real corpus; the four ESCALATED known findings surface as warns", () => {
-    const issues = gateCorrectChoiceMiscon(loadContent(CONTENT));
-    expect(issues.filter((i) => i.level === "error")).toEqual([]);
-    // Real instances of the d8f20b3 bug class found by this gate on 2026-06-09 and
-    // escalated to the orchestrator (content/** is orchestrator-owned). Pinned in the
-    // gate's KNOWN_ESCALATED baseline; when content is fixed and the baseline emptied,
-    // this assertion becomes toEqual([]).
-    expect(issues.filter((i) => i.level === "warn").map((i) => i.message.split(":")[0]).sort()).toEqual([
-      "cell.input.numbers#2",
-      "cell.loops.guessing_game#2",
-      "cell.variables.box#2",
-      "cell.variables.use#2",
-    ]);
+  it("is clean on the real corpus (zero findings; gate is strictly ERROR)", () => {
+    // The four 2026-06-09 escalated findings were fixed on main in aacf0ce (each tag
+    // moved to the believer's wrong choice, the d8f20b3 pattern); the gate now enforces
+    // at full strength with no allowlist.
+    expect(gateCorrectChoiceMiscon(loadContent(CONTENT))).toEqual([]);
   });
 
   // Golden mutation: the exact d8f20b3 bug — join_text#2 carried mis.concat.missing_space

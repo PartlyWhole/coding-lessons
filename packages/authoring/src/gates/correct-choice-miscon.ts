@@ -15,19 +15,6 @@ interface ChoiceLike {
   misconception?: string;
 }
 
-// KNOWN FINDINGS, ESCALATED 2026-06-09 (Stream K): four pre-existing corpus instances of
-// this exact bug class, found the day the gate was written. content/** is orchestrator-
-// owned, so they are pinned here (exact stepId|choiceId|tag) and reported at WARN level —
-// any new instance, or any change to these steps, is an ERROR. When the orchestrator
-// moves each tag to the believer's wrong choice (the d8f20b3 fix pattern), DELETE the
-// entry; the gate then enforces at full strength.
-const KNOWN_ESCALATED = new Set([
-  "cell.input.numbers#2|c|mis.type.int_input",
-  "cell.loops.guessing_game#2|b|mis.loop.infinite_true",
-  "cell.variables.box#2|b|mis.var.undefined",
-  "cell.variables.use#2|b|mis.var.use_quoted",
-]);
-
 export function gateCorrectChoiceMiscon(loaded: Loaded): GateIssue[] {
   const issues: GateIssue[] = [];
   const push = (message: string, level: "error" | "warn" = "error") =>
@@ -66,13 +53,10 @@ export function gateCorrectChoiceMiscon(loaded: Loaded): GateIssue[] {
           if (choices && choices.length > 0) {
             for (const ch of choices) {
               if (ch.misconception && matchesAccepted(expected, ch.id)) {
-                const known = KNOWN_ESCALATED.has(`${s.id}|${ch.id}|${ch.misconception}`);
                 push(
                   `${s.id}: misconception ${ch.misconception} on the CORRECT choice ` +
                     `${JSON.stringify(ch.id)} (its id matches expected) — the tag must ` +
-                    `describe the belief that picks a wrong choice` +
-                    (known ? " [known finding, escalated 2026-06-09 — fix content, then drop from KNOWN_ESCALATED]" : ""),
-                  known ? "warn" : "error",
+                    `describe the belief that picks a wrong choice`,
                 );
               }
             }
