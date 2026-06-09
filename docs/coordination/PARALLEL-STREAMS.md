@@ -104,17 +104,30 @@ Both prior open decisions are now **RESOLVED** (orchestrator + user, 2026-06-08)
   `print_literal ≥ 0.5` met and toggle `var.assign` across 0.6 → `random` flips `locked`↔`available`
   (`var.assign` is the deciding gate). Both skills have single producers; the pair is unambiguous.
 
+### Frozen-contract change during integration (2026-06-08)
+
+- **`GenSpec.elem` over-constraint — FIXED on `main` @ `fec6b8f`.** Escalated by Stream A: the recursive
+  `GenSpec` forced a list-element generator's `elem` to carry a REQUIRED `param`, but §6.4 `param`
+  names an entrypoint argument (top-level only) — so the valid `loops` guessing-game generator failed
+  `Value.Check(Bundle)`. Fix (decision A): a paramless recursive **`ElemSpec`** for `elem`; top-level
+  `GenSpec.param` stays required. Compatible loosening — M2/M3a unaffected; **M1 must rebase + flip its
+  pinned validity tests** (see §7). Test-first; schema 37/37 green.
+- **DEFERRED follow-up — shared-package node-runnable exports.** `@trellis/schema`'s `main`/`exports`
+  point at TS source, so a *runtime value-import* of the bare specifier from a built consumer (e.g.
+  M1's CLI) fails under plain `node`. Type-only consumers (M2/M3a) are unaffected; nothing is blocked
+  now. Revisit at M3b/M5 once the consumption mode (dev CLI vs distributable vs browser-only) is fixed.
+
 ## 7. Status board (orchestrator updates this — streams report, don't edit)
 
-Worktrees created off `main` (each has a `START-HERE.md` onboarding scaffold, git-excluded).
-All three branches synced to `main` @ `303834e` (2026-06-08) — they start with the re-themed
-conditionals content + both §6 decisions resolved.
+`main` @ `1c05031`. M2 + M3a integrated (merged result green: 136 tests across schema/engine/sandbox;
+typecheck/lint/test/build all pass; lockfile reconciled with `re2js` + `pyodide`). M1 blocked on a
+post-fix rebase. Worktrees each have a git-excluded `START-HERE.md` scaffold.
 
-| Stream | Status | Worktree / branch (base) | Notes |
+| Stream | Status | Worktree / branch | Notes |
 |---|---|---|---|
-| A · M1 authoring | launching @ `303834e` | `../trellis-m1` / `m1-authoring` | write plan first (writing-plans). Invariant lint should find ZERO spine→extension edges (decision resolved). |
-| B · M2 engine | launching @ `303834e` | `../trellis-m2` / `m2-engine` | write plan first; builds on hand-authored Bundle fixtures (no dep on M1). Gating-diff pair = `var.assign`@0.6 + `print_literal`@0.5 (§6). |
-| C · M3a sandbox | launching @ `303834e` (verify deferred) | `../trellis-m3a` / `m3a-sandbox` | **no network here → real-Pyodide verification deferred**; build host + mock-worker tests now |
+| A · M1 authoring | ⏳ **rebase needed** | `../trellis-m1` / `m1-authoring` | Complete & 76/76 green, but pinned to the pre-fix schema. **Re-engage the M1 session:** rebase on `main` (≥ `fec6b8f`, ElemSpec fix landed) + flip the 4 pinned tests (`compile`/`gates-run`/`cli`/`corpus.smoke`) from "exactly one gate-1 error" to full validity, then re-report for integration. |
+| B · M2 engine | ✅ **integrated** @ `f5a1ad8` | merged to `main` | Gating diff (`var.assign` 0.59→locked, 0.60→available) + determinism proven; engine purity confirmed; 76 tests. |
+| C · M3a sandbox | ✅ **integrated** @ `1c05031` · real-Pyodide verify **deferred** | merged to `main` | Host/watchdog/warm-pool proven vs a mock worker (23 tests). **Real Pyodide load, live `worker.terminate()`, line extraction, mem-cap, and `PYODIDE_VERSION` (0.27.2) CDN pin MUST be verified in a networked browser before M3a is verification-COMPLETE.** |
 
 ## 8. Reference index
 
