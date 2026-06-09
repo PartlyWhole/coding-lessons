@@ -49,5 +49,8 @@ describe("runProperty", () => {
     const r1 = await runProperty(prop, "add", "def add(a, b):\n    return a * b", make());
     const r2 = await runProperty(prop, "add", "def add(a, b):\n    return a * b", make());
     expect(r1.counterexample).toEqual(r2.counterexample);
+    // Pin the exact shrunk value: with seed 1234 the first diverging tuple shrinks to
+    // [0, 1] (a*b != a+b minimally). This makes the test a real seed-reproducibility guard.
+    expect(r1.counterexample).toEqual([0, 1]);
   });
 });
