@@ -62,3 +62,33 @@ describe("persistDiagnosis", () => {
     expect(hist).toHaveLength(1);
   });
 });
+
+// --- appended: marquee str_num diagnosis through the real CPython twin ---
+import { readFileSync as _read } from "node:fs";
+import { execSync as _exec } from "node:child_process";
+import { createLocalSandbox } from "@trellis/sandbox";
+import type { Bundle as _Bundle, Cell as _Cell, BuildStep as _BuildStep } from "@trellis/schema";
+
+function _realBundle(): _Bundle {
+  const out = "/tmp/trellis-grade-bundle.json";
+  _exec(`node ${process.cwd()}/../authoring/dist/src/cli.js build --out ${out} --content ${process.cwd()}/../../content`, { stdio: "ignore" });
+  return JSON.parse(_read(out, "utf8")) as _Bundle;
+}
+
+describe("marquee build diagnosis (real CPython twin)", () => {
+  it("'...: ' + number → mis.concat.str_num; str() coercion → pass", async () => {
+    const bundle = _realBundle();
+    const cell = bundle.cells["cell.string_concat.text_plus_number"] as _Cell;
+    const step = cell.steps.find((s) => s.kind === "build") as _BuildStep;
+    const twin = createLocalSandbox();
+    const fx2 = { newId: () => "dx", now: () => "2026-01-01T00:00:00Z", learnerId: "L" };
+
+    const bug = await gradeStep(step, { kind: "build", code: 'def announce(number):\n    return "Your random number is: " + number\n' }, twin, bundle, fx2);
+    expect(bug.correct).toBe(false);
+    expect(bug.misconceptionId).toBe("mis.concat.str_num");
+
+    const ok = await gradeStep(step, { kind: "build", code: 'def announce(number):\n    return "Your random number is: " + str(number)\n' }, twin, bundle, fx2);
+    expect(ok.correct).toBe(true);
+    expect(ok.attribution).toBe("pass");
+  }, 30000);
+});

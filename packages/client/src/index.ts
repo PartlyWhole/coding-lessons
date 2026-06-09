@@ -1,0 +1,26 @@
+// @trellis/client — the React presentation slice (M5). Consumes schema/engine/persist/sandbox.
+export { CellRunner } from "./CellRunner.js";
+export type { CellRunnerProps } from "./CellRunner.js";
+export { useCellRunner } from "./runner/useCellRunner.js";
+export type { UseCellRunnerArgs, CellRunnerView } from "./runner/useCellRunner.js";
+export { gradeStep, persistDiagnosis } from "./runner/grade.js";
+export type { RunnerEffects } from "./runner/grade.js";
+export { createEventBus } from "./eventBus.js";
+export type { EventBus, UiEvent } from "./eventBus.js";
+export type { PeekBackEntry, StepAnswer } from "./types.js";
+export { attributionStyle } from "./attribution.js";
+export type { AttributionStyle } from "./attribution.js";
+export { StepView } from "./steps/StepView.js";
+export { WatchStepView } from "./steps/WatchStepView.js";
+export { PredictStepView } from "./steps/PredictStepView.js";
+export { RecognizeStepView } from "./steps/RecognizeStepView.js";
+export { RecallStepView } from "./steps/RecallStepView.js";
+export { BuildStepView } from "./steps/BuildStepView.js";
+export { EditorPane } from "./editor/EditorPane.js";
+export { lockedRegionsExtension, lineRangesToOffsets } from "./editor/lockedRegions.js";
+export { HintPanel } from "./hints/HintPanel.js";
+export { FeedbackPanel } from "./feedback/FeedbackPanel.js";
+export { PeekBackPanel } from "./peekback/PeekBackPanel.js";
+export { TrellisApp } from "./app/TrellisApp.js";
+export { loadCellContent } from "./app/loadContent.js";
+export { makeBrowserSandbox } from "./app/makeSandbox.js";
