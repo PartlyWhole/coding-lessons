@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Cross-bundle P7 validation (TECHNICAL_DESIGN.md §13.2 gates 1-4, bundle scope).
+"""Cross-bundle P7 validation (TECHNICAL_DESIGN.md §13.2 gates 1-4 + 8-9, bundle scope).
 Not the real @trellis/authoring compiler — a pre-flight that catches dangling refs,
-granularity, certifies-subset, DAG cycles, and the extension single-track rule."""
-import glob, sys, yaml
+granularity, certifies-subset, DAG cycles, the extension single-track rule, and the
+gate-8/9 answerability/correct-choice-misconception checks (lockstep with the TS gates)."""
+import glob, re, sys, yaml
 from collections import defaultdict
 
 nodes, skills, miscons = {}, {}, {}
@@ -88,6 +89,58 @@ for nid, n in nodes.items():
     for ref in walk_steps(n):
         if ref not in miscons:
             errs.append(f"{nid} references undefined misconception {ref}")
+
+# Gates 8 + 9 (ported from @trellis/authoring gates/answerable.ts +
+# correct-choice-miscon.ts, themselves a faithful mirror of the engine's §8
+# non-build matching: normalize = trim/lower/collapse-ws; match = normalized
+# exact OR anchored full-match pattern). Golden precedents: 0884bf3 (three
+# unanswerable choice-mode predicts), d8f20b3 + aacf0ce (five misconception
+# tags on the CORRECT choice).
+def _gnorm(s):
+    return re.sub(r"\s+", " ", s.strip().lower())
+
+def _matches_accepted(acc, value):
+    if any(_gnorm(a) == _gnorm(value) for a in (acc.get("normalized") or [])):
+        return True
+    for p in (acc.get("patterns") or []):
+        try:  # engine uses anchored RE2 full-match; corpus patterns are lint-re2-gated
+            if re.fullmatch(p, value):
+                return True
+        except re.error:
+            pass  # non-compiling patterns are lint-re2's finding, non-matching here
+    return False
+
+def _gate9_map(step, field, acc):
+    for key in (acc.get("misconceptionMap") or {}):
+        if _matches_accepted(acc, key):
+            errs.append(f"gate9: {step['id']} {field}.misconceptionMap key {key!r} "
+                        f"matches the accepted answers — it tags a CORRECT answer and can never fire")
+
+for nid, n in nodes.items():
+    for c in n.get("cells", []):
+        for s in c.get("steps", []):
+            kind, choices = s.get("kind"), s.get("choices") or []
+            if kind == "predict":
+                exp = s.get("expected") or {}
+                if choices:
+                    # Gate 8: the engine compares the chosen CHOICE ID against expected —
+                    # some choice id must match, or no learner can ever pass the step.
+                    if not any(_matches_accepted(exp, ch["id"]) for ch in choices):
+                        errs.append(f"gate8: {s['id']} unanswerable choice-mode predict — no choice id "
+                                    f"matches expected (ids: {', '.join(ch['id'] for ch in choices)})")
+                    # Gate 9: a misconception tag describes the belief that picks a WRONG choice.
+                    for ch in choices:
+                        if ch.get("misconception") and _matches_accepted(exp, ch["id"]):
+                            errs.append(f"gate9: {s['id']} misconception {ch['misconception']} on the "
+                                        f"CORRECT choice {ch['id']!r} (its id matches expected)")
+                _gate9_map(s, "expected", exp)
+            elif kind == "recognize":
+                for ch in choices:
+                    if ch.get("misconception") and ch["id"] == s.get("correctChoiceId"):
+                        errs.append(f"gate9: {s['id']} misconception {ch['misconception']} on the "
+                                    f"CORRECT choice {ch['id']!r} (correctChoiceId)")
+            elif kind == "recall":
+                _gate9_map(s, "accepted", s.get("accepted") or {})
 
 # Gate 3: DAG over induced node graph (producer(req.skill) -> node)
 color = {nid: 0 for nid in nodes}  # 0 white 1 gray 2 black
