@@ -106,7 +106,7 @@ def eval_tags(code, queries):
     except SyntaxError:
         return None
     pm = parents(tree)
-    return [q["tag"] for q in queries if query_matches(q["query"], tree, pm)]
+    return {q["tag"] for q in queries if query_matches(q["query"], tree, pm)}
 `;
 
 function toBase64Json(value: unknown): string {
