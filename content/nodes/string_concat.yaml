@@ -49,8 +49,12 @@ node:
             name = "Alan"
             print("Hi" + name)
           choices:
-            - { id: a, label: "Hi Alan" }
-            - { id: b, label: "HiAlan", misconception: mis.concat.missing_space }
+            # The missing_space tag belongs on a: a learner who believes `+` inserts a space
+            # predicts "Hi Alan". (Was mis-tagged on b — the CORRECT choice — describing the
+            # choice's label rather than the belief that picks it. Flagged by the real-Pyodide
+            # verification session; moved by the orchestrator 2026-06-09, user-approved.)
+            - { id: a, label: "Hi Alan", misconception: mis.concat.missing_space }
+            - { id: b, label: "HiAlan" }
             - { id: c, label: "Hi name" }
           # Choice-mode predict: the engine matches the CHOSEN ID against expected.normalized
           # (engine diagnose.ts compareNonBuild) — the id of the correct choice must be listed.
