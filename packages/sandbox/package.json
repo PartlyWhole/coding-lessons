@@ -16,6 +16,7 @@
     "@sinclair/typebox": "^0.34.0"
   },
   "devDependencies": {
+    "@trellis/engine": "workspace:*",
     "vitest": "^2.1.0"
   }
 }
