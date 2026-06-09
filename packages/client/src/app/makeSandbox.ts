@@ -1,18 +1,15 @@
-import { createSandbox, browserWorkerFactory } from "@trellis/sandbox";
-import type { BuildSandbox } from "@trellis/engine";
+import { createSandbox, browserWorkerFactory, type ManagedSandbox } from "@trellis/sandbox";
 
-// Production sandbox: the Pyodide Web Worker host. Real-Pyodide-in-WASM behavior is DEFERRED
-// to a networked browser (no network here). createSandbox returns a ManagedSandbox, which
-// structurally satisfies BuildSandbox ({ run, parseAndMatch }).
+// Production sandbox: the Pyodide Web Worker host. createSandbox returns a ManagedSandbox
+// (structurally a BuildSandbox: { run, parseAndMatch }) plus warmup()/status() — TrellisApp
+// uses warmup() to drive the "Getting Python ready…" state.
 //
-// `browserWorkerFactory(workerUrl)` builds the WorkerFactory; the app supplies the worker URL,
-// which the static host resolves against the served @trellis/sandbox dist (§6.1). Resolved at
-// load time relative to this module so `python -m http.server` can serve it without a bundler.
-const workerUrl = new URL(
-  "../../../sandbox/dist/src/pyodide-worker.js",
-  import.meta.url,
-);
+// `browserWorkerFactory(workerUrl)` builds the WorkerFactory. The worker is bundled by
+// scripts/build-app.mjs as a SIBLING module file of this bundle (dist/app/pyodide-worker.js),
+// so resolving against import.meta.url works in the built, statically served layout
+// (`python -m http.server` — Debt-5 defect 3 fix).
+const workerUrl = new URL("./pyodide-worker.js", import.meta.url);
 
-export function makeBrowserSandbox(): BuildSandbox {
+export function makeBrowserSandbox(): ManagedSandbox {
   return createSandbox({ workerFactory: browserWorkerFactory(workerUrl) });
 }

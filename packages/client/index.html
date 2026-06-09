@@ -4,11 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Trellis</title>
+    <link rel="stylesheet" href="./dist/app/main.css" />
   </head>
   <body>
     <div id="root"></div>
-    <!-- Built bundle + main entry are emitted by tsc to dist/. M5 ships the slice served from
-         `python -m http.server`. Real-Pyodide grading is DEFERRED (needs network). -->
-    <script type="module" src="./dist/src/app/main.js"></script>
+    <!-- Static esbuild output (scripts/build-app.mjs): app bundle + CSS + fonts +
+         pyodide-worker.js + bundle.json under dist/app/. Serve from the repo root with
+         `python -m http.server` → http://localhost:8000/packages/client/index.html
+         (no server logic — frozen M5 contract). -->
+    <script type="module" src="./dist/app/main.js"></script>
   </body>
 </html>

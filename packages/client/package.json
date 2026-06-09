@@ -8,7 +8,7 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node scripts/build-app.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "lint": "eslint src test --ext .ts,.tsx"
@@ -19,6 +19,9 @@
     "@codemirror/language": "^6.10.0",
     "@codemirror/state": "^6.4.0",
     "@codemirror/view": "^6.34.0",
+    "@fontsource/baloo-2": "^5.2.0",
+    "@fontsource/jetbrains-mono": "^5.2.0",
+    "@fontsource/nunito-sans": "^5.2.0",
     "@lezer/highlight": "^1.2.0",
     "@trellis/engine": "workspace:*",
     "@trellis/persist": "workspace:*",
@@ -31,9 +34,11 @@
     "@testing-library/dom": "^10.0.0",
     "@testing-library/react": "^16.0.0",
     "@testing-library/user-event": "^14.0.0",
+    "@trellis/authoring": "workspace:^",
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "esbuild": "^0.25.0",
     "happy-dom": "^15.0.0",
     "vitest": "^2.1.0"
   }
