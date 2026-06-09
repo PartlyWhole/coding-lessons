@@ -1,9 +1,11 @@
 # Real-Pyodide Verification Session — launch prompt + debt ledger
 
-**Owner:** orchestrator. **Status:** ✅ FULLY UNBLOCKED & READY TO RUN — Stream G integrated `19d8eea`
-(2026-06-09), so all five debts (incl. Debt 5, the M5-client whole-slice) are now on `main`. Run in a
-**networked environment with a real browser**; a single pass clears all five. Root the session at `main`
-@ `19d8eea` or later (6 packages, 392 tests).
+**Owner:** orchestrator. **Status:** ✅ FULLY UNBLOCKED & READY TO RUN — all five debts on `main`
+(`5bb4a56`: full slice + shims cleanup; 6 packages, 392 tests). Run in a **networked environment with a
+real browser**; a single pass clears all five. **Root the session at the dedicated worktree
+`/Users/alan/Desktop/trellis-verify` (branch `real-pyodide-verification`, pre-created off `main` @
+`5bb4a56`)** — NOT the main repo; a prior spawned task ran in the main repo and switched its branch under
+the orchestrator, which this worktree isolation prevents.
 
 ## Why this session exists
 Every prior Trellis session ran **offline** (no network → no real Pyodide/WASM, no real browser
@@ -42,9 +44,11 @@ deps that were unfetchable offline are now available. This single pass clears FI
 debts (M3a, M3b, M4 re-key, M5-persist nativeDriver, M5-client whole-slice).
 
 SETUP
-- Root at the Trellis repo on the LATEST main (pull first; it should be at/after Stream G's
-  integration — 6 packages once G lands). Create a branch real-pyodide-verification off main so
-  any fix/commit is isolated; do NOT commit directly to main — the orchestrator reviews + merges.
+- ROOTING SELF-CHECK FIRST: pwd MUST be /Users/alan/Desktop/trellis-verify and
+  `git branch --show-current` MUST print real-pyodide-verification (the worktree + branch are
+  pre-created off main @ 5bb4a56 — 6 packages, 392 tests). If either is wrong, STOP and fix your
+  workspace folder — do NOT work in /Users/alan/Desktop/Trellis (the orchestrator owns it).
+  All commits go on this branch; do NOT merge to main — the orchestrator reviews + merges.
   export PATH="/opt/homebrew/lib/node_modules/corepack/shims:$PATH" before pnpm.
 - Reproduce the offline baseline first (must already be green): pnpm -r typecheck/lint/test/
   build + python3 content/validate.py + python3 content/verify/harness.py. harness.py (CPython)
