@@ -173,8 +173,10 @@ the held M4 re-key (archived 2026-06-09 handoff, "Decisions" section).
 2. **Polish queue** (small, design-adjacent): backtick rendering in feedback/hint bodies (needs a
    design ⚑ sign-off — could go back to the design session); hint-button-persists-after-syntax-
    error (frozen-behavior UX question for the user, eventually).
-3. **Port gates 8/9 into `validate.py`** — yours (oracle seam), cheap, keeps Python coverage
-   matched to the TS gates.
+3. ~~**Port gates 8/9 into `validate.py`**~~ **DONE @ `b4671cc`** (2026-06-09 night) —
+   mutation-tested against a 4-bug corpus (historical goldens + synthetic recognize/map
+   mutations); findings byte-equivalent in substance to the TS CLI's on the same mutations;
+   pristine corpus + harness + CLI lint green. Python coverage now matches TS gates 1–9.
 4. **Break the engine↔sandbox test-dep cycle properly** — move the 3 cross-package test files
    (`engine/test/m4-concat-e2e.test.ts`, `sandbox/test/differential.test.ts`,
    `sandbox/test/acceptance.test.ts`) into an integration-test package depending on both;
