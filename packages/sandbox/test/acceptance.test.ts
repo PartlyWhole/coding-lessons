@@ -53,10 +53,14 @@ describe("§4 acceptance - string_concat str_num (announce)", () => {
     expect(concat.attribution).toBe("pass");
   });
 
-  it("text + raw number is a fault (misconception or runtime), never pass", { timeout: 60_000 }, async () => {
+  it("text + raw number is attributed to the str_num misconception, never pass", { timeout: 60_000 }, async () => {
     const bad = await evaluate(step, { kind: "build", code: 'def announce(number):\n    return "Your random number is: " + number' }, sandbox, bundle, fx);
     expect(bad.correct).toBe(false);
-    expect(["misconception", "runtime"]).toContain(bad.attribution);
+    // The TypeError surfaces as runError:runtime, which detect() maps to the authored
+    // misconception (mis.concat.str_num, signature any:[{runError:runtime},{choice:a}]) —
+    // proving the full detection chain end-to-end, not merely "not a pass".
+    expect(bad.attribution).toBe("misconception");
+    expect(bad.misconceptionId).toBe("mis.concat.str_num");
   });
 });
 
