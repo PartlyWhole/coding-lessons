@@ -38,7 +38,10 @@ export class FakeClock implements Clock {
 // Flush the microtask queue so message handlers (dispatched via queueMicrotask) run.
 export const flush = (): Promise<void> => new Promise<void>((r) => queueMicrotask(r));
 
-export type RunOutcome = RunResultData | "hang";
+export type RunOutcome =
+  | RunResultData
+  | "hang"
+  | { result: RunResultData; recycle: true };
 
 export interface MockBehavior {
   // "immediate" (default): post ready in a microtask. "never": never become ready.
@@ -90,9 +93,13 @@ export function makeMockFactory(behavior: MockBehavior = {}): {
         runCount += 1;
         const outcome = (behavior.onRun ?? defaultRun)(msg.req);
         if (outcome === "hang") return; // never replies → watchdog must fire
+        const wire =
+          "recycle" in outcome
+            ? { kind: "result" as const, id: msg.id, result: outcome.result, recycle: true }
+            : { kind: "result" as const, id: msg.id, result: outcome };
         queueMicrotask(() => {
           if (!terminated) {
-            self.onmessage?.({ data: { kind: "result", id: msg.id, result: outcome } });
+            self.onmessage?.({ data: wire });
           }
         });
       },

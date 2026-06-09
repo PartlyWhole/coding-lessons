@@ -131,7 +131,15 @@ export class WorkerHost {
       if (this.pending && this.pending.id === msg.id) {
         const { resolve } = this.pending;
         this.pending = null;
-        this.state_ = "ready";
+        if (msg.recycle === true) {
+          // The worker retired itself (e.g. mem-cap hit; the wasm heap cannot shrink).
+          // Tear the Worker down and go dead BEFORE resolving, so the pool's
+          // `host.state === "dead"` check discards us and spawns a replacement.
+          this.state_ = "dead";
+          this.worker.terminate();
+        } else {
+          this.state_ = "ready";
+        }
         resolve(msg.result);
       }
     }

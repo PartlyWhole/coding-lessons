@@ -54,12 +54,45 @@ async function main() {
     { firstRun: r4a, secondRun: r4b },
   );
 
-  // ── 5. js FFI reachability from learner code (boundary claim) ──────
+  // ── 5. js FFI must be UNREACHABLE from learner code (§6.1 boundary) ─
+  // Stream J hardening: RUN_HARNESS pops the JS-bridge modules + JsFinder around the
+  // learner exec and arms an import blocker → clean ImportError, host machinery intact.
+  const BLOCK_MSG = "is not available in the Trellis sandbox";
+  const blocked = (r) =>
+    r.error?.type === "runtime" &&
+    /ImportError/.test(r.error?.message ?? "") &&
+    r.error.message.includes(BLOCK_MSG);
   const r5a = await run({ code: "import js\nprint(type(js))" });
   const r5b = await run({ code: "import pyodide_js\nprint(type(pyodide_js))" });
-  record("5-js-ffi-probe", null /* observational; assessed in report */, {
-    import_js: r5a, import_pyodide_js: r5b,
+  const r5c = await run({ code: "import pyodide.code\nprint(pyodide.code.run_js)" }); // run_js = JS escape
+  const r5d = await run({ code: "from js import fetch" });
+  // exhaustive sweep DURING a run: no JsProxy-typed module (and no pyodide/_pyodide
+  // module) may be visible in sys.modules while learner code executes
+  const r5e = await run({
+    code:
+      "import sys\n" +
+      "leaks = sorted(n for n, m in sys.modules.items()\n" +
+      "    if 'JsProxy' in type(m).__name__\n" +
+      "    or type(m).__module__.split('.', 1)[0] in ('pyodide', '_pyodide')\n" +
+      "    or n.split('.', 1)[0] in ('js', 'pyodide_js', 'pyodide', '_pyodide'))\n" +
+      "print(leaks)",
   });
+  // host machinery must stay green ON THE SAME (reused) workers after blocked runs:
+  const r5f = await run({ code: "def main():\n    import math\n    return math.floor(2.5)", entrypoint: "main" });
+  const r5g = await sb.parseAndMatch("x = 1 + 2", [
+    { tag: "has_binop", query: { node: "BinOp" } },
+  ]);
+  record(
+    "5-js-ffi-blocked",
+    blocked(r5a) && blocked(r5b) && blocked(r5c) && blocked(r5d) &&
+      r5e.ran === true && r5e.stdout === "[]\n" && !r5e.error &&
+      r5f.returnValue === 2 && Array.isArray(r5g) && r5g.includes("has_binop"),
+    {
+      import_js: r5a, import_pyodide_js: r5b, import_pyodide_code: r5c,
+      from_js_import_fetch: r5d, jsproxy_sweep_during_run: r5e,
+      host_entrypoint_after_block: r5f, parse_and_match_after_block: r5g,
+    },
+  );
 
   // ── 6. Syntax error: type + line from real traceback ───────────────
   const r6 = await run({ code: "def f(:\n    pass" });
@@ -97,12 +130,26 @@ async function main() {
     { timedOutResult: r10, watchdogMs, followUpRun: r10b, statusAfterKill },
   );
 
-  // ── 11. Memory cap behavior (documented as deferred-tuning in worker) ─
+  // ── 11. Memory cap ENFORCED: oversized alloc → structured failure + recycle ─
+  // Stream J hardening: wasmMemory grow-guard (preemptive) + post-run watermark;
+  // a capped worker is retired and the pool self-heals (like the watchdog path).
   const r11 = await run({
     code: "data = bytearray(600 * 1024 * 1024)\nprint('allocated', len(data))",
     memoryMb: 256, timeoutMs: 30000,
   });
-  record("11-memory-cap-probe", null /* observational; assessed in report */, r11);
+  // next run must succeed (fresh/healthy worker from the pool)
+  const r11b = await run({ code: "print('alive after cap kill')" });
+  await new Promise((res) => setTimeout(res, 100));
+  const statusAfterCap = sb.status();
+  record(
+    "11-memory-cap-enforced",
+    r11.ran === false && r11.timedOut === false &&
+      r11.error?.type === "runtime" && /memory limit exceeded/.test(r11.error?.message ?? "") &&
+      /heap growth refused by the cap guard/.test(r11.error?.message ?? "") /* PREEMPTIVE, not just watermark */ &&
+      r11.stdout === "" /* the oversized alloc never 'succeeded' */ &&
+      r11b.ran === true && r11b.stdout === "alive after cap kill\n" && statusAfterCap.total === 2,
+    { cappedRun: r11, followUpRun: r11b, statusAfterCap },
+  );
 
   // ── 12. Warm pool hides respawn latency: warm run ≪ cold start ─────
   const t12 = performance.now();

@@ -28,7 +28,16 @@ export type HostToWorker = InitMessage | RunMessage;
 // ---- worker → host ----
 export interface ReadyMessage { kind: "ready"; }
 export interface InitErrorMessage { kind: "init-error"; message: string; }
-export interface ResultMessage { kind: "result"; id: number; result: RunResultData; }
+export interface ResultMessage {
+  kind: "result";
+  id: number;
+  result: RunResultData;
+  // Internal wire flag (NOT part of the frozen RunResult): the worker asks to be
+  // retired after this result — e.g. it hit/neared the memoryMb cap and the wasm heap
+  // cannot shrink. The host resolves the run, then goes dead so the pool discards it
+  // and spawns a fresh replacement (same self-healing path as the watchdog).
+  recycle?: boolean;
+}
 export type WorkerToHost = ReadyMessage | InitErrorMessage | ResultMessage;
 
 export const isReadyMessage = (m: WorkerToHost): m is ReadyMessage => m.kind === "ready";

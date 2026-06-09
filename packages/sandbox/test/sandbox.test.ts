@@ -85,6 +85,41 @@ describe("createSandbox (gate behaviors)", () => {
     sb.dispose();
   });
 
+  it("a mem-cap recycle is self-healing: structured failure, worker replaced, next run green", async () => {
+    const clock = new FakeClock();
+    const capError = {
+      ran: false as const,
+      stdout: "",
+      wallMs: 3,
+      timedOut: false,
+      error: { type: "runtime" as const, message: "memory limit exceeded: memoryMb=256" },
+    };
+    let runs = 0;
+    const { factory, workers } = makeMockFactory({
+      onRun: () => {
+        runs += 1;
+        // first run blows the cap (worker asks to be recycled); later runs are healthy
+        if (runs === 1) return { result: capError, recycle: true as const };
+        return { ran: true, stdout: "healthy\n", wallMs: 1, timedOut: false };
+      },
+    });
+    const sb = createSandbox({ workerFactory: factory, clock, poolSize: 1 });
+    await sb.warmup();
+    const res = await sb.run({ ...base, code: "bytearray(600*1024*1024)" });
+    expect(res.ran).toBe(false);
+    expect(res.timedOut).toBe(false);
+    expect(res.error?.type).toBe("runtime");
+    expect(res.error?.message).toMatch(/memory limit/i);
+    expect(workers[0]?.terminated).toBe(true); // capped worker torn down…
+    await flush();
+    expect(workers.length).toBe(2); // …and the pool spawned a replacement
+    const next = await sb.run({ ...base });
+    expect(next.ran).toBe(true);
+    expect(next.stdout).toBe("healthy\n");
+    expect(sb.status().total).toBe(1); // pool back at full strength
+    sb.dispose();
+  });
+
   it("a request exceeding the pool memory cap runs on a dedicated worker", async () => {
     const clock = new FakeClock();
     const { factory, workers } = makeMockFactory();

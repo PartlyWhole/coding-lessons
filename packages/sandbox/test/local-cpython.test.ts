@@ -40,6 +40,66 @@ describe("createLocalSandbox.run", () => {
   });
 });
 
+describe("RUN_HARNESS js-FFI hardening (twin semantics — identical harness runs in Pyodide)", () => {
+  const BLOCK_MSG = "is not available in the Trellis sandbox";
+  it("blocks `import js` with a clean ImportError", async () => {
+    const r = await sb.run({ code: "import js\nprint(type(js))", timeoutMs: 5000, memoryMb: 256 });
+    expect(r.ran).toBe(true); // normal Python error path, not a crash
+    expect(r.error?.type).toBe("runtime");
+    expect(r.error?.message).toContain("ImportError");
+    expect(r.error?.message).toContain(BLOCK_MSG);
+  });
+  it("blocks `import pyodide_js`", async () => {
+    const r = await sb.run({ code: "import pyodide_js", timeoutMs: 5000, memoryMb: 256 });
+    expect(r.error?.type).toBe("runtime");
+    expect(r.error?.message).toContain(BLOCK_MSG);
+  });
+  it("blocks `import pyodide` (pyodide.code.run_js would be a JS escape)", async () => {
+    const r = await sb.run({ code: "import pyodide.code", timeoutMs: 5000, memoryMb: 256 });
+    expect(r.error?.type).toBe("runtime");
+    expect(r.error?.message).toContain(BLOCK_MSG);
+  });
+  it("blocks `from js import fetch` and js submodules", async () => {
+    const a = await sb.run({ code: "from js import fetch", timeoutMs: 5000, memoryMb: 256 });
+    const b = await sb.run({ code: "import js.something", timeoutMs: 5000, memoryMb: 256 });
+    expect(a.error?.message).toContain(BLOCK_MSG);
+    expect(b.error?.message).toContain(BLOCK_MSG);
+  });
+  it("reports the blocked import at the right line", async () => {
+    const r = await sb.run({ code: "x = 1\nimport js", timeoutMs: 5000, memoryMb: 256 });
+    expect(r.error?.line).toBe(2);
+  });
+  it("normal stdlib imports still work (math, ast, json)", async () => {
+    const r = await sb.run({
+      code: "import math, ast, json\nprint(math.floor(2.5), len(ast.parse('x=1').body), json.dumps([1]))",
+      timeoutMs: 5000,
+      memoryMb: 256,
+    });
+    expect(r.ran).toBe(true);
+    expect(r.error).toBeUndefined();
+    expect(r.stdout).toBe("2 1 [1]\n");
+  });
+  it("a blocked-import run does not poison the next run (restore holds)", async () => {
+    const bad = await sb.run({ code: "import js", timeoutMs: 5000, memoryMb: 256 });
+    const ok = await sb.run({ code: "print('healthy')", timeoutMs: 5000, memoryMb: 256 });
+    expect(bad.error?.message).toContain(BLOCK_MSG);
+    expect(ok.ran).toBe(true);
+    expect(ok.stdout).toBe("healthy\n");
+    expect(ok.error).toBeUndefined();
+  });
+  it("blocking is armed only around learner code: harness imports (io/sys/json) unaffected", async () => {
+    // entrypoint return value is marshalled with json AFTER the learner code ran —
+    // proves the harness's own machinery still works post-block/post-restore.
+    const r = await sb.run({
+      code: "def main():\n    return 'ok'",
+      entrypoint: "main",
+      timeoutMs: 5000,
+      memoryMb: 256,
+    });
+    expect(r.returnValue).toBe("ok");
+  });
+});
+
 describe("createLocalSandbox.parseAndMatch", () => {
   it("matches a field-scoped elif (has_elif) but NOT a nested-if-in-body", async () => {
     const q = [{ tag: "has_elif", query: { node: "If", field: { orelse: { node: "If" } } } }];

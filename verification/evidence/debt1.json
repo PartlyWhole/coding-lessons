@@ -26,7 +26,7 @@
           "running": 0,
           "total": 2
         },
-        "warmupMs": 1241,
+        "warmupMs": 4973,
         "budgetMs": 30000
       }
     },
@@ -36,7 +36,7 @@
       "evidence": {
         "ran": true,
         "stdout": "hello from real pyodide\n",
-        "wallMs": 1.0999999940395355,
+        "wallMs": 9,
         "timedOut": false
       }
     },
@@ -47,13 +47,13 @@
         "firstRun": {
           "ran": true,
           "stdout": "set 42\n",
-          "wallMs": 0.5,
+          "wallMs": 3.800000011920929,
           "timedOut": false
         },
         "secondRun": {
           "ran": true,
           "stdout": "",
-          "wallMs": 0.5,
+          "wallMs": 5.699999988079071,
           "timedOut": false,
           "error": {
             "type": "runtime",
@@ -64,21 +64,69 @@
       }
     },
     {
-      "name": "5-js-ffi-probe",
-      "pass": null,
+      "name": "5-js-ffi-blocked",
+      "pass": true,
       "evidence": {
         "import_js": {
           "ran": true,
-          "stdout": "<class 'pyodide.ffi.JsProxy'>\n",
-          "wallMs": 0.5,
-          "timedOut": false
+          "stdout": "",
+          "wallMs": 5,
+          "timedOut": false,
+          "error": {
+            "type": "runtime",
+            "message": "ImportError: module 'js' is not available in the Trellis sandbox",
+            "line": 1
+          }
         },
         "import_pyodide_js": {
           "ran": true,
-          "stdout": "<class 'pyodide.ffi.JsProxy'>\n",
-          "wallMs": 0.4000000059604645,
+          "stdout": "",
+          "wallMs": 3.9000000059604645,
+          "timedOut": false,
+          "error": {
+            "type": "runtime",
+            "message": "ImportError: module 'pyodide_js' is not available in the Trellis sandbox",
+            "line": 1
+          }
+        },
+        "import_pyodide_code": {
+          "ran": true,
+          "stdout": "",
+          "wallMs": 2.800000011920929,
+          "timedOut": false,
+          "error": {
+            "type": "runtime",
+            "message": "ImportError: module 'pyodide' is not available in the Trellis sandbox",
+            "line": 1
+          }
+        },
+        "from_js_import_fetch": {
+          "ran": true,
+          "stdout": "",
+          "wallMs": 3.9000000059604645,
+          "timedOut": false,
+          "error": {
+            "type": "runtime",
+            "message": "ImportError: module 'js' is not available in the Trellis sandbox",
+            "line": 1
+          }
+        },
+        "jsproxy_sweep_during_run": {
+          "ran": true,
+          "stdout": "[]\n",
+          "wallMs": 5.4000000059604645,
           "timedOut": false
-        }
+        },
+        "host_entrypoint_after_block": {
+          "ran": true,
+          "stdout": "",
+          "wallMs": 5.5999999940395355,
+          "timedOut": false,
+          "returnValue": 2
+        },
+        "parse_and_match_after_block": [
+          "has_binop"
+        ]
       }
     },
     {
@@ -87,7 +135,7 @@
       "evidence": {
         "ran": false,
         "stdout": "",
-        "wallMs": 1.199999988079071,
+        "wallMs": 10.700000017881393,
         "timedOut": false,
         "error": {
           "type": "syntax",
@@ -102,7 +150,7 @@
       "evidence": {
         "ran": true,
         "stdout": "",
-        "wallMs": 0.7999999821186066,
+        "wallMs": 4.199999988079071,
         "timedOut": false,
         "error": {
           "type": "runtime",
@@ -117,7 +165,7 @@
       "evidence": {
         "ran": true,
         "stdout": "",
-        "wallMs": 0.5,
+        "wallMs": 3.4000000059604645,
         "timedOut": false,
         "returnValue": 5
       }
@@ -128,7 +176,7 @@
       "evidence": {
         "ran": true,
         "stdout": "abc\n",
-        "wallMs": 0.5999999940395355,
+        "wallMs": 5.700000017881393,
         "timedOut": false
       }
     },
@@ -139,14 +187,14 @@
         "timedOutResult": {
           "ran": false,
           "stdout": "",
-          "wallMs": 2000.699999988079,
+          "wallMs": 2001.300000011921,
           "timedOut": true
         },
-        "watchdogMs": 2001,
+        "watchdogMs": 2002,
         "followUpRun": {
           "ran": true,
           "stdout": "alive after kill\n",
-          "wallMs": 1.4000000059604645,
+          "wallMs": 27.799999982118607,
           "timedOut": false
         },
         "statusAfterKill": {
@@ -158,13 +206,31 @@
       }
     },
     {
-      "name": "11-memory-cap-probe",
-      "pass": null,
+      "name": "11-memory-cap-enforced",
+      "pass": true,
       "evidence": {
-        "ran": true,
-        "stdout": "allocated 629145600\n",
-        "wallMs": 171.80000001192093,
-        "timedOut": false
+        "cappedRun": {
+          "ran": false,
+          "stdout": "",
+          "wallMs": 8.200000017881393,
+          "timedOut": false,
+          "error": {
+            "type": "runtime",
+            "message": "memory limit exceeded: the run needed more than memoryMb=256 (wasm heap 20 MB, heap growth refused by the cap guard); the worker will be recycled"
+          }
+        },
+        "followUpRun": {
+          "ran": true,
+          "stdout": "alive after cap kill\n",
+          "wallMs": 6.199999988079071,
+          "timedOut": false
+        },
+        "statusAfterCap": {
+          "warming": 0,
+          "ready": 2,
+          "running": 0,
+          "total": 2
+        }
       }
     },
     {
@@ -172,7 +238,7 @@
       "pass": true,
       "evidence": {
         "warmRunMs": 3,
-        "coldWarmupMs": 1241
+        "coldWarmupMs": 4973
       }
     },
     {

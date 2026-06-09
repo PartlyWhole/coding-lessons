@@ -76,6 +76,29 @@ describe("WorkerHost", () => {
     expect(host.state).toBe("dead");
   });
 
+  it("a result carrying recycle:true resolves the run AND retires the worker (mem-cap path)", async () => {
+    const clock = new FakeClock();
+    const capError = {
+      ran: false as const,
+      stdout: "",
+      wallMs: 3,
+      timedOut: false,
+      error: { type: "runtime" as const, message: "memory limit exceeded: memoryMb=256" },
+    };
+    const { factory, workers } = makeMockFactory({
+      onRun: () => ({ result: capError, recycle: true }),
+    });
+    const host = new WorkerHost(factory, cfg(clock));
+    await host.ready();
+    const res = await host.run({ code: "bytearray(600*1024*1024)", timeoutMs: 1000, memoryMb: 256 });
+    expect(res.ran).toBe(false);
+    expect(res.error?.type).toBe("runtime");
+    expect(res.error?.message).toMatch(/memory limit/i);
+    expect(res.timedOut).toBe(false); // a cap kill is NOT a timeout
+    expect(host.state).toBe("dead"); // pool's release path will discard + respawn
+    expect(workers[0]?.terminated).toBe(true); // the actual Worker is torn down, not leaked
+  });
+
   it("an onerror event fails an in-flight run and goes dead", async () => {
     const clock = new FakeClock();
     const { factory, workers } = makeMockFactory({ onRun: () => "hang" });
