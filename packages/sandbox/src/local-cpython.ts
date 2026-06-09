@@ -1,6 +1,4 @@
-// node:child_process is typed via the minimal ambient declaration in
-// ./node-child-process.d.ts (no @types/node installed). Single source for that typing.
-import { spawnSync } from "node:child_process";
+import { spawnSync, type SpawnSyncReturns } from "node:child_process";
 import type { RunResult, RunRequest, AstQuery } from "@trellis/schema";
 import { RUN_HARNESS } from "./run-harness.js";
 import { parseAndMatch as runParseAndMatch, type RunFn } from "./parse-and-match.js";
@@ -25,8 +23,9 @@ function b64(s: string): string {
   return btoa(bin);
 }
 
-function isTimeout(proc: { error?: { code?: string }; signal?: string | null; status?: number | null }): boolean {
-  const code = proc.error?.code;
+function isTimeout(proc: SpawnSyncReturns<string>): boolean {
+  // Real @types/node types `error` as `Error` (no `.code`); narrow to ErrnoException to read it.
+  const code = (proc.error as NodeJS.ErrnoException | undefined)?.code;
   if (code === "ETIMEDOUT" || code === "ENOBUFS") return true;
   if (proc.signal === "SIGTERM") return true;
   if (proc.status === null && proc.signal != null) return true;
