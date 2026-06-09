@@ -13,24 +13,31 @@ M1/M3 prevents silently-wrong detectors in the field.
 
 ---
 
-## 1. No field-scoped predicates (the load-bearing gap)
+## 1. No field-scoped predicates (the load-bearing gap) — ✅ RESOLVED (2026-06-08)
 
-`AstQuery`/`AstPred` can match a node type and walk *all* descendants (`childMatches`) or *any*
-ancestor (`within`), but cannot target a **specific child field** (`While.test`, `If.orelse`,
-`Call.func`, `Assign.targets`). Two shipped queries are therefore approximations:
+`AstQuery`/`AstPred` could match a node type and walk *all* descendants (`childMatches`) or *any*
+ancestor (`within`), but could not target a **specific child field** (`While.test`, `If.orelse`,
+`Call.func`, `Assign.targets`). Two shipped queries were therefore approximations:
 
-- **`content/nodes/conditionals.yaml` — `has_elif`** = `{ node: If, within: { node: If } }`.
-  In CPython an `elif` is a nested `If` in the outer `If`'s **`orelse`**. This query can't say
-  "in `orelse`," so it *also* matches a legitimately nested `if` in a branch **body**. Over-matches.
-- **`content/nodes/loops.yaml` — `infinite_true_no_break`** = `{ While, where: { childMatches:
+- **`content/nodes/conditionals.yaml` — `has_elif`** was `{ node: If, within: { node: If } }`.
+  In CPython an `elif` is a nested `If` in the outer `If`'s **`orelse`**. That query couldn't say
+  "in `orelse`," so it *also* matched a legitimately nested `if` in a branch **body**. Over-matched.
+- **`content/nodes/loops.yaml` — `infinite_true_no_break`** was `{ While, where: { childMatches:
   { Constant, where: { attr: value, eq: true } } } }`. The intent is "the `While`'s **test** is
-  literally `True`," but `childMatches` matches a stray `True` *anywhere* under the loop
-  (e.g. `while running: if found == True: ...`). Over-matches.
+  literally `True`," but `childMatches` matched a stray `True` *anywhere* under the loop
+  (e.g. `while running: if found == True: ...`). Over-matched.
 
-**Proposed:** add a field selector, e.g.
-`{ node: "While", field: { test: { node: "Constant", where: { attr: "value", eq: true } } } }`,
-or an `inField: <name>` qualifier on `within`/`childMatches`. This is the single highest-value
-addition — it converts both queries above from heuristics into exact detectors.
+**Resolution:** the **`field` selector was added to `AstQuery`** (schema `e125a99`) and **both corpus
+queries migrated** to it:
+- `has_elif` → `{ node: If, field: { orelse: { node: If } } }`
+- `infinite_true_no_break` → `{ node: While, field: { test: { node: Constant, where: { attr: value, eq: true } } } }`
+
+`content/verify/harness.py` now implements §6.3 rule 1 (field-scoped matching: the named child field's
+subtree must contain a match). Verified: the field forms match the real construct and reject the exact
+over-matches the old forms allowed (a plain nested `if` in a branch body; a `True` in the loop body) —
+gate 5 stays green on all 21 fixtures, including the `no_update` notTrigger that the over-matching
+`infinite_true_no_break` would have wrongly caught. M1's TS matcher supports the same form; the M1
+rebase differential is the final cross-check.
 
 ## 2. `not`/`all`/`any` live only at `AstQuery` level, not in `AstPred`
 
@@ -62,17 +69,25 @@ and `not` is scoped to the query's current root, with the whole submission as th
 a containing scope. **Not used in the shipped bundle** (authors avoided it on this advice), but pin it
 before authors rely on it.
 
-## 5. No `timedOut` primitive in `Signature` (§7) — the right infinite-loop signal is unspeakable
+## 5. No `timedOut` primitive in `Signature` (§7) — ✅ primitive ADDED; ⚠️ corpus deliberately keeps AST as the detector
 
 A genuine infinite loop's **robust, deterministic** signal is the worker watchdog timeout (§6.1,
-§17.5). But `Signature` offers only `runError: "syntax" | "runtime"` — there is no way to key a
-misconception on "it didn't terminate." So `mis.loop.infinite_true` must lean on the fragile AST
-shape (gap 1) instead of the defined runtime fact. (In headless grading with finite scripted stdin
-the loop happens to surface as a runtime `EOFError`, but that's incidental, not guaranteed.)
+§17.5). `Signature` originally offered only `runError: "syntax" | "runtime"`, so `mis.loop.infinite_true`
+had to lean on the AST shape. **`{ timedOut: true }` was added to the `Signature` union and
+`RawSignals.timedOut` is surfaced** (schema `e125a99`), so the primitive now *exists*.
 
-**Proposed:** add `{ timedOut: true }` to the `Signature` union and surface `RawSignals.timedOut`
-(it already exists on `RunResult` as `timedOut`). Then infinite-loop misconceptions key on the
-timeout, with the AST shape as corroboration — robust regardless of gap 1.
+**Decision (2026-06-08): `mis.loop.infinite_true` is NOT re-keyed onto `{ timedOut: true }`; it keeps
+the (now field-scoped, gap 1) AST shape as its detector, with the watchdog timeout as the product
+backstop.** Reason — `timedOut` is **ambiguous across infinite-loop misconceptions**: a `while True:`
+with no break AND a never-updating `while cond:` (the `mis.loop.no_update` case) *both* hang and both
+set `timedOut`. The real engine disambiguates via §7 detection **precedence** (specificity-ranked
+first-match-wins), but the offline differential harness (`content/verify/harness.py`, gate 5) tests
+each signature **in isolation**, so a bare `{ timedOut: true }` on `infinite_true` would wrongly fire
+on the `no_update` notTrigger. Conversely the realistic input-reading `infinite_true` trigger EOFs
+under finite scripted stdin and never times out offline, so `{ all: [timedOut, astTag] }` would fail to
+fire there. Net: the **field-scoped AST shape is the correct offline-testable detector**; the runtime
+timeout stays the product backstop, resolved by §7 precedence in the live engine — not by the content
+signature. (Revisit only if the harness is taught to model §7 precedence for build fixtures.)
 
 ## 6. `Compare.ops` (list-valued attribute) matching is unspecified
 

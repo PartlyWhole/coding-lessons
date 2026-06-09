@@ -318,7 +318,9 @@ node:
                 - { input: 70, expected: "C", hidden: true }   # boundary
             ast:
               queries:
-                - { tag: has_elif, query: { node: If, within: { node: If } } }
+                # §6.3 field selector: an `elif` is an `If` nested in the parent's `orelse`
+                # (not a plain nested `if` in a branch body). `field` scopes the match exactly.
+                - { tag: has_elif, query: { node: If, field: { orelse: { node: If } } } }
             property:
               # Oracle maps any score to its letter -> any correctly-ordered if/elif/else
               # (or equivalent) passes; a shadowed/reversed order is caught here and by tests.

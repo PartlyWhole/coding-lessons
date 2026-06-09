@@ -13,8 +13,10 @@ FIDELITY NOTE: execution is CPython 3.x locally, not the pinned Pyodide-in-WASM 
 product ships. Signatures key on error *type* (syntax vs runtime) and stdout, never on
 message text, and the constructs here (print/str/int/input/if/while) are identical
 across CPython and Pyodide — so the residual gap is empirically nil for this content.
-The AstQuery interpreter below implements the *natural* reading of §6.3; the two queries
-that depend on under-specified scoping (see design note) are flagged in their output.
+The AstQuery interpreter below implements §6.3 including the `field` selector (rule 1):
+the corpus's structural queries (`has_elif`, `infinite_true_no_break`) are field-scoped,
+so they no longer depend on the under-specified `within`/`childMatches` scoping that the
+earlier design note flagged.
 """
 import ast, glob, subprocess, sys, yaml
 from collections import defaultdict
@@ -107,6 +109,20 @@ def query_matches(query, tree, parmap):
         return any(query_matches(q, tree, parmap) for q in query["any"])
     # node-spec query: scan all nodes
     matches = [nd for nd in ast.walk(tree) if node_matches(query, nd, parmap)]
+    if "field" in query:
+        # §6.3 rule 1: field {name: Q} matches iff the node's named child field (e.g.
+        # While.test, If.orelse) CONTAINS a match of Q — scoped to that field's subtree,
+        # never the whole node. This is what distinguishes `while True:` (test IS True)
+        # from `while x: ... True ...` (True elsewhere), and an `elif` (If in orelse) from
+        # a nested `if` in a branch body. Silently ignoring `field` would over-match.
+        def _field_ok(nd):
+            for fname, subq in query["field"].items():
+                kids = getattr(nd, fname, None)
+                kids = kids if isinstance(kids, list) else ([kids] if kids is not None else [])
+                if not any(isinstance(k, ast.AST) and query_matches(subq, k, parmap) for k in kids):
+                    return False
+            return True
+        matches = [m for m in matches if _field_ok(m)]
     if "within" in query:
         inside = set(nd for nd in ast.walk(tree) if node_matches(query["within"], nd, parmap))
         matches = [m for m in matches if _has_ancestor(m, inside, parmap)]

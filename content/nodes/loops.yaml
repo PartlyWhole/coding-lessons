@@ -233,10 +233,13 @@ node:
             ast:
               queries:
                 # Primary signature for the infinite-loop misconception: a `while True:` with no break.
+                # §6.3 field selector: the While's TEST must literally be the constant True —
+                # `field: { test: ... }` scopes to the test expression, not the whole loop subtree
+                # (the old `childMatches` matched a stray `True` anywhere inside the body).
                 - tag: infinite_true_no_break
                   query:
                     all:
-                      - { node: While, where: { childMatches: { node: Constant, where: { attr: value, eq: true } } } }
+                      - { node: While, field: { test: { node: Constant, where: { attr: value, eq: true } } } }
                       - { not: { node: Break } }
                 # Corroborating: a While exists, and no Assign occurs inside any While body
                 # (the loop variable is never updated). `not` is a query combinator, not an

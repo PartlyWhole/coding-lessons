@@ -124,6 +124,25 @@ Both prior open decisions are now **RESOLVED** (orchestrator + user, 2026-06-08)
   change needed. `tsconfig` `customConditions` deliberately untouched (editor types read `dist/*.d.ts`,
   kept fresh by Turbo `^build`); revisit at M5 if packaging needs live-source editor types.
 
+### Content hardening — AST queries migrated to the `field` selector (2026-06-08)
+
+- **`has_elif` and `infinite_true_no_break` migrated to §6.3 `field` forms** (flagged by Stream A). The
+  over-matching `within`/`childMatches` heuristics are replaced by exact field-scoped detectors:
+  `has_elif` → `{ node: If, field: { orelse: { node: If } } }`; `infinite_true_no_break` →
+  `{ node: While, field: { test: { node: Constant, where: { attr: value, eq: true } } } }`.
+  `content/verify/harness.py` now implements §6.3 rule 1 (it previously ignored `field` — which would
+  silently over-match, so the harness update was mandatory, not cosmetic). Verified: validate.py PASS,
+  harness gate 5+6 PASS, plus a direct precision check (old forms over-matched a nested-if/body-`True`;
+  new forms don't). See `docs/design-notes/2026-06-08-astquery-grammar-gaps.md` §1.
+- **`mis.loop.infinite_true` deliberately NOT re-keyed onto `{ timedOut: true }`** (the third item Stream A
+  flagged). `timedOut` is ambiguous across infinite-loop misconceptions (a `while True:` and a
+  never-updating `while cond:` both hang); the real engine disambiguates via §7 precedence, but the
+  offline differential harness tests signatures in isolation, so the field-scoped AST shape stays the
+  detector and the watchdog timeout stays the product backstop. Full reasoning in the design note §5.
+- Touches only `content/**` + `content/verify/harness.py` (orchestrator-owned tooling). **M1 rebase note:**
+  its TS matcher already supports `field`; the rebase differential (TS vs harness on all 21 fixtures) is
+  the cross-check that both implement §6.3 rule 1 identically.
+
 ## 7. Status board (orchestrator updates this — streams report, don't edit)
 
 `main` @ `f9bcef6`. M2 + M3a integrated (merged result green: 136 tests across schema/engine/sandbox;
