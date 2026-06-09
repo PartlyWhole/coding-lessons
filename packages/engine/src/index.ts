@@ -17,6 +17,20 @@ export { initialState, step, StepTransitionError } from "./stepMachine.js";
 export type { DetectContext } from "./detect.js";
 export { evalSignature, specificityRank, detect } from "./detect.js";
 
+export { matchedSpecificity } from "./detect.js";
+
+export type { HintState, LadderOptions } from "./hintLadder.js";
+export {
+  NO_LADDER,
+  GENERIC_LADDERS,
+  initialHintState,
+  ladderKeyFor,
+  ladderFor,
+  syncLadder,
+  pullHint,
+  visibleHints,
+} from "./hintLadder.js";
+
 export type { NonBuildSubmission, DiagnoseEffects } from "./diagnose.js";
 export {
   matchesAccepted,

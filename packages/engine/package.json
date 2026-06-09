@@ -16,6 +16,8 @@
     "re2js": "^2.8.3"
   },
   "devDependencies": {
+    "@trellis/authoring": "workspace:*",
+    "@trellis/sandbox": "workspace:*",
     "vitest": "^2.1.0"
   }
 }
