@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Trellis</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- Built bundle + main entry are emitted by tsc to dist/. M5 ships the slice served from
+         `python -m http.server`. Real-Pyodide grading is DEFERRED (needs network). -->
+    <script type="module" src="./dist/src/app/main.js"></script>
+  </body>
+</html>
