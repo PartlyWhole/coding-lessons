@@ -3,9 +3,20 @@
 **Purpose:** onboard a fresh agent into the **build-orchestrator** role.
 **As of:** `main` @ `8b114c0` (2026-06-09, evening — end of the escalations/design/deploy session).
 Re-verify on arrival.
-**Previous handoffs:** `archive/2026-06-09-ORCHESTRATOR-HANDOFF.md` (the verification/escalation
-era — read for how today's state was reached) → `archive/2026-06-08-…` (the build era). This file
-supersedes both.
+**Previous handoffs — TWO, both in `docs/coordination/archive/`, both still load-bearing context
+(this file supersedes them as "current state", not as history):**
+1. `archive/2026-06-09-ORCHESTRATOR-HANDOFF.md` — the verification/escalation era. Uniquely holds:
+   the full verification-merge review story (Debt-3 re-key scrutiny criteria), the original
+   escalation triage, the M4 Escalation-A precedent ("hold-and-escalate, don't paper over" — the
+   canonical refusal of a stream's "just adjust the fixture"), the M5-split parallelization lens
+   (reuse when sequencing M6+), and the frozen-contract change protocol (§5: additive seams beat
+   schema edits — demand that standard).
+2. `archive/2026-06-08-ORCHESTRATOR-HANDOFF.md` — the build era. Uniquely holds: streams A–D
+   history, the original environment constraints (offline-era workarounds you must NOT
+   reintroduce, e.g. ambient shims), the §13.2 authoring-gates origin, the TypeBox/ElemSpec and
+   dist-exports schema sagas, and the original gotcha derivations.
+Read BOTH on arrival (skim is fine; know what's in them). The §1 runbook below is inlined from
+the 2026-06-09 handoff so day-to-day operation never depends on an archive.
 
 > You are the BUILD ORCHESTRATOR — not a stream, not a verifier, not the content author. You do
 > NOT implement packages or author curriculum yourself — sessions do that in their own worktrees
@@ -87,23 +98,61 @@ A peer **CONTENT ORCHESTRATOR** now owns the curriculum track: roadmap, authorin
 3. Check the live site is healthy (it deploys from `main`): assets 200 at
    `https://partlywhole.github.io/coding-lessons/` and `gh run list --repo
    PartlyWhole/coding-lessons --limit 3` green.
-4. Read: this file → `PARALLEL-STREAMS.md` (§7 board — you own it) →
-   `CONTENT-ORCHESTRATOR-HANDOFF.md` (know your peer's charter) → design-notes as needed →
-   `TECHNICAL_DESIGN.md` (do not re-litigate). Invoke `superpowers:using-superpowers`.
+4. Read, in order: this file → `PARALLEL-STREAMS.md` (§7 board — you own it) →
+   `CONTENT-ORCHESTRATOR-HANDOFF.md` (your peer's charter) → **both archived handoffs**
+   (`archive/2026-06-09-…` then `archive/2026-06-08-…` — see the lineage note up top for what
+   each uniquely holds) → design-notes as needed → `TECHNICAL_DESIGN.md` (do not re-litigate).
+   Invoke `superpowers:using-superpowers`.
 
-## 1. The operating loop (unchanged spine, new edges)
-- Streams: one worktree + one branch + one git-excluded `START-HERE.md` each (§2 of the archived
-  2026-06-09 handoff has the full pattern; `.git/info/exclude` already covers `START-HERE.md`).
-  **NEW HARD RULE for START-HEREs:** sessions MUST run the repo gate in the FOREGROUND — three
-  agent sessions today exited prematurely after backgrounding the ~6-min gate.
-- Integration: the §4.1 runbook (archived handoff §4.1 — verbatim still correct): pre-flight
-  scope/rebase checks → ff-only merge → frozen-lockfile proof → full gate on the merged result →
-  reproduce the branch's DEFINING gate yourself (browser harnesses live in `verification/`;
-  `npm ci` there once; scripts honor `TRELLIS_PORT`) → no-drift → record on the §7 board → PUSH
-  (= deploy) → prune. Verify, don't trust — reproduce gates, read diffs line-by-line on
-  contract/content-adjacent changes.
-- Commit identity on `main`: `-c user.name='Trellis' -c user.email='noreply@anthropic.com'`.
+## 1. The operating loop (inlined — no archive needed for day-to-day operation)
+
+### 1.1 The stream pattern (how to launch ANY working session, including small spawned tasks)
+Every session gets: a worktree off current `main` (`git worktree add -b <branch> ../<dir> main`),
+a **git-excluded `START-HERE.md`** inside it (`.git/info/exclude` already lists it; worktrees
+share it) containing IN ORDER: rooting self-check FIRST (pwd + branch MUST match, else STOP —
+the defense against a spawned session switching the main repo's branch under you, which has
+actually happened), ownership paths (exact write set; everything else read-only → escalate),
+defining gates (the green bar, with pasted-output requirement), guardrails (frozen schema, no
+shared-doc edits, commit identity, rebase-before-report, do-not-merge), and escalation triggers.
+Then a short launch prompt pointing at that file. **HARD RULE (cost three sessions today):
+START-HEREs MUST mandate running the ~6-min repo gate in the FOREGROUND — backgrounded gates
+make agent sessions exit prematurely; the working resume pattern is a continuation agent into
+the same worktree with an explicit "no backgrounding; report before exit".**
+
+### 1.2 The §4.1 integration runbook (the repeatable spine — validated on 13 merges to date)
+Set `export PATH="/opt/homebrew/lib/node_modules/corepack/shims:$PATH"` first.
+0. **Pre-flight — verify, don't trust.** Scope: `git diff --stat main...<branch>` = only the
+   owned paths + plan doc + (if deps changed) `pnpm-lock.yaml`. Guarded paths clean:
+   `git diff --name-only main...<branch> -- packages/schema content/ docs/coordination
+   turbo.json .eslintrc.cjs pnpm-workspace.yaml` **empty** (exceptions: the branch's own plan
+   under `docs/superpowers/plans/`; an orchestrator-sanctioned content/seam change is reviewed
+   LINE-BY-LINE instead). Rebased: `git merge-base --is-ancestor main <branch>` — if not,
+   rebase it yourself (disjoint paths rebase clean) or bounce it.
+1. **Merge.** Confirm `git branch --show-current` = `main` FIRST ("already up to date" while
+   HEAD moved = you're ON the branch). Then `git merge --ff-only <branch>`.
+2. **Lockfile.** `pnpm install` then `pnpm install --frozen-lockfile` (consistency proof).
+   Conflict → regenerate, NEVER hand-merge.
+3. **Full gate on the merged result.** `pnpm -r typecheck && lint && test && build` + native-ESM
+   probes (5× `dist` import + client `esm-probe.mjs`) + `python3 content/validate.py` +
+   `python3 content/verify/harness.py` + `node packages/authoring/dist/src/cli.js lint content`
+   + **reproduce the branch's DEFINING gate yourself** (browser harnesses in `verification/`;
+   `npm ci` there once; scripts honor `TRELLIS_PORT`). Paste real output — no success claims
+   without it.
+4. **No-drift.** `git diff <pre-merge-sha>..HEAD -- packages/schema` empty (plus any path the
+   branch shouldn't touch).
+5. **Record + publish.** Update the §7 board (+ this file's snapshot if material); commit as
+   `-c user.name='Trellis' -c user.email='noreply@anthropic.com'`; **`git push` = DEPLOY** —
+   only push on green.
+6. **Prune** the branch/worktree; unblock downstream.
+
+**Hold-and-escalate, don't paper over:** a cross-implementation differential disagreement
+(TS/Pyodide vs `harness.py`) is a spec ambiguity — pin it, don't merge around it. Precedent:
+the held M4 re-key (archived 2026-06-09 handoff, "Decisions" section).
+
+### 1.3 Standing rules
 - Escalate to the user, don't guess: product/curriculum/contract calls, anything outward-facing.
+- The frozen contract changes ONCE on `main` (test-first), then everything rebases; additive
+  seams beat schema edits (M3b/M4/M5 + all five of today's streams shipped with ZERO schema changes).
 
 ## 2. Work queue (nothing in flight at handoff)
 1. **Content track ramp-up** — the content orchestrator's first branches will arrive for §4.1
@@ -137,6 +186,10 @@ A peer **CONTENT ORCHESTRATOR** now owns the curriculum track: roadmap, authorin
    engine purity ESLint, gitignored `bundle.json`, mutation-test new gates, branch-switch defense.
 
 ## 4. Reference index
+- `archive/2026-06-09-ORCHESTRATOR-HANDOFF.md` — **previous handoff #1** (verification/escalation
+  era: review precedents, escalation history, contract-change protocol, M5-split lens).
+- `archive/2026-06-08-ORCHESTRATOR-HANDOFF.md` — **previous handoff #2** (build era: streams A–D,
+  original constraints, schema sagas, gotcha origins).
 - `PARALLEL-STREAMS.md` — rules + §7 board (you own it; streams report, never edit).
 - `CONTENT-ORCHESTRATOR-HANDOFF.md` — the peer track's charter.
 - `2026-06-09-REAL-PYODIDE-VERIFICATION-REPORT.md` — the verification evidence base.
