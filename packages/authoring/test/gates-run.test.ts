@@ -22,6 +22,13 @@ describe("runAllGates", () => {
     expect(report.stats.cells).toBeGreaterThan(0);
   });
 
+  it("runs gates 8/9 (pure, never skipped): the four escalated 9-correct-miscon warns surface", () => {
+    const fast = runAllGates(loaded, compile(loaded), { runExecGates: false });
+    expect(fast.issues.filter((i) => i.gate === "9-correct-miscon" && i.level === "warn")).toHaveLength(4);
+    expect(fast.issues.filter((i) => i.gate === "8-answerable")).toEqual([]);
+    expect(fast.ok).toBe(true); // warns do not fail the gate run
+  });
+
   it("can skip the exec gates (5/6) via runExecGates:false", () => {
     const fast = runAllGates(loaded, compile(loaded), { runExecGates: false });
     // still includes gate 1's known error, but does not invoke python3 for gates 5/6

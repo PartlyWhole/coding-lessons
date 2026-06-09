@@ -15,7 +15,8 @@
   "dependencies": {
     "@trellis/schema": "workspace:*",
     "@sinclair/typebox": "^0.34.0",
-    "js-yaml": "^4.2.0"
+    "js-yaml": "^4.2.0",
+    "re2js": "^2.8.3"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.0",

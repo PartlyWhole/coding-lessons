@@ -8,6 +8,8 @@ import { gateGranularity } from "./granularity.js";
 import { gateFixtures } from "./fixtures.js";
 import { gateOracle } from "./oracle.js";
 import { gateGolden } from "./golden.js";
+import { gateAnswerable } from "./answerable.js";
+import { gateCorrectChoiceMiscon } from "./correct-choice-miscon.js";
 import { lintWhereCombinators } from "../lints/where-combinators.js";
 import { lintSpineExtension } from "../lints/spine-extension.js";
 import { lintRe2Patterns } from "../lints/re2-pattern.js";
@@ -30,6 +32,8 @@ export function runAllGates(loaded: Loaded, bundle: Bundle, opts: GateOptions = 
     ...(runExec ? gateFixtures(loaded) : []),
     ...(runExec ? gateOracle(loaded) : []),
     ...gateGolden(loaded),
+    ...gateAnswerable(loaded), // gate 8 (pure, mirrors engine §8 matching)
+    ...gateCorrectChoiceMiscon(loaded), // gate 9 (pure, mirrors directMisconception reachability)
   ];
   const cells = Object.values(loaded.nodes).reduce((acc, n) => acc + n.cells.length, 0);
   return {
