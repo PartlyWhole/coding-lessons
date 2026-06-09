@@ -5,7 +5,7 @@ export type StillFails = (candidate: Json) => boolean;
 
 // Candidate-smaller values for one shrink step, ordered smallest-first so the greedy
 // loop converges to a minimal counterexample. Deterministic (no randomness).
-function candidates(spec: AnySpec, value: Json): Json[] {
+export function shrinkCandidates(spec: AnySpec, value: Json): Json[] {
   switch (spec.type) {
     case "int":
     case "float": {
@@ -49,7 +49,7 @@ export function shrink(spec: AnySpec, value: Json, stillFails: StillFails): Json
   // Greedy fixpoint: repeatedly take the smallest still-failing candidate.
   for (;;) {
     let shrunk = false;
-    for (const c of candidates(spec, current)) {
+    for (const c of shrinkCandidates(spec, current)) {
       if (stillFails(c)) {
         current = c;
         shrunk = true;
