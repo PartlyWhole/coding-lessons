@@ -87,6 +87,9 @@ function makeConnection(db: IDBDatabase): IdbConnection {
           } catch {
             /* already aborting */
           }
+          // abort() (and any request-level error) fires onabort/onerror, rejecting `done`. We
+          // rethrow the original cause, so swallow `done`'s rejection to avoid an unhandled one.
+          done.catch(() => {});
           throw err;
         },
       );
