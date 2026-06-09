@@ -21,6 +21,19 @@ importers:
         specifier: ^5.6.0
         version: 5.9.3
 
+  packages/engine:
+    dependencies:
+      '@trellis/schema':
+        specifier: workspace:*
+        version: link:../schema
+      re2js:
+        specifier: ^2.8.3
+        version: 2.8.3
+    devDependencies:
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9
+
   packages/schema:
     dependencies:
       '@sinclair/typebox':
@@ -807,6 +820,10 @@ packages:
 
   queue-microtask@1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
+
+  re2js@2.8.3:
+    resolution: {integrity: sha512-lUKeXVwMqU302DM/WaOm33XF2hhzjGUZ8CbLg4zSAMpW2PPkJ2+is25AROevNiw+DytFmKU5gsQ92cB1Kxy+fA==}
+    engines: {node: '>=18.0.0'}
 
   resolve-from@4.0.0:
     resolution: {integrity: sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==}
@@ -1676,6 +1693,8 @@ snapshots:
   punycode@2.3.1: {}
 
   queue-microtask@1.2.3: {}
+
+  re2js@2.8.3: {}
 
   resolve-from@4.0.0: {}
 
