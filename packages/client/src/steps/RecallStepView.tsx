@@ -17,6 +17,7 @@ export function RecallStepView({ step, disabled, onSubmit }: RecallStepViewProps
       <input
         type="text"
         aria-label="answer"
+        placeholder="Type your answer…"
         value={text}
         disabled={disabled}
         onChange={(e) => setText(e.target.value)}

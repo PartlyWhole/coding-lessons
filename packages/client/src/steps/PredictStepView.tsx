@@ -46,6 +46,7 @@ export function PredictStepView({ step, disabled, onSubmit }: PredictStepViewPro
         <input
           type="text"
           aria-label="prediction"
+          placeholder="Type exactly what gets printed…"
           value={text}
           disabled={disabled}
           onChange={(e) => setText(e.target.value)}

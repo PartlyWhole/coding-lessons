@@ -18,6 +18,18 @@ describe("WatchStepView", () => {
     await userEvent.click(screen.getByRole("button", { name: /continue/i }));
     expect(onAdvance).toHaveBeenCalledOnce();
   });
+
+  it("renders the body through the tiny markdown subset (⚑ Greenhouse)", () => {
+    const step: WatchStep = {
+      ...base, kind: "watch",
+      body: "Glue with `+` to **tie strings**.\n\n    print(\"a\" + \"b\")\n\nDone.",
+    };
+    const { container } = render(<WatchStepView step={step} onAdvance={vi.fn()} />);
+    const body = container.querySelector(".body")!;
+    expect(body.querySelector("code")!.textContent).toBe("+");
+    expect(body.querySelector("strong")!.textContent).toBe("tie strings");
+    expect(body.querySelector("pre.code")!.textContent).toBe('print("a" + "b")');
+  });
 });
 
 describe("RecognizeStepView", () => {
@@ -42,6 +54,12 @@ describe("RecallStepView", () => {
     await userEvent.type(screen.getByRole("textbox"), "  hello  ");
     await userEvent.click(screen.getByRole("button", { name: /submit/i }));
     expect(onSubmit).toHaveBeenCalledWith({ kind: "recall", text: "  hello  " });
+  });
+
+  it("has placeholder copy on the answer input (⚑ Greenhouse)", () => {
+    const step: RecallStep = { ...base, kind: "recall", accepted: { normalized: ["x"] } };
+    render(<RecallStepView step={step} disabled={false} onSubmit={vi.fn()} />);
+    expect((screen.getByRole("textbox") as HTMLInputElement).placeholder).toBe("Type your answer…");
   });
 });
 
@@ -70,6 +88,14 @@ describe("PredictStepView", () => {
     await userEvent.click(screen.getByLabelText("Beta"));
     await userEvent.click(screen.getByRole("button", { name: /submit/i }));
     expect(onSubmit).toHaveBeenCalledWith({ kind: "predict", choiceId: "b" });
+  });
+
+  it("has the approved placeholder copy on the free-text input (⚑ Greenhouse)", () => {
+    const step: PredictStep = {
+      ...base, kind: "predict", code: "print(1)", reveal: "run-and-show", expected: { normalized: ["1"] },
+    };
+    render(<PredictStepView step={step} disabled={false} onSubmit={vi.fn()} />);
+    expect((screen.getByRole("textbox") as HTMLInputElement).placeholder).toBe("Type exactly what gets printed…");
   });
 
   it("disables the submit button while disabled (EVALUATING)", () => {
