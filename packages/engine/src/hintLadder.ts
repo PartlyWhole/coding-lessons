@@ -71,6 +71,11 @@ export function ladderFor(key: string, bundle: Bundle): Hint[] {
 // §9.2 — sync the ladder to a new Diagnosis. Changing misconception resets to the new
 // ladder at level 0; repeating the same one (with autoEscalate) raises the floor by one,
 // bounded at 3 so the solution is never auto-revealed, and only after at least one pull.
+// NOTE: this is intentionally ladder-agnostic (it has no ladder to clamp against). The
+// bump to 2|3 assumes the standard 4-level ladder; the frozen `Hint.level` union (1..4)
+// and the v1 corpus (every ladder is 4 levels) guarantee that. If a future ladder is
+// shorter than 3 levels, `visibleHints` still just shows all of it (no crash) — but the
+// floor could point past the last hint, so re-clamp here against the ladder length then.
 export function syncLadder(prev: HintState, diag: Diagnosis, opts: LadderOptions = {}): HintState {
   const key = ladderKeyFor(diag);
   if (key !== prev.ladderKey) return { ladderKey: key, revealedThrough: 0 };
