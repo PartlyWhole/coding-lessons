@@ -37,21 +37,15 @@ historical. Re-verify on arrival rather than assuming either way.
 
 ### The two LIVE tracks (both external to you — their outputs return to you)
 
-**1. Real-Pyodide verification session — STAGED, launch status unknown (check on arrival).**
-- Worktree `/Users/alan/Desktop/trellis-verify`, branch `real-pyodide-verification` (FF'd to current
-  `main`), with a git-excluded `START-HERE.md` rooting guard inside.
-- Mission: `docs/coordination/REAL-PYODIDE-VERIFICATION.md` — **5 debts in one pass**: M3a host (real
-  Pyodide @ CDN pin 0.27.2, watchdog `terminate()`, mem-cap, pygame-ce smoke) · M3b ladder +
-  `parseAndMatch` under real Pyodide (21-fixture differential must still agree with `harness.py`) ·
-  **M4 `timedOut` re-key (Debt 3 — the only non-mechanical one, see below)** · M5-persist `nativeDriver`
-  vs real IndexedDB · M5-client whole-slice in-browser walkthrough.
-- **On arrival, check `git -C ../trellis-verify log --oneline -5` and `status`** — if commits exist, the
-  session ran; expect/await its report. When it reports: **review the branch via §4.1**, scrutinizing the
-  **Debt-3 `content/**` + `harness.py` diff hardest** (it changes detection semantics; the session was
-  told to choose teach-harness-§7-precedence vs. explicit-carve-out and must NOT have weakened the
-  discriminating `no_update`-shaped fixture — if it did, bounce it). Everything else should be evidence
-  + at most env/config fixes (CDN pin etc.). Merge to `main`, update the board, flip the memory status
-  files if the session didn't.
+**1. Real-Pyodide verification session — ✅ DONE, reviewed + MERGED (FF to `91fca31`, 2026-06-09).**
+- All 5 debts ran in a real networked browser. Report:
+  `docs/coordination/2026-06-09-REAL-PYODIDE-VERIFICATION-REPORT.md`; evidence under `verification/`.
+- D1/D2/D4/D5-behavior CONFIRMED; the Debt-3 re-key landed (`a4fb601`, harness §7 precedence = design-note
+  §5 option (a), `no_update` notTrigger kept) and was reviewed rank-by-rank vs `detect.ts`; 3 unanswerable
+  choice-mode predicts fixed (`0884bf3`). Worktree `../trellis-verify` pruned.
+- **Its 6 escalations are now the active work queue** — see the §7 board header in `PARALLEL-STREAMS.md`
+  and the report's §Escalations. Blockers: (1) engine `evaluate` doesn't route `!ran`/`timedOut` through
+  `detect()`; (2) the client static host can't boot without a real build step.
 
 **2. External UI/UX design — brief delivered, deliverables will return.**
 - Self-contained brief: `docs/design/2026-06-09-ui-design-brief.md` (committed). An upload bundle

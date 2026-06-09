@@ -164,7 +164,29 @@ Both prior open decisions are now **RESOLVED** (orchestrator + user, 2026-06-08)
 
 ## 7. Status board (orchestrator updates this — streams report, don't edit)
 
-`main` @ `fdf0abb`. **🎉 THE FULL M0–M5 DETERMINISTIC SLICE IS INTEGRATED — A–G all done** (6 packages).
+`main` @ `91fca31`. **🎉 THE FULL M0–M5 SLICE IS INTEGRATED *AND* REAL-PYODIDE-VERIFIED** (6 packages).
+
+**Real-Pyodide verification session MERGED (2026-06-09, FF to `91fca31`)** — all 5 deferred debts ran in
+a real networked browser (headless Chromium, jsDelivr CDN, `python -m http.server`); full report:
+`docs/coordination/2026-06-09-REAL-PYODIDE-VERIFICATION-REPORT.md`, evidence under `verification/`.
+Verdicts: **D1 M3a CONFIRMED** (11/13; CDN pin 0.27.2, real watchdog terminate+respawn, error lines,
+warm pool, pygame-ce 2.4.1) · **D2 M3b CONFIRMED** (49/49 differential w/ real Pyodide 3.12.7 executor;
+§4 acceptance; determinism mod `wallMs`) · **D3 `timedOut` re-key APPLIED+REVIEWED** (`a4fb601`:
+`{timedOut:true}` primary branch; harness taught §7 attribution precedence — design-note §5 option (a);
+`no_update` notTrigger KEPT, passes for the engine's reason; orchestrator reviewed the mirror rank-by-rank
+vs `detect.ts`) · **D4 nativeDriver CONFIRMED** (7/7 vs real IndexedDB incl. real-abort rollback) ·
+**D5 client behavior CONFIRMED** (9/9 walkthrough w/ real Pyodide grading + real reload) **but the
+as-shipped static host cannot boot** (esc. 2). Plus 3 unanswerable choice-mode predicts fixed (`0884bf3`,
+reviewed vs `diagnose.ts` semantics). `verification/app/` bundle = living repro for esc. 2; delete it when
+the real client build step lands. **Six escalations are now the work queue** (report §Escalations):
+(1) engine `evaluate` routes `!ran`/`timedOut` past `detect()` → re-keyed infinite_true unreachable in the
+live ladder [BLOCKER]; (2) client static-host wiring needs a real build step + browser-safe sandbox entry +
+workerUrl fix [BLOCKER]; (3) sandbox js-FFI reachable from learner code; (4) WASM mem-cap unenforced;
+(5) `wallMs` vs byte-identical-Diagnosis determinism contract [user call]; (6) authoring lint gap
+(unanswerable choice predicts) + `join_text#2` misconception-tag-on-correct-choice [content call].
+Harness fidelity footnote for esc. 1: harness computes `tests` on timed-out fixtures, engine short-circuits
+before tests — benign on this corpus (no `testFailure`-keyed loop candidate; 49/49 agreement), revisit with
+the routing fix.
 **Post-slice tooling cleanup landed** (`fdf0abb`): all four offline-era ambient `shims.d.ts` dropped for
 real `@types/node`/`@types/js-yaml` (network now available); `local-cpython.ts` `isTimeout` narrowed via
 `NodeJS.ErrnoException` (was masked by a shim mistyping `spawnSync.error`). Full gate re-verified green
@@ -172,10 +194,9 @@ against the real types — no masked errors surfaced.
 Merged result verified green: **392 tests** (schema 37 + engine 159 + authoring 80 + sandbox 55 + persist
 19 + **client 42**); typecheck/lint/build clean; native-ESM imports of all 6 `dist` clean (client barrel
 has no init cycle); content oracle PASS. The marquee offline walkthrough runs end-to-end (UI → engine +
-sandbox-twin grading → persist → reload survival). **No build streams remain.** The ONLY work left before
-the slice is *fully* verified is the **networked-browser real-Pyodide session** (5 debts — see
-`REAL-PYODIDE-VERIFICATION.md`), now fully unblocked since Debt 5 (M5-client whole-slice) needs G, which is
-on `main`. Deferred milestones: M6 (telemetry), M6.5 (pygame), M7 (offline/a11y). Earlier checkpoints:
+sandbox-twin grading → persist → reload survival). **No build streams remain.** The real-Pyodide
+verification pass is ~~pending~~ **DONE and merged** (see above); next work = the 6 escalations, then the
+design-implementation stream (UI deliverables), then M6 (telemetry), M6.5 (pygame), M7 (offline/a11y). Earlier checkpoints:
 M0–M3b core 288 tests; +M4 = 331; +M5-persist = 350; typecheck/lint/build clean; native-ESM `import()` of each `dist/src/index.js` OK (the new
 test-only sandbox→engine devDep adds no runtime cycle); `content/validate.py` + `content/verify/harness.py`
 PASS. **M3b's two defining gates green & proven non-vacuous:** the 21-fixture differential (engine
