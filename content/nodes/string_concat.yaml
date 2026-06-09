@@ -196,3 +196,11 @@ node:
               numCases: 50
               seed: 1234
               comparator: deep-equal
+          # Gate-7 golden Diagnosis snapshot (authoring affordance, not a frozen-schema field):
+          # gate 7 re-grades this recorded buggy submission via gradeBuild and asserts the
+          # attribution + misconceptionId hold — pins mis.concat.str_num against detector drift.
+          golden:
+            submission: |
+              def announce(number):
+                  return "Your random number is: " + number
+            expect: { attribution: misconception, misconceptionId: mis.concat.str_num }
