@@ -14,6 +14,7 @@ import "../styles/trellis-ui.css";
 import { createRoot } from "react-dom/client";
 import { TrellisApp } from "./TrellisApp.js";
 import { makeBrowserSandbox } from "./makeSandbox.js";
+import { makePygameRuntime } from "./makePygameRuntime.js";
 
 // Static-model entry: served from `python -m http.server` with NO server logic.
 // scripts/build-app.mjs bundles this module to dist/app/main.js, emits bundle.json
@@ -22,6 +23,9 @@ declare const __TRELLIS_CONTENT_VERSION__: string | undefined;
 const contentVersion = typeof __TRELLIS_CONTENT_VERSION__ === "string" ? __TRELLIS_CONTENT_VERSION__ : "";
 
 const sandbox = makeBrowserSandbox();
+// M6.5 — the main-thread pygame player. Creation is free; the CDN Pyodide module is
+// only imported when a pygame step actually boots (§17.7).
+const pygameRuntime = makePygameRuntime(sandbox);
 const root = createRoot(document.getElementById("root")!);
 root.render(
   <TrellisApp
@@ -30,5 +34,6 @@ root.render(
     cellId="cell.string_concat.text_plus_number"
     sandbox={sandbox}
     warmup={() => sandbox.warmup()}
+    pygameRuntime={pygameRuntime}
   />,
 );
