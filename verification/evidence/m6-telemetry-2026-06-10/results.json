@@ -36,12 +36,12 @@
       "pass": true,
       "evidence": {
         "sentinel": {
-          "id": "602d9aaa-cdad-4a50-9cdb-b789eecfe689",
-          "learnerId": "95aa0b04-4df4-477c-b219-29904d773d46",
-          "sessionId": "6b48dab0-f04c-442c-ab78-79566bd6e43b",
+          "id": "382c5689-9749-4f96-a7f3-a950944b67af",
+          "learnerId": "a5717110-4a8e-4faa-9290-47ac41572069",
+          "sessionId": "fe01aafb-032f-4fce-a2aa-fb2e919b5f9f",
           "seq": 0,
           "stepId": "",
-          "ts": "2026-06-10T16:04:17.029Z",
+          "ts": "2026-06-10T16:18:31.561Z",
           "type": "session_start",
           "payload": {}
         }
@@ -86,7 +86,7 @@
       "name": "gap-free seq per session",
       "pass": true,
       "evidence": {
-        "6b48dab0-f04c-442c-ab78-79566bd6e43b": {
+        "fe01aafb-032f-4fce-a2aa-fb2e919b5f9f": {
           "count": 16,
           "contiguous": true
         }
@@ -111,7 +111,7 @@
           "editLength": 63,
           "editHash": "825b898b",
           "editDistanceProxy": 0,
-          "msSinceLastSubmission": 878
+          "msSinceLastSubmission": 999
         }
       }
     },
@@ -128,11 +128,11 @@
       "name": "reload started a NEW session (second sessionId, own gap-free seq)",
       "pass": true,
       "evidence": {
-        "6b48dab0-f04c-442c-ab78-79566bd6e43b": {
+        "fe01aafb-032f-4fce-a2aa-fb2e919b5f9f": {
           "count": 16,
           "contiguous": true
         },
-        "571c6c03-baeb-40d6-acb9-328cda257d3c": {
+        "32d2402f-2ac9-45d6-9c4b-0cca041a6649": {
           "count": 2,
           "contiguous": true
         }
