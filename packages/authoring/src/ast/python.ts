@@ -31,10 +31,19 @@ function python(script: string, input: string): string {
 
 export type Parsed = { syntaxError: true } | { syntaxError: false; ast: JsonNode };
 
-/** ast.parse(code) -> JSON AST (or a syntax-error marker). */
+// In-process memo: callers (matcher.ts) walk the AST read-only — never mutate; the memo
+// returns the SAME object by contract. ast.parse is deterministic per interpreter, and
+// the interpreter is pinned for the life of this process.
+const parseMemo = new Map<string, Parsed>();
+
+/** ast.parse(code) -> JSON AST (or a syntax-error marker). Memoized per process. */
 export function parsePython(code: string): Parsed {
+  const hit = parseMemo.get(code);
+  if (hit) return hit;
   const out = JSON.parse(python(join(PY_DIR, "ast_dump.py"), code)) as JsonNode & { _syntaxError?: boolean };
-  return out._syntaxError ? { syntaxError: true } : { syntaxError: false, ast: out };
+  const parsed: Parsed = out._syntaxError ? { syntaxError: true } : { syntaxError: false, ast: out };
+  parseMemo.set(code, parsed);
+  return parsed;
 }
 
 export interface CaseSpec {

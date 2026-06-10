@@ -105,6 +105,20 @@ describe("runCases (batched bridge)", () => {
   });
 });
 
+describe("parsePython memo", () => {
+  it("repeat parse of identical source is a cache hit (fast and equal)", () => {
+    const src = "def f(x):\n    return x + 1";
+    const first = parsePython(src);
+    const t0 = Date.now();
+    for (let i = 0; i < 50; i++) expect(parsePython(src)).toEqual(first);
+    expect(Date.now() - t0).toBeLessThan(50); // 50 spawns would cost >1s
+  });
+  it("distinct sources still parse distinctly", () => {
+    expect(parsePython("x = 1").syntaxError).toBe(false);
+    expect(parsePython("x = (").syntaxError).toBe(true);
+  });
+});
+
 describe("runCases disk cache", () => {
   const specs = [
     { code: "def sol(a):\n    return a * 3", mode: "entrypoint" as const, entry: "sol", args: [7], expected: 21 },
