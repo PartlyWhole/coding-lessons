@@ -1,0 +1,177 @@
+{
+  "contentVersion": "m65-fixture@1",
+  "skills": {
+    "skill.m65.motion": {
+      "id": "skill.m65.motion",
+      "title": "Frame-rate independent motion",
+      "description": "Position integrates velocity over dt; edges clamp and reflect.",
+      "misconceptions": [
+        "mis.m65.no_bounce_clamp"
+      ],
+      "upstream": []
+    }
+  },
+  "misconceptions": {
+    "mis.m65.no_bounce_clamp": {
+      "id": "mis.m65.no_bounce_clamp",
+      "skill": "skill.m65.motion",
+      "title": "The ball flies through the walls",
+      "signature": {
+        "all": [
+          {
+            "astTag": "no_bounce_clamp"
+          },
+          {
+            "testFailure": {}
+          }
+        ]
+      },
+      "hintLadder": [
+        {
+          "level": 1,
+          "body": "What should happen when y passes 200?"
+        }
+      ],
+      "feedback": "Position keeps growing forever — clamp y at the edges and flip vy."
+    }
+  },
+  "nodes": {
+    "node.m65.pygame": {
+      "id": "node.m65.pygame",
+      "title": "Moving pictures",
+      "track": "spine",
+      "requires": [],
+      "teaches": [
+        "skill.m65.motion"
+      ],
+      "cells": [
+        "cell.m65.bounce"
+      ]
+    }
+  },
+  "cells": {
+    "cell.m65.bounce": {
+      "id": "cell.m65.bounce",
+      "nodeId": "node.m65.pygame",
+      "title": "The bouncing ball",
+      "steps": [
+        {
+          "id": "step.m65.bounce",
+          "kind": "build",
+          "prompt": "Make the ball bounce off the floor and ceiling.",
+          "skills": [
+            "skill.m65.motion"
+          ],
+          "language": "python",
+          "runtime": "pygame",
+          "starterCode": "import asyncio, os, pygame\n__HEADLESS = os.environ.get(\"TRELLIS_HEADLESS\") == \"1\"\nif not __HEADLESS:\n    from js import window\n    os.environ[\"SDL_EMSCRIPTEN_KEYBOARD_ELEMENT\"] = \"#canvas\"\npygame.init()\n# Pyodide's Emscripten SDL ships no dummy VIDEO driver — headless grading renders\n# to an offscreen Surface; only the main-thread player owns a real display.\nscreen = pygame.Surface((320, 240)) if __HEADLESS else pygame.display.set_mode((320, 240))\nGEN = 0 if __HEADLESS else int(window.gameGen)\ndef init(vy0):\n    return {\"y\": 100.0, \"vy\": vy0}\n\ndef update(state, events, dt):\n    y = state[\"y\"] + state[\"vy\"] * dt\n    vy = state[\"vy\"]\n    if y < 0:\n        y = 0.0\n        vy = -vy\n    if y > 200:\n        y = 200.0\n        vy = -vy\n    return {\"y\": y, \"vy\": vy}\n\ndef probe(state):\n    return {\"y\": state[\"y\"], \"vy\": state[\"vy\"]}\ndef draw(screen, state):\n    screen.fill((16, 28, 36))\n    pygame.draw.circle(screen, (242, 201, 76), (160, int(220 - state[\"y\"])), 12)\n\nasync def main():\n    state = init(120.0)\n    while __HEADLESS is False and int(window.gameGen) == GEN:\n        events = pygame.event.get()\n        for e in events:\n            if e.type == pygame.KEYDOWN:\n                window.__trellisKeySeen = window.__trellisKeySeen + 1\n        state = update(state, events, 1 / 60)\n        draw(screen, state)\n        pygame.display.flip()\n        window.__trellisFrameTick = window.__trellisFrameTick + 1\n        await asyncio.sleep(1 / 60)\n\nif not __HEADLESS:\n    asyncio.ensure_future(main())\n",
+          "evaluator": {
+            "run": {
+              "timeoutMs": 60000,
+              "memoryMb": 256,
+              "entrypoint": "update"
+            },
+            "tests": {
+              "cases": [
+                {
+                  "input": [
+                    0,
+                    240
+                  ],
+                  "expected": {
+                    "y": 100,
+                    "vy": 240
+                  }
+                },
+                {
+                  "input": [
+                    30,
+                    240
+                  ],
+                  "expected": {
+                    "y": 184,
+                    "vy": -240
+                  }
+                }
+              ]
+            },
+            "ast": {
+              "queries": [
+                {
+                  "tag": "no_bounce_clamp",
+                  "query": {
+                    "not": {
+                      "node": "Compare",
+                      "where": {
+                        "childMatches": {
+                          "node": "Constant",
+                          "where": {
+                            "attr": "value",
+                            "eq": 200
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "property": {
+              "referenceImpl": "def init(vy0):\n    return {\"y\": 100.0, \"vy\": vy0}\n\ndef update(state, events, dt):\n    y = state[\"y\"] + state[\"vy\"] * dt\n    vy = state[\"vy\"]\n    if y < 0:\n        y = 0.0\n        vy = -vy\n    if y > 200:\n        y = 200.0\n        vy = -vy\n    return {\"y\": y, \"vy\": vy}\n\ndef probe(state):\n    return {\"y\": state[\"y\"], \"vy\": state[\"vy\"]}",
+              "generators": [
+                {
+                  "param": "frame",
+                  "type": "int",
+                  "min": 0,
+                  "max": 119
+                },
+                {
+                  "param": "vy0",
+                  "type": "float",
+                  "min": -80,
+                  "max": 80
+                }
+              ],
+              "numCases": 12,
+              "seed": 7
+            },
+            "graphical": {
+              "entrypoints": {
+                "init": "init",
+                "update": "update",
+                "probe": "probe"
+              },
+              "inputTape": [
+                {},
+                {
+                  "keysDown": [
+                    "K_LEFT"
+                  ]
+                },
+                {
+                  "keysDown": [
+                    "K_LEFT"
+                  ]
+                },
+                {}
+              ],
+              "dt": 0.016666666666666666,
+              "frames": 120
+            }
+          }
+        }
+      ],
+      "certifies": [
+        "skill.m65.motion"
+      ]
+    }
+  },
+  "producers": {
+    "skill.m65.motion": [
+      "node.m65.pygame"
+    ]
+  },
+  "requirements": {
+    "node.m65.pygame": []
+  }
+}

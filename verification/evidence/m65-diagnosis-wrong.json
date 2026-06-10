@@ -1,0 +1,38 @@
+{
+  "id": "diag-m65",
+  "learnerId": "L",
+  "stepId": "step.m65.bounce",
+  "contentVersion": "m65-fixture@1",
+  "submittedAt": "2026-06-10T00:00:00.000Z",
+  "correct": false,
+  "attribution": "misconception",
+  "signals": {
+    "ran": true,
+    "wallMs": 0,
+    "astTags": [
+      "no_bounce_clamp"
+    ],
+    "tests": {
+      "passed": 1,
+      "failed": 1,
+      "failures": [
+        {
+          "caseIndex": 1,
+          "got": {
+            "y": 220,
+            "vy": 240
+          }
+        }
+      ]
+    }
+  },
+  "skillDeltas": [
+    {
+      "skill": "skill.m65.motion",
+      "kind": "misconception",
+      "weight": 1
+    }
+  ],
+  "seed": 7,
+  "misconceptionId": "mis.m65.no_bounce_clamp"
+}

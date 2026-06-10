@@ -1,0 +1,96 @@
+{
+  "url": "http://localhost:8907/verification/m65-pygame.html",
+  "results": [
+    {
+      "name": "a1-canvas-alive",
+      "pass": true,
+      "evidence": {
+        "tick": 49,
+        "deltas": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "name": "a3-editor-typeable",
+      "pass": true,
+      "evidence": {
+        "focusedEditor": true
+      }
+    },
+    {
+      "name": "a2-keyboard-scoped-to-canvas",
+      "pass": true,
+      "evidence": {
+        "k0": 0,
+        "k1": 0,
+        "k2": 2
+      }
+    },
+    {
+      "name": "b-gameGen-restart-no-stacked-loops",
+      "pass": true,
+      "evidence": {
+        "gen0": 1,
+        "gen1": 2,
+        "rateBefore": 56.666666666666664,
+        "rateAfter": 56.666666666666664
+      }
+    },
+    {
+      "name": "d-awaitless-refused-pre-play",
+      "pass": true,
+      "evidence": {
+        "refusalText": "Syntax errorThis loop never yields to the browser — add `await asyncio.sleep(1/60)` inside it so the page stays responsive.",
+        "tickFrozen": true
+      }
+    },
+    {
+      "name": "e-misconception-warm-amber",
+      "pass": true,
+      "evidence": {
+        "fbClass": "feedback feedback--misconception",
+        "fbText": "Let's look closerThe ball flies through the wallsPosition keeps growing forever — clamp y at the edges and flip vy."
+      }
+    },
+    {
+      "name": "c1-headless-grading-playback-stopped",
+      "pass": true,
+      "evidence": {
+        "preSubmitRate": 56.25,
+        "tickDuringGrading": [
+          383,
+          383
+        ],
+        "passClass": "feedback feedback--pass"
+      }
+    },
+    {
+      "name": "c2-determinism-correct",
+      "pass": true,
+      "evidence": {
+        "identical": true,
+        "attribution": "pass",
+        "bytes": 369
+      }
+    },
+    {
+      "name": "c3-determinism-wrong-misconception",
+      "pass": true,
+      "evidence": {
+        "identical": true,
+        "attribution": "misconception",
+        "misconceptionId": "mis.m65.no_bounce_clamp"
+      }
+    }
+  ],
+  "consoleLines": [
+    "[log] Loading pygame-ce",
+    "[log] Loaded pygame-ce",
+    "[log] pygame-ce 2.4.1 (SDL 2.28.4, Python 3.12.7)",
+    "[warning] The ScriptProcessorNode is deprecated. Use AudioWorkletNode instead. (https://bit.ly/audio-worklet)",
+    "[log] Loading pygame-ce",
+    "[log] Loaded pygame-ce"
+  ]
+}

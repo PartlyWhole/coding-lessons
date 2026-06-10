@@ -84,11 +84,18 @@ export function PygameStage({ step, code, disabled, onChange, onSubmit, runtime 
           </button>
         </div>
       )}
+      {/* readOnly is FALSE by design, not `disabled`: EditorPane bakes readOnly into
+          CodeMirror at mount (mount-once contract), and a pygame step that is the FIRST
+          step of a cell mounts during PENDING (the runner auto-enters ACTIVE in a
+          post-mount effect) — baking `disabled` would leave the editor permanently
+          read-only (real-browser finding, Task 14). The frozen build view's de-facto
+          semantics are the same: editor editable for the step's life; submission
+          legality is governed by the buttons + step machine, never the editor. */}
       <EditorPane
         value={code}
         onChange={onChange}
         {...(step.lockedRegions ? { lockedRegions: step.lockedRegions } : {})}
-        readOnly={disabled}
+        readOnly={false}
       />
       {notice !== null && (
         <div aria-label="feedback" className={`feedback feedback--${notice.kind}`}>
@@ -106,6 +113,7 @@ export function PygameStage({ step, code, disabled, onChange, onSubmit, runtime 
         disabled={disabled}
         onClick={() => {
           if (disabled) return;
+          setNotice(null); // a stale play-path notice must not sit beside grading feedback
           runtime.stop();
           onSubmit();
         }}

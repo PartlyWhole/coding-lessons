@@ -32,7 +32,9 @@ const PREAMBLE = [
   "    from js import window",
   '    os.environ["SDL_EMSCRIPTEN_KEYBOARD_ELEMENT"] = "#canvas"',
   "pygame.init()",
-  "screen = pygame.display.set_mode((320, 240))",
+  "# Pyodide's Emscripten SDL ships no dummy VIDEO driver (real-browser finding,",
+  "# Task 14) — headless grading renders to an offscreen Surface instead.",
+  "screen = pygame.Surface((320, 240)) if __HEADLESS else pygame.display.set_mode((320, 240))",
   "GEN = 0 if __HEADLESS else int(window.gameGen)",
   "",
 ].join("\n");
