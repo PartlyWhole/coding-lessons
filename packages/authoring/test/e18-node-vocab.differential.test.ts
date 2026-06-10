@@ -190,6 +190,11 @@ const PROGRAMS = [
 describe("E-18 differential: FunctionDef/Tuple/UnaryOp/BoolOp agree across all three implementations", () => {
   const sb = createLocalSandbox();
 
+  // Explicit 60s budget (wall-clock headroom ONLY; semantics untouched): this loop
+  // shells out to harness.py per program (~16 spawnSync calls) and awaits the warm
+  // twin, so it is genuinely async — vitest's default 5s timeout fired under a
+  // saturated full-suite run (~2.8s solo, >5s contended; observed twice in the
+  // speedup concurrency sweep at turbo c1 and c4).
   it("authoring TS == sandbox twin == harness.py on every program", async () => {
     for (const code of PROGRAMS) {
       const ts = [...(evalTags(code, QUERIES) ?? new Set<string>())].sort();
@@ -200,7 +205,7 @@ describe("E-18 differential: FunctionDef/Tuple/UnaryOp/BoolOp agree across all t
       expect({ code, tags: sandbox }).toEqual({ code, tags: ts });
       expect({ code, tags: harness }).toEqual({ code, tags: ts });
     }
-  });
+  }, 60000);
 
   it("sanity: the new vocabulary actually fires (not vacuous agreement)", () => {
     const t = (code: string) => [...(evalTags(code, QUERIES) ?? new Set<string>())].sort();
