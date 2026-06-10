@@ -14,3 +14,5 @@ export { createWatchdog } from "./watchdog.js";
 export type { Watchdog, WatchdogOpts } from "./watchdog.js";
 export { precheckSource, AWAITLESS_LOOP_QUERIES, REFUSAL_MESSAGE } from "./precheck.js";
 export type { PrecheckResult } from "./precheck.js";
+export { createPygameRuntime } from "./pygame-runtime.js";
+export type { PygameRuntime, PygameRuntimeOpts } from "./pygame-runtime.js";
