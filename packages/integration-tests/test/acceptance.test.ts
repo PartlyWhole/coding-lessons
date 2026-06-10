@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { evaluate } from "@trellis/engine";
-import { createLocalSandbox } from "../src/local-cpython.js";
+import { createLocalSandbox } from "@trellis/sandbox";
 import { loadRawContent } from "./_fixtures.js";
 
 type Any = any;

@@ -11,7 +11,7 @@ export interface RawContent {
 }
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const REPO = resolve(HERE, "../../.."); // packages/sandbox/test -> repo root
+const REPO = resolve(HERE, "../../.."); // packages/integration-tests/test -> repo root
 
 const LOADER = `
 import glob, json, yaml

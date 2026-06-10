@@ -12,10 +12,10 @@ import {
   visibleHints,
   initialHintState,
   canonicalDiagnosis,
-} from "../src/index.js";
+} from "@trellis/engine";
 import type { BuildStep, Bundle, Step } from "@trellis/schema";
 
-const HERE = dirname(fileURLToPath(import.meta.url)); // packages/engine/test
+const HERE = dirname(fileURLToPath(import.meta.url)); // packages/integration-tests/test
 const CONTENT_ROOT = resolve(HERE, "../../../content");
 const bundle: Bundle = compile(loadContent(CONTENT_ROOT));
 const sandbox = createLocalSandbox();

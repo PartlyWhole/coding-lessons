@@ -3,7 +3,7 @@ import { assembleBuildSignals, detect } from "@trellis/engine";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { createLocalSandbox } from "../src/local-cpython.js";
+import { createLocalSandbox } from "@trellis/sandbox";
 import { loadRawContent, pickBuildStep } from "./_fixtures.js";
 
 type Any = any; // intentional: test works with raw YAML content of unknown shape
