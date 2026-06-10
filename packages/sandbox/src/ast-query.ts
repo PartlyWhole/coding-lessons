@@ -31,6 +31,13 @@ def call_name(node):
     return None
 
 def pred_ok(where, node):
+    # M6.5 additive, RUNTIME-INTERNAL: pred-level negation. The frozen schema's AstPred
+    # union has no "not", so CONTENT can never author this -- it exists solely for the
+    # await-less-loop pre-check's query ("While with NO Await descendant", section 17.5
+    # guard 1), built in code by @trellis/runtime. harness.py (not ours) lacks it; the
+    # gate-5 differential is unaffected because no corpus query can contain it.
+    if "not" in where:
+        return not pred_ok(where["not"], node)
     if "attr" in where:
         val = where["eq"]
         if where["attr"] == "value" and isinstance(node, ast.Constant):
@@ -54,6 +61,11 @@ NODE_TYPES = {
     "While": ast.While, "If": ast.If, "Return": ast.Return, "Constant": ast.Constant,
     "Name": ast.Name, "Assign": ast.Assign, "Expr": ast.Expr, "Break": ast.Break,
     "Import": ast.Import, "ImportFrom": ast.ImportFrom, "Attribute": ast.Attribute,
+    # M6.5 additive: the await-less-loop pre-check (§17.5 guard 1) queries for Await.
+    # NOTE: a deliberate superset of content/verify/harness.py's NODE_TYPES (not ours
+    # to edit) — corpus queries use neither, so the gate-5 differential is unaffected;
+    # the orchestrator-owned validate.py port should mirror this entry.
+    "Await": ast.Await,
 }
 
 def node_matches(query, node, parmap):

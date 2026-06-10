@@ -112,4 +112,19 @@ describe("createLocalSandbox.parseAndMatch", () => {
     const q = [{ tag: "t", query: { node: "Return" } }];
     expect(await sb.parseAndMatch("def f(:", q)).toEqual([]);
   });
+  // §17.5 guard 1 — the await-less-loop pre-check needs `Await` as a queryable node
+  // type (additive NODE_TYPES entry; mutation golden in both directions).
+  it("matches Await as a node type (M6.5 pre-check dependency)", async () => {
+    const q = [
+      {
+        tag: "awaitless_loop",
+        query: { node: "While", where: { not: { childMatches: { node: "Await" } } } },
+      },
+    ] as unknown as Parameters<typeof sb.parseAndMatch>[1];
+    const yielding =
+      "import asyncio\nasync def main():\n    while True:\n        await asyncio.sleep(1/60)\n";
+    const hot = "while True:\n    x = 1\n";
+    expect(await sb.parseAndMatch(yielding, q)).not.toContain("awaitless_loop");
+    expect(await sb.parseAndMatch(hot, q)).toContain("awaitless_loop");
+  });
 });
