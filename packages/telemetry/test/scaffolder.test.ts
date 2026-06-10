@@ -145,7 +145,9 @@ describe("createProactiveScaffolder (headless seam)", () => {
     await settle();
     expect(h.actions).toHaveLength(1);
     h.bus.emit({ t: "step_enter", stepId: "s1", kind: "build" }); // re-entering the step resets
-    h.bus.emit({ t: "submission", stepId: "s1", diagnosis: wrongDiag });
+    await settle(); // baseline anchored at 4 persisted submissions
+    h.setRows([sub({ correct: false }), sub({ correct: false }), sub({ correct: false }), sub({ correct: false }), sub({ correct: false })]);
+    h.bus.emit({ t: "submission", stepId: "s1", diagnosis: wrongDiag }); // 5th row visible = baseline+1
     await settle();
     expect(h.actions).toHaveLength(2);
   });
@@ -186,6 +188,79 @@ describe("createProactiveScaffolder (headless seam)", () => {
     h.clock.tick(600_000);
     await settle();
     expect(h.actions).toEqual([]);
+  });
+
+  it("D5 read-after-write: waits (injected-clock retries) until the just-flushed submission is VISIBLE before evaluating — never fires off stale state", async () => {
+    // Eventually-consistent persist: rows become visible only after `lag` extra reads,
+    // modeling memoryDriver/IndexedDB commit latency behind the bus event.
+    const bus = createEventBus();
+    const clock = new FakeClock();
+    const actions: ScaffoldAction[] = [];
+    let committed: BehavioralEvent[] = [];
+    let pending: { rows: BehavioralEvent[]; lag: number } | null = null;
+    const persist: TelemetryPersist = {
+      appendEvents: async () => undefined,
+      recentEvents: async (q) => {
+        if (pending !== null && --pending.lag <= 0) {
+          committed = pending.rows;
+          pending = null;
+        }
+        return q.stepId !== undefined ? committed.filter((r) => r.stepId === q.stepId) : committed;
+      },
+    };
+    createProactiveScaffolder({ bus, persist, clock, config: DEFAULT_SCAFFOLD_CONFIG, onAction: (a) => actions.push(a) });
+
+    bus.emit({ t: "step_enter", stepId: "s1", kind: "recognize" }); // baseline fetch: 0 rows
+    await settle();
+    // two wrongs flow through normally (each immediately visible)…
+    committed = [sub({ correct: false })];
+    bus.emit({ t: "submission", stepId: "s1", diagnosis: wrongDiag });
+    await settle();
+    committed = [sub({ correct: false }), sub({ correct: false })];
+    bus.emit({ t: "submission", stepId: "s1", diagnosis: wrongDiag });
+    await settle();
+    expect(actions).toEqual([]); // 2 wrongs: nothing
+    // …then the THIRD is flushed but its commit lags behind three reads
+    pending = { rows: [sub({ correct: false }), sub({ correct: false }), sub({ correct: false })], lag: 3 };
+    bus.emit({ t: "submission", stepId: "s1", diagnosis: wrongDiag });
+    await settle();
+    expect(actions).toEqual([]); // stale state (2 wrongs visible) must NOT fire
+    for (let i = 0; i < 6; i++) {
+      clock.tick(0); // each retry is an injected-clock timer, never wall time
+      await settle();
+    }
+    expect(actions).toEqual([{ rule: "three_fail_streak", stepId: "s1", action: "advance_hint_one_level" }]);
+  });
+
+  it("end-to-end with attachTelemetry + real memoryDriver: 3 wrong submissions on one bus → exactly one three_fail_streak action", async () => {
+    const { memoryDriver, openTrellisDb, appendEvents, recentEvents } = await import("@trellis/persist");
+    const { attachTelemetry } = await import("../src/attach.js");
+    const { DEFAULT_CAPTURE_POLICY } = await import("../src/policy.js");
+    const { FakeListenerTarget, seqIds } = await import("./helpers/fake.js");
+    const bus = createEventBus();
+    const clock = new FakeClock();
+    const db = await openTrellisDb(memoryDriver(), { idGen: () => "L" });
+    const port: TelemetryPersist = {
+      appendEvents: (ev) => appendEvents(db, ev),
+      recentEvents: (q) => recentEvents(db, q),
+    };
+    const actions: ScaffoldAction[] = [];
+    attachTelemetry({
+      bus, persist: port, clock, ids: seqIds(), policy: DEFAULT_CAPTURE_POLICY,
+      learnerId: "L", target: new FakeListenerTarget(), isHidden: () => false,
+    });
+    createProactiveScaffolder({ bus, persist: port, clock, config: DEFAULT_SCAFFOLD_CONFIG, onAction: (a) => actions.push(a) });
+
+    bus.emit({ t: "step_enter", stepId: "r", kind: "recognize" });
+    for (let i = 0; i < 3; i++) {
+      bus.emit({ t: "submission", stepId: "r", diagnosis: wrongDiag });
+      for (let j = 0; j < 4; j++) {
+        await settle();
+        clock.tick(0);
+      }
+      await settle();
+    }
+    expect(actions).toEqual([{ rule: "three_fail_streak", stepId: "r", action: "advance_hint_one_level" }]);
   });
 
   it("an onAction that throws never breaks the emitting caller (bus emit stays safe)", async () => {

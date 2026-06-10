@@ -99,6 +99,25 @@ export function createProactiveScaffolder(deps: ProactiveScaffolderDeps): () => 
   const { bus, persist, clock, onAction } = deps;
   const config = deps.config ?? DEFAULT_SCAFFOLD_CONFIG;
   const fired = new Set<string>(); // `${rule}:${stepId}` — re-armed only by step_enter
+  let disposed = false;
+
+  // D5 read-after-write, made explicit: the Recorder flushes the submission row on the
+  // same bus event, but persist commits ASYNCHRONOUSLY (memoryDriver gives no
+  // creation-order read guarantee at all). Timing is not a happens-before edge — a
+  // VISIBILITY CONDITION is: the scaffolder counts the submissions it has witnessed on
+  // the bus per step (plus a baseline count fetched at step_enter, which also covers
+  // rows persisted by earlier sessions), and retries the read on injected-clock timers
+  // until persist shows that many rows for the step. Bounded: if writes are failing
+  // (closing db), evaluation is skipped — suggestions only, never a guess off stale state.
+  const baselines = new Map<string, Promise<number>>(); // stepId → submissions persisted before this visit
+  const busSubs = new Map<string, number>(); // stepId → submissions witnessed on the bus since step_enter
+
+  async function countStepSubmissions(stepId: string): Promise<number> {
+    const rows = await persist.recentEvents({ stepId, limit: 50 });
+    return rows.filter((r) => r.type === "submission").length;
+  }
+
+  const nextTick = (): Promise<void> => new Promise((res) => clock.setTimer(res, 0));
 
   function propose(a: ScaffoldAction): void {
     const key = `${a.rule}:${a.stepId}`;
@@ -112,7 +131,16 @@ export function createProactiveScaffolder(deps: ProactiveScaffolderDeps): () => 
   }
 
   // Submission-driven rules, in frozen priority order; first match wins.
-  async function evaluate(stepId: string): Promise<void> {
+  async function evaluate(stepId: string, expectedStepSubmissions: number): Promise<void> {
+    // Wait for visibility of everything we have witnessed (≥, never ===: other tabs or
+    // the 50-row horizon must not deadlock us; 50 saturates the rule window by design).
+    for (let attempt = 0; ; attempt++) {
+      const visible = await countStepSubmissions(stepId);
+      if (visible >= Math.min(expectedStepSubmissions, 50) || disposed) break;
+      if (attempt >= 20) return; // persist is not catching up (db closing?) — skip quietly
+      await nextTick();
+    }
+    if (disposed) return;
     const rows = await persist.recentEvents({ limit: 50 });
     if (ruleWrongPredictThenCorrectRun(rows)) {
       return propose({ rule: "wrong_predict_then_correct_run", stepId, action: "offer_hint", level: 1 });
@@ -144,21 +172,29 @@ export function createProactiveScaffolder(deps: ProactiveScaffolderDeps): () => 
       for (const rule of ["wrong_predict_then_correct_run", "three_fail_streak", "rapid_resubmit", "idle"]) {
         fired.delete(`${rule}:${e.stepId}`);
       }
+      // Anchor the visibility condition: how many submissions this step already has in
+      // persist (earlier visits / earlier sessions) before this visit adds any.
+      busSubs.set(e.stepId, 0);
+      baselines.set(e.stepId, countStepSubmissions(e.stepId).catch(() => 0));
       return;
     }
     if (e.t === "submission") {
-      // Deferred one microtask so the telemetry Recorder's submission flush (subscribed
-      // first in the client) starts its write before our read (D5 read-after-write).
       const stepId = e.stepId;
-      void Promise.resolve().then(() =>
-        evaluate(stepId).catch(() => {
-          // a read failure (closing db) silently skips this evaluation — suggestions only
-        }),
-      );
+      const witnessed = (busSubs.get(stepId) ?? 0) + 1;
+      busSubs.set(stepId, witnessed);
+      void (async () => {
+        // No baseline (scaffolder attached after step_enter — not the client wiring):
+        // fall back to this-visit count only; documented narrower guarantee.
+        const base = await (baselines.get(stepId) ?? Promise.resolve(0));
+        await evaluate(stepId, base + witnessed);
+      })().catch(() => {
+        // a read failure (closing db) silently skips this evaluation — suggestions only
+      });
     }
   });
 
   return function detach(): void {
+    disposed = true;
     unsubscribe();
     idle.dispose();
   };

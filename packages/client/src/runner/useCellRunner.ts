@@ -13,9 +13,9 @@ import {
   type HintState,
   type BuildSandbox,
 } from "@trellis/engine";
-import { hashText, DEFAULT_CAPTURE_POLICY } from "@trellis/telemetry";
+import { hashText, DEFAULT_CAPTURE_POLICY, createProactiveScaffolder, realClock } from "@trellis/telemetry";
 import type { EventBus } from "../eventBus.js";
-import type { TrellisDb } from "@trellis/persist";
+import { appendEvents, recentEvents, type TrellisDb } from "@trellis/persist";
 import type { PeekBackEntry, StepAnswer } from "../types.js";
 import { gradeStep, persistDiagnosis, type RunnerEffects } from "./grade.js";
 
@@ -163,6 +163,31 @@ export function useCellRunner(args: UseCellRunnerArgs): CellRunnerView {
     }
   }, []);
 
+  // M6 §11.3 — ProactiveScaffolder (Task-12 carve-out): ONLY three_fail_streak's
+  // advance_hint_one_level is routed, onto the EXISTING pullHint path — visually identical
+  // to a learner pull, one level, deduped inside the scaffolder. Every other action stays
+  // headless until the design ⚑ (E5) lands. Suggestions only; never beyond one level.
+  // DEFINED BEFORE the auto-enter effect below: effects run in definition order, and the
+  // scaffolder must be subscribed before the mount step_enter emit (its visibility baseline
+  // and idle arming anchor there).
+  const pullHintRef = useRef<(opts?: { confirmRevealCode: true }) => void>(() => undefined);
+  useEffect(() => {
+    if (!db) return undefined;
+    const detach = createProactiveScaffolder({
+      bus,
+      persist: { appendEvents: (ev) => appendEvents(db, ev), recentEvents: (q) => recentEvents(db, q) },
+      clock: realClock,
+      onAction: (a) => {
+        if (a.action === "advance_hint_one_level" && a.stepId === activeIdRef.current) {
+          pullHintRef.current(); // never passes confirmRevealCode: level 4 stays learner-gated
+        }
+        // offer_hint / suggest_hint / nudge_peek_or_hint: recorded by the scaffolder's
+        // dedupe but surface NOTHING here (E5 design flag pending).
+      },
+    });
+    return detach;
+  }, [bus, db]);
+
   // Auto-enter the first step (PENDING → ACTIVE) on mount; emit session_start + step_enter.
   // Guarded: a double-run of this effect (e.g. StrictMode remount) must not re-enter ACTIVE.
   useEffect(() => {
@@ -291,6 +316,8 @@ export function useCellRunner(args: UseCellRunnerArgs): CellRunnerView {
     },
     [state.hintState, ladder, bus, active.id],
   );
+
+  pullHintRef.current = pullHint; // keep the scaffolder's route on the CURRENT pull closure
 
   const openPeekBack = useCallback(() => bus.emit({ t: "peek_back", stepId: active.id }), [bus, active.id]);
 
