@@ -85,6 +85,68 @@ describe("AstQuery interpreter (§6.3)", () => {
     expect(q("a[0]", { node: "Subscript", count: { op: ">=", n: 2 } })).toBe(false);
   });
 
+  // §6.3 E-18 — FunctionDef, Tuple, UnaryOp, BoolOp. The authoring matcher carries NO
+  // node-type table (it compares the query's `node` string against the real CPython
+  // `_type` directly), so these prove the per-item lockstep on the authoring side: the
+  // same shapes the harness/sandbox NODE_TYPES additions enable must match here
+  // identically. Field-selector reality (mirrored in the e18 differential): body/elts/
+  // operand/values are reachable; FunctionDef.name only via `where: {attr: name}` (a bare
+  // string is invisible to `field`); UnaryOp.op/BoolOp.op are op-class instances — the
+  // string-eq `where` never matches them anywhere, and op-class SUBQUERIES are out of
+  // vocabulary (table-gated in harness/sandbox; see the e18 differential's pinned test).
+  it("E-18: FunctionDef via name attr + within; body field; name NOT field-reachable", () => {
+    const within = {
+      node: "Call",
+      where: { calls: "input" },
+      within: { node: "FunctionDef", where: { attr: "name", eq: "update" } },
+    };
+    expect(q("def update(s):\n    x = input()", within)).toBe(true);
+    expect(q("x = input()\ndef update(s):\n    return s", within)).toBe(false);
+    expect(q("def draw(s):\n    x = input()", within)).toBe(false);
+    const body = { node: "FunctionDef", field: { body: { node: "Call", where: { calls: "screen.fill" } } } };
+    expect(q("def draw(s, screen):\n    screen.fill(SKY)", body)).toBe(true);
+    expect(q("def draw(s, screen):\n    return s", body)).toBe(false);
+    // `name` is a bare string: the field selector only descends into nodes -> never matches.
+    expect(q("def update(s):\n    return s", { node: "FunctionDef", field: { name: { node: "Name" } } })).toBe(false);
+  });
+
+  it("E-18: Tuple via elts field and as a within scope", () => {
+    const elts = { node: "Tuple", field: { elts: { node: "Constant", where: { attr: "value", eq: 300 } } } };
+    expect(q("color = (300, 0, 0)", elts)).toBe(true);
+    expect(q("color = (255, 0, 0)", elts)).toBe(false);
+    expect(q("color = [300, 0, 0]", elts)).toBe(false);
+    const scoped = { node: "Constant", where: { attr: "value", eq: 300 }, within: { node: "Tuple" } };
+    expect(q("screen.fill((300, 0, 0))", scoped)).toBe(true);
+    expect(q("x = 300", scoped)).toBe(false);
+  });
+
+  it("E-18: UnaryOp via operand field; op never string-eq-matchable", () => {
+    const negateX = {
+      node: "Assign",
+      field: {
+        targets: { node: "Name", where: { attr: "id", eq: "x" } },
+        value: { node: "UnaryOp", field: { operand: { node: "Name", where: { attr: "id", eq: "x" } } } },
+      },
+    };
+    expect(q("if x > 800:\n    x = -x", negateX)).toBe(true);
+    expect(q("if x > 800:\n    speed = -speed", negateX)).toBe(false);
+    expect(q("x = x + speed", negateX)).toBe(false);
+    // op holds an op-class node ({_type: "USub"}), never equal to a string.
+    expect(q("x = -x", { node: "UnaryOp", where: { attr: "op", eq: "USub" } })).toBe(false);
+  });
+
+  it("E-18: BoolOp op-agnostic (values field + within If); op never string-eq-matchable", () => {
+    const inIf = { node: "BoolOp", within: { node: "If" } };
+    expect(q("if near_x and near_y:\n    print(1)", inIf)).toBe(true);
+    expect(q("if near_x or near_y:\n    print(1)", inIf)).toBe(true); // deliberately op-agnostic (E-3)
+    expect(q("ok = near_x and near_y", inIf)).toBe(false);
+    expect(q("if near_x:\n    if near_y:\n        print(1)", inIf)).toBe(false);
+    const values = { node: "BoolOp", field: { values: { node: "Name", where: { attr: "id", eq: "near_x" } } } };
+    expect(q("ok = near_x and near_y", values)).toBe(true);
+    expect(q("ok = a and b", values)).toBe(false);
+    expect(q("ok = near_x and near_y", { node: "BoolOp", where: { attr: "op", eq: "And" } })).toBe(false);
+  });
+
   it("evalTags returns matched tag names; null on syntax error", () => {
     const queries = [{ tag: "has_print", query: { node: "Call", where: { calls: "print" } } }];
     expect([...evalTags("print('x')", queries)!]).toEqual(["has_print"]);

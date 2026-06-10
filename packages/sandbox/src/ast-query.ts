@@ -70,6 +70,15 @@ NODE_TYPES = {
     # literals; field selectors apply to the real ast fields (Subscript.value /
     # Subscript.slice — py3.9+ plain-expr slice — and List.elts).
     "Subscript": ast.Subscript, "List": ast.List,
+    # E-18 additive (lockstep with harness.py NODE_TYPES): function defs, tuple
+    # literals, unary and boolean operators. Field selectors apply to the real ast
+    # fields — FunctionDef.body / Tuple.elts / UnaryOp.operand / BoolOp.values; a
+    # FunctionDef's name is a plain string (match it via where {attr: name}, not field);
+    # UnaryOp.op / BoolOp.op hold op-class instances (ast.USub()/ast.And()/...) whose
+    # classes are deliberately NOT in this table — op-class subqueries are out of the
+    # §6.3 vocabulary (the gated boolop content tag is op-agnostic by design, E-3).
+    "FunctionDef": ast.FunctionDef, "Tuple": ast.Tuple,
+    "UnaryOp": ast.UnaryOp, "BoolOp": ast.BoolOp,
 }
 
 def node_matches(query, node, parmap):

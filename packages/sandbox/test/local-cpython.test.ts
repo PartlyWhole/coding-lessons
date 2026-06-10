@@ -167,4 +167,87 @@ describe("createLocalSandbox.parseAndMatch", () => {
       "list_with_certain",
     );
   });
+
+  // §6.3 E-18 — `FunctionDef`, `Tuple`, `UnaryOp`, `BoolOp` as queryable node types
+  // (additive NODE_TYPES entries, lockstep with content/verify/harness.py NODE_TYPES).
+  // Field-selector reality: FunctionDef.body / Tuple.elts / UnaryOp.operand / BoolOp.values
+  // are reachable (node / node-list fields); FunctionDef.name is a bare string — reachable
+  // only via `where: {attr: name}`, never via `field`; UnaryOp.op / BoolOp.op hold op-class
+  // instances whose classes are NOT in the table, so op subqueries are rejected here (the
+  // e18 differential pins the resulting authoring divergence — out-of-vocabulary shape).
+  it("matches FunctionDef by name attr and body field (E-18)", async () => {
+    const q = [
+      {
+        tag: "input_in_update",
+        query: {
+          node: "Call",
+          where: { calls: "input" },
+          within: { node: "FunctionDef", where: { attr: "name", eq: "update" } },
+        },
+      },
+      {
+        tag: "draw_body_fill",
+        query: { node: "FunctionDef", field: { body: { node: "Call", where: { calls: "screen.fill" } } } },
+      },
+    ] as unknown as Parameters<typeof sb.parseAndMatch>[1];
+    expect(await sb.parseAndMatch("def update(s):\n    x = input()", q)).toContain("input_in_update");
+    expect(await sb.parseAndMatch("x = input()\ndef update(s):\n    return s", q)).not.toContain(
+      "input_in_update",
+    );
+    expect(await sb.parseAndMatch("def draw(s, screen):\n    screen.fill(SKY)", q)).toContain(
+      "draw_body_fill",
+    );
+    expect(await sb.parseAndMatch("def draw(s, screen):\n    pass", q)).not.toContain("draw_body_fill");
+  });
+
+  it("matches Tuple with field-scoped elts and as a within scope (E-18)", async () => {
+    const q = [
+      {
+        tag: "color_300_in_tuple",
+        query: { node: "Constant", where: { attr: "value", eq: 300 }, within: { node: "Tuple" } },
+      },
+      {
+        tag: "tuple_elts_300",
+        query: { node: "Tuple", field: { elts: { node: "Constant", where: { attr: "value", eq: 300 } } } },
+      },
+    ] as unknown as Parameters<typeof sb.parseAndMatch>[1];
+    expect(await sb.parseAndMatch("screen.fill((300, 0, 0))", q)).toEqual([
+      "color_300_in_tuple",
+      "tuple_elts_300",
+    ]);
+    expect(await sb.parseAndMatch("x = 300", q)).toEqual([]);
+    expect(await sb.parseAndMatch("color = (255, 0, 0)", q)).toEqual([]);
+  });
+
+  it("matches UnaryOp via operand field; op field is table-gated (E-18)", async () => {
+    const q = [
+      {
+        tag: "negate_x",
+        query: { node: "UnaryOp", field: { operand: { node: "Name", where: { attr: "id", eq: "x" } } } },
+      },
+      // op-class subquery: USub is NOT in NODE_TYPES -> rejected (out of vocabulary).
+      { tag: "usub_op", query: { node: "UnaryOp", field: { op: { node: "USub" } } } },
+    ] as unknown as Parameters<typeof sb.parseAndMatch>[1];
+    expect(await sb.parseAndMatch("x = -x", q)).toEqual(["negate_x"]);
+    expect(await sb.parseAndMatch("speed = -speed", q)).toEqual([]);
+  });
+
+  it("matches BoolOp op-agnostically via values field and within If (E-18)", async () => {
+    const q = [
+      { tag: "boolop_in_if", query: { node: "BoolOp", within: { node: "If" } } },
+      {
+        tag: "boolop_values_near_x",
+        query: { node: "BoolOp", field: { values: { node: "Name", where: { attr: "id", eq: "near_x" } } } },
+      },
+      // op-class subquery: And is NOT in NODE_TYPES -> rejected (out of vocabulary).
+      { tag: "and_op", query: { node: "BoolOp", field: { op: { node: "And" } } } },
+    ] as unknown as Parameters<typeof sb.parseAndMatch>[1];
+    expect(await sb.parseAndMatch("if near_x and near_y:\n    print(1)", q)).toEqual([
+      "boolop_in_if",
+      "boolop_values_near_x",
+    ]);
+    expect(await sb.parseAndMatch("if near_x or near_y:\n    print(1)", q)).toContain("boolop_in_if");
+    expect(await sb.parseAndMatch("ok = near_x and near_y", q)).toEqual(["boolop_values_near_x"]);
+    expect(await sb.parseAndMatch("if near_x:\n    if near_y:\n        print(1)", q)).toEqual([]);
+  });
 });
