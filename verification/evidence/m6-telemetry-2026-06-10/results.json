@@ -1,0 +1,150 @@
+{
+  "url": "http://localhost:8902/packages/client/index.html",
+  "pass": true,
+  "results": [
+    {
+      "name": "walkthrough green with telemetry attached",
+      "pass": true,
+      "evidence": {
+        "completed": true
+      }
+    },
+    {
+      "name": "zero pageerrors during walkthrough",
+      "pass": true,
+      "evidence": {
+        "pageErrors": []
+      }
+    },
+    {
+      "name": "behavioral_event rows exist in real IndexedDB",
+      "pass": true,
+      "evidence": {
+        "count": 16,
+        "types": [
+          "editor_change",
+          "hint_requested",
+          "session_start",
+          "step_enter",
+          "step_release",
+          "submission"
+        ]
+      }
+    },
+    {
+      "name": "session_start sentinel row (stepId:'')",
+      "pass": true,
+      "evidence": {
+        "sentinel": {
+          "id": "602d9aaa-cdad-4a50-9cdb-b789eecfe689",
+          "learnerId": "95aa0b04-4df4-477c-b219-29904d773d46",
+          "sessionId": "6b48dab0-f04c-442c-ab78-79566bd6e43b",
+          "seq": 0,
+          "stepId": "",
+          "ts": "2026-06-10T16:04:17.029Z",
+          "type": "session_start",
+          "payload": {}
+        }
+      }
+    },
+    {
+      "name": "row type recorded: step_enter",
+      "pass": true,
+      "evidence": {
+        "present": true
+      }
+    },
+    {
+      "name": "row type recorded: submission",
+      "pass": true,
+      "evidence": {
+        "present": true
+      }
+    },
+    {
+      "name": "row type recorded: editor_change",
+      "pass": true,
+      "evidence": {
+        "present": true
+      }
+    },
+    {
+      "name": "row type recorded: hint_requested",
+      "pass": true,
+      "evidence": {
+        "present": true
+      }
+    },
+    {
+      "name": "row type recorded: step_release",
+      "pass": true,
+      "evidence": {
+        "present": true
+      }
+    },
+    {
+      "name": "gap-free seq per session",
+      "pass": true,
+      "evidence": {
+        "6b48dab0-f04c-442c-ab78-79566bd6e43b": {
+          "count": 16,
+          "contiguous": true
+        }
+      }
+    },
+    {
+      "name": "privacy: no raw editor text in any persisted row",
+      "pass": true,
+      "evidence": {
+        "scannedChars": 4897
+      }
+    },
+    {
+      "name": "submission payload carries derived signals (stepKind/failStreak/edit fingerprint)",
+      "pass": true,
+      "evidence": {
+        "payload": {
+          "correct": true,
+          "attribution": "pass",
+          "stepKind": "build",
+          "failStreak": 0,
+          "editLength": 63,
+          "editHash": "825b898b",
+          "editDistanceProxy": 0,
+          "msSinceLastSubmission": 878
+        }
+      }
+    },
+    {
+      "name": "rows survive reload (all pre-reload ids still present)",
+      "pass": true,
+      "evidence": {
+        "before": 16,
+        "after": 18,
+        "sessions": 2
+      }
+    },
+    {
+      "name": "reload started a NEW session (second sessionId, own gap-free seq)",
+      "pass": true,
+      "evidence": {
+        "6b48dab0-f04c-442c-ab78-79566bd6e43b": {
+          "count": 16,
+          "contiguous": true
+        },
+        "571c6c03-baeb-40d6-acb9-328cda257d3c": {
+          "count": 2,
+          "contiguous": true
+        }
+      }
+    },
+    {
+      "name": "zero pageerrors incl. reload",
+      "pass": true,
+      "evidence": {
+        "pageErrors": []
+      }
+    }
+  ],
+  "consoleLines": []
+}

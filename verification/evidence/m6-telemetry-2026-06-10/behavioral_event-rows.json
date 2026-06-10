@@ -1,0 +1,227 @@
+[
+  {
+    "id": "137fbab6-1c0e-4a40-b194-f1706ec1e3a5",
+    "learnerId": "95aa0b04-4df4-477c-b219-29904d773d46",
+    "sessionId": "6b48dab0-f04c-442c-ab78-79566bd6e43b",
+    "seq": 2,
+    "stepId": "cell.string_concat.text_plus_number#1",
+    "ts": "2026-06-10T16:04:17.487Z",
+    "type": "step_release",
+    "payload": {}
+  },
+  {
+    "id": "1432d152-b25c-4322-84f4-d5928b26ba48",
+    "learnerId": "95aa0b04-4df4-477c-b219-29904d773d46",
+    "sessionId": "571c6c03-baeb-40d6-acb9-328cda257d3c",
+    "seq": 0,
+    "stepId": "",
+    "ts": "2026-06-10T16:04:27.926Z",
+    "type": "session_start",
+    "payload": {}
+  },
+  {
+    "id": "15dd7358-7e6a-49a0-b502-8efa80af11e3",
+    "learnerId": "95aa0b04-4df4-477c-b219-29904d773d46",
+    "sessionId": "6b48dab0-f04c-442c-ab78-79566bd6e43b",
+    "seq": 7,
+    "stepId": "cell.string_concat.text_plus_number#3",
+    "ts": "2026-06-10T16:04:18.075Z",
+    "type": "submission",
+    "payload": {
+      "correct": true,
+      "attribution": "pass",
+      "stepKind": "recognize",
+      "failStreak": 0
+    }
+  },
+  {
+    "id": "2b5bba74-9017-4b12-87c1-dc86c207082e",
+    "learnerId": "95aa0b04-4df4-477c-b219-29904d773d46",
+    "sessionId": "6b48dab0-f04c-442c-ab78-79566bd6e43b",
+    "seq": 12,
+    "stepId": "cell.string_concat.text_plus_number#4",
+    "ts": "2026-06-10T16:04:18.923Z",
+    "type": "hint_requested",
+    "payload": {
+      "level": 1
+    }
+  },
+  {
+    "id": "341a4df3-4925-48f3-9ba2-204b83e9eed1",
+    "learnerId": "95aa0b04-4df4-477c-b219-29904d773d46",
+    "sessionId": "6b48dab0-f04c-442c-ab78-79566bd6e43b",
+    "seq": 5,
+    "stepId": "cell.string_concat.text_plus_number#2",
+    "ts": "2026-06-10T16:04:18.008Z",
+    "type": "step_release",
+    "payload": {}
+  },
+  {
+    "id": "376dfde5-e54d-4bef-ac93-c6307a602706",
+    "learnerId": "95aa0b04-4df4-477c-b219-29904d773d46",
+    "sessionId": "6b48dab0-f04c-442c-ab78-79566bd6e43b",
+    "seq": 15,
+    "stepId": "cell.string_concat.text_plus_number#4",
+    "ts": "2026-06-10T16:04:19.858Z",
+    "type": "step_release",
+    "payload": {}
+  },
+  {
+    "id": "4474788f-e747-47c4-97b4-1d0fb11dce01",
+    "learnerId": "95aa0b04-4df4-477c-b219-29904d773d46",
+    "sessionId": "6b48dab0-f04c-442c-ab78-79566bd6e43b",
+    "seq": 11,
+    "stepId": "cell.string_concat.text_plus_number#4",
+    "ts": "2026-06-10T16:04:18.881Z",
+    "type": "submission",
+    "payload": {
+      "correct": false,
+      "attribution": "misconception",
+      "stepKind": "build",
+      "failStreak": 1,
+      "misconceptionId": "mis.concat.str_num",
+      "editLength": 63,
+      "editHash": "73315a20"
+    }
+  },
+  {
+    "id": "49423d2d-6a72-49c8-b4b2-0d4e561565c1",
+    "learnerId": "95aa0b04-4df4-477c-b219-29904d773d46",
+    "sessionId": "6b48dab0-f04c-442c-ab78-79566bd6e43b",
+    "seq": 6,
+    "stepId": "cell.string_concat.text_plus_number#3",
+    "ts": "2026-06-10T16:04:18.008Z",
+    "type": "step_enter",
+    "payload": {
+      "kind": "recognize"
+    }
+  },
+  {
+    "id": "5728b712-cd7a-45e9-8f6f-d72c13125cb1",
+    "learnerId": "95aa0b04-4df4-477c-b219-29904d773d46",
+    "sessionId": "6b48dab0-f04c-442c-ab78-79566bd6e43b",
+    "seq": 4,
+    "stepId": "cell.string_concat.text_plus_number#2",
+    "ts": "2026-06-10T16:04:17.959Z",
+    "type": "submission",
+    "payload": {
+      "correct": true,
+      "attribution": "pass",
+      "stepKind": "predict",
+      "failStreak": 0
+    }
+  },
+  {
+    "id": "5761de95-fa5c-4ab3-8c44-2f5c30afcfcb",
+    "learnerId": "95aa0b04-4df4-477c-b219-29904d773d46",
+    "sessionId": "6b48dab0-f04c-442c-ab78-79566bd6e43b",
+    "seq": 10,
+    "stepId": "cell.string_concat.text_plus_number#4",
+    "ts": "2026-06-10T16:04:18.684Z",
+    "type": "editor_change",
+    "payload": {
+      "length": 63,
+      "hash": "73315a20"
+    }
+  },
+  {
+    "id": "602d9aaa-cdad-4a50-9cdb-b789eecfe689",
+    "learnerId": "95aa0b04-4df4-477c-b219-29904d773d46",
+    "sessionId": "6b48dab0-f04c-442c-ab78-79566bd6e43b",
+    "seq": 0,
+    "stepId": "",
+    "ts": "2026-06-10T16:04:17.029Z",
+    "type": "session_start",
+    "payload": {}
+  },
+  {
+    "id": "69455f21-7559-4349-827c-cc6c180557ec",
+    "learnerId": "95aa0b04-4df4-477c-b219-29904d773d46",
+    "sessionId": "6b48dab0-f04c-442c-ab78-79566bd6e43b",
+    "seq": 8,
+    "stepId": "cell.string_concat.text_plus_number#3",
+    "ts": "2026-06-10T16:04:18.107Z",
+    "type": "step_release",
+    "payload": {}
+  },
+  {
+    "id": "6cb33cd1-eddc-4101-90b0-32b870c04530",
+    "learnerId": "95aa0b04-4df4-477c-b219-29904d773d46",
+    "sessionId": "6b48dab0-f04c-442c-ab78-79566bd6e43b",
+    "seq": 14,
+    "stepId": "cell.string_concat.text_plus_number#4",
+    "ts": "2026-06-10T16:04:19.759Z",
+    "type": "submission",
+    "payload": {
+      "correct": true,
+      "attribution": "pass",
+      "stepKind": "build",
+      "failStreak": 0,
+      "editLength": 63,
+      "editHash": "825b898b",
+      "editDistanceProxy": 0,
+      "msSinceLastSubmission": 878
+    }
+  },
+  {
+    "id": "9defd480-5283-4e6d-a25b-2241d178e5be",
+    "learnerId": "95aa0b04-4df4-477c-b219-29904d773d46",
+    "sessionId": "6b48dab0-f04c-442c-ab78-79566bd6e43b",
+    "seq": 13,
+    "stepId": "cell.string_concat.text_plus_number#4",
+    "ts": "2026-06-10T16:04:19.465Z",
+    "type": "editor_change",
+    "payload": {
+      "length": 63,
+      "hash": "825b898b"
+    }
+  },
+  {
+    "id": "c0e2c142-fc82-4a9d-b4c3-640ad20c779c",
+    "learnerId": "95aa0b04-4df4-477c-b219-29904d773d46",
+    "sessionId": "6b48dab0-f04c-442c-ab78-79566bd6e43b",
+    "seq": 1,
+    "stepId": "cell.string_concat.text_plus_number#1",
+    "ts": "2026-06-10T16:04:17.029Z",
+    "type": "step_enter",
+    "payload": {
+      "kind": "watch"
+    }
+  },
+  {
+    "id": "d7265e95-9285-432a-b923-10635ad4f143",
+    "learnerId": "95aa0b04-4df4-477c-b219-29904d773d46",
+    "sessionId": "6b48dab0-f04c-442c-ab78-79566bd6e43b",
+    "seq": 9,
+    "stepId": "cell.string_concat.text_plus_number#4",
+    "ts": "2026-06-10T16:04:18.107Z",
+    "type": "step_enter",
+    "payload": {
+      "kind": "build"
+    }
+  },
+  {
+    "id": "e12b34a8-17f0-4d0b-9a5a-1af8ab543b22",
+    "learnerId": "95aa0b04-4df4-477c-b219-29904d773d46",
+    "sessionId": "6b48dab0-f04c-442c-ab78-79566bd6e43b",
+    "seq": 3,
+    "stepId": "cell.string_concat.text_plus_number#2",
+    "ts": "2026-06-10T16:04:17.487Z",
+    "type": "step_enter",
+    "payload": {
+      "kind": "predict"
+    }
+  },
+  {
+    "id": "efb70301-8fbc-48d4-83ca-619ca3bcd79a",
+    "learnerId": "95aa0b04-4df4-477c-b219-29904d773d46",
+    "sessionId": "571c6c03-baeb-40d6-acb9-328cda257d3c",
+    "seq": 1,
+    "stepId": "cell.string_concat.text_plus_number#1",
+    "ts": "2026-06-10T16:04:27.926Z",
+    "type": "step_enter",
+    "payload": {
+      "kind": "watch"
+    }
+  }
+]
