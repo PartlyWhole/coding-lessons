@@ -142,6 +142,71 @@ for nid, n in nodes.items():
             elif kind == "recall":
                 _gate9_map(s, "accepted", s.get("accepted") or {})
 
+# Gate 10 (E-17, ported from @trellis/authoring gates/graphical.ts — lockstep, same
+# messages in substance). Graphical-step lint for BuildStep runtime "pygame" (§17.4):
+# (a) pygame <-> evaluator.graphical pairing, both directions; (b) graphical.entrypoints
+# (update + init/probe when present) exist as `def <name>` in starterCode (real ast);
+# (c) frames ≤ 600 (warn; §17.7) and len(inputTape) ≤ frames (error); (d) lockedRegions,
+# when present, must cover line 1 (the locked import/scaffold preamble, §17.6).
+import ast as _ast
+
+def _def_names(code):
+    try:
+        tree = _ast.parse(code)
+    except SyntaxError:
+        return None
+    return {n.name for n in _ast.walk(tree)
+            if isinstance(n, (_ast.FunctionDef, _ast.AsyncFunctionDef))}
+
+for nid, n in nodes.items():
+    for c in n.get("cells", []):
+        for s in c.get("steps", []):
+            ev = s.get("evaluator") or {}
+            graphical = ev.get("graphical")
+            is_pygame = s.get("kind") == "build" and s.get("runtime") == "pygame"
+            if is_pygame and not graphical:
+                errs.append(f"gate10: {s['id']} runtime \"pygame\" without an evaluator.graphical "
+                            f"block — a pygame step cannot be graded headlessly without "
+                            f"entrypoints/inputTape/dt/frames (§17.4)")
+                continue
+            if graphical and not is_pygame:
+                errs.append(f"gate10: {s['id']} evaluator.graphical on a non-pygame step "
+                            f"(runtime {s.get('runtime')!r}) — graphical grading is meaningful "
+                            f"only on a build step with runtime \"pygame\" (§17.4)")
+                continue
+            if not graphical:
+                continue
+            defs = _def_names(s.get("starterCode") or "")
+            if defs is None:
+                errs.append(f"gate10: {s['id']} starterCode does not parse (syntax error) — "
+                            f"graphical entrypoints cannot be verified, and a pygame starter "
+                            f"must carry the locked preamble scaffold")
+            else:
+                eps = graphical.get("entrypoints") or {}
+                for key in ("init", "update", "probe"):
+                    name = eps.get(key)
+                    if name is not None and name not in defs:
+                        errs.append(f"gate10: {s['id']} graphical.entrypoints.{key} {name!r} has "
+                                    f"no `def {name}` in starterCode — the headless harness "
+                                    f"would fail to drive it")
+            frames = graphical.get("frames")
+            if isinstance(frames, int) and frames > 600:
+                warns.append(f"gate10: {s['id']} graphical.frames={frames} exceeds the §17.7 "
+                             f"grading budget of 600 (keep frames ≤ 600 so grading stays bounded)")
+            tape = graphical.get("inputTape")
+            if isinstance(tape, list) and isinstance(frames, int) and len(tape) > frames:
+                errs.append(f"gate10: {s['id']} graphical.inputTape has {len(tape)} entries but "
+                            f"frames={frames} — tape entries beyond `frames` are never simulated "
+                            f"(short tape = trailing empty frames)")
+            locked = s.get("lockedRegions")
+            if locked is not None:
+                covers = any(isinstance(r.get("startLine"), int) and isinstance(r.get("endLine"), int)
+                             and r["startLine"] <= 1 <= r["endLine"] for r in locked)
+                if not covers:
+                    errs.append(f"gate10: {s['id']} lockedRegions does not cover line 1 — the "
+                                f"import/scaffold preamble must be locked (§17.6; the "
+                                f"headless-aware preamble is the grading gate)")
+
 # Gate 3: DAG over induced node graph (producer(req.skill) -> node)
 color = {nid: 0 for nid in nodes}  # 0 white 1 gray 2 black
 def visit(nid, stack):
