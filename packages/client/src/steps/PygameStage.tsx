@@ -11,6 +11,9 @@ export interface PygameStageProps {
   disabled: boolean;
   onChange: (next: string) => void;
   onSubmit: () => void;
+  /** M6 E1 — telemetry-only: called once per Run press (incl. stall Reset). Optional;
+      absent → behavior identical. The submit path is a submission, not a run press. */
+  onRun?: () => void;
   runtime: ClientPygameRuntime;
 }
 
@@ -18,7 +21,7 @@ export interface PygameStageProps {
 // EditorPane + the runtime lifecycle mapped onto the step machine (mount→boot+start,
 // Run→restart, submit→stop THEN grade, unmount→dispose). Grading stays headless in
 // the worker (runner/grade.ts); the Greenhouse §5/§9 semantics are untouched.
-export function PygameStage({ step, code, disabled, onChange, onSubmit, runtime }: PygameStageProps): React.ReactElement {
+export function PygameStage({ step, code, disabled, onChange, onSubmit, onRun, runtime }: PygameStageProps): React.ReactElement {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const codeRef = useRef(code);
   codeRef.current = code;
@@ -57,6 +60,7 @@ export function PygameStage({ step, code, disabled, onChange, onSubmit, runtime 
 
   async function run(): Promise<void> {
     if (disabled) return;
+    onRun?.(); // M6 E1 — telemetry announce only; everything below is unchanged
     setStalled(false);
     setNotice(null);
     const r = await runtime.restart(codeRef.current);

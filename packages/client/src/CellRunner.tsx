@@ -71,6 +71,7 @@ export function CellRunner(props: CellRunnerProps): React.ReactElement {
           }}
           onBuildChange={r.setBuildCode}
           onBuildSubmit={() => void r.submitBuild()}
+          onRun={r.emitRun}
         />
       </div>
 

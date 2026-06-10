@@ -13,6 +13,7 @@ import {
   type HintState,
   type BuildSandbox,
 } from "@trellis/engine";
+import { hashText, DEFAULT_CAPTURE_POLICY } from "@trellis/telemetry";
 import type { EventBus } from "../eventBus.js";
 import type { TrellisDb } from "@trellis/persist";
 import type { PeekBackEntry, StepAnswer } from "../types.js";
@@ -113,6 +114,8 @@ export interface CellRunnerView {
   retry: () => void;
   pullHint: (opts?: { confirmRevealCode: true }) => void;
   openPeekBack: () => void;
+  /** M6 E1 — telemetry-only: announce a Run press ({t:"run"}). No behavior. */
+  emitRun: () => void;
 }
 
 export function useCellRunner(args: UseCellRunnerArgs): CellRunnerView {
@@ -132,6 +135,11 @@ export function useCellRunner(args: UseCellRunnerArgs): CellRunnerView {
   const [state, rawDispatch] = useReducer((s: RunnerState, a: Action) => reducer(s, a, cell), init);
 
   const active = cell.steps[state.activeStepIndex]!;
+
+  // M6 emit sites (E1/E2/E3 — telemetry-only; zero behavior): stable callbacks read the
+  // CURRENT active step id through this ref, mirroring the machineRef pattern below.
+  const activeIdRef = useRef(active.id);
+  activeIdRef.current = active.id;
 
   // ⚑ Hotfix (live-site crash): mirror of the committed machine state, resynced every render.
   // User-triggerable dispatchers must consult/claim THIS (not a closure) so a second event in
@@ -204,7 +212,48 @@ export function useCellRunner(args: UseCellRunnerArgs): CellRunnerView {
     [grade],
   );
   const submitBuild = useCallback(() => grade({ kind: "build", code: state.buildCode }), [grade, state.buildCode]);
-  const setBuildCode = useCallback((code: string) => rawDispatch({ type: "setBuildCode", code }), []);
+  // M6 E2 — debounced {t:"editor_change"} beside the (unchanged) immediate state update.
+  // CapturePolicy.editorDebounceMs collapses a typing burst into one emit; the payload is
+  // length+hash ONLY (§11.2 — raw text never crosses the bus). The stepId is captured at
+  // keystroke time so a pending emit that fires after an advance still names the step the
+  // edit happened on.
+  const editorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const setBuildCode = useCallback(
+    (code: string) => {
+      rawDispatch({ type: "setBuildCode", code });
+      const stepId = activeIdRef.current;
+      if (editorTimer.current !== null) clearTimeout(editorTimer.current);
+      editorTimer.current = setTimeout(() => {
+        editorTimer.current = null;
+        bus.emit({ t: "editor_change", stepId, length: code.length, hash: hashText(code) });
+      }, DEFAULT_CAPTURE_POLICY.editorDebounceMs);
+    },
+    [bus],
+  );
+  // A pending debounce must never emit after unmount.
+  useEffect(
+    () => () => {
+      if (editorTimer.current !== null) clearTimeout(editorTimer.current);
+    },
+    [],
+  );
+
+  // M6 E3 — window attention: {t:"focus", focused} for the active step. Mount-once
+  // listeners (the ref keeps the stepId current); emit-only, removed on unmount.
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const onFocus = (): void => bus.emit({ t: "focus", stepId: activeIdRef.current, focused: true });
+    const onBlur = (): void => bus.emit({ t: "focus", stepId: activeIdRef.current, focused: false });
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("blur", onBlur);
+    };
+  }, [bus]);
+
+  // M6 E1 — a Run press (PygameStage) is announced, never acted on, here.
+  const emitRun = useCallback(() => bus.emit({ t: "run", stepId: activeIdRef.current }), [bus]);
   // Guarded: "retry" is only legal in FEEDBACK — a double-fire (second lands in ACTIVE)
   // must be a no-op, not a reducer throw.
   const retry = useCallback(() => {
@@ -261,5 +310,6 @@ export function useCellRunner(args: UseCellRunnerArgs): CellRunnerView {
     retry,
     pullHint,
     openPeekBack,
+    emitRun,
   };
 }

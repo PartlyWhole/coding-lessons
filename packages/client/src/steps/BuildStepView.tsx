@@ -9,11 +9,13 @@ export interface BuildStepViewProps {
   disabled: boolean;
   onChange: (next: string) => void;
   onSubmit: () => void;
+  /** M6 E1 — telemetry-only Run-press announce, threaded to PygameStage. */
+  onRun?: () => void;
   /** M6.5 §17.3 — optional injected pygame player. Absent → frozen behavior below. */
   pygameRuntime?: ClientPygameRuntime;
 }
 
-export function BuildStepView({ step, code, disabled, onChange, onSubmit, pygameRuntime }: BuildStepViewProps): React.ReactElement {
+export function BuildStepView({ step, code, disabled, onChange, onSubmit, onRun, pygameRuntime }: BuildStepViewProps): React.ReactElement {
   // The single pygame injection point: a pygame step with an injected runtime renders
   // the stage; every other combination is the existing (frozen) build view.
   if (step.runtime === "pygame" && pygameRuntime != null) {
@@ -24,6 +26,7 @@ export function BuildStepView({ step, code, disabled, onChange, onSubmit, pygame
         disabled={disabled}
         onChange={onChange}
         onSubmit={onSubmit}
+        {...(onRun !== undefined ? { onRun } : {})}
         runtime={pygameRuntime}
       />
     );

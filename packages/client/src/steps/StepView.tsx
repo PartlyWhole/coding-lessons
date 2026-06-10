@@ -14,12 +14,14 @@ export interface StepViewProps {
   onSubmit: (answer: StepAnswer) => void;
   onBuildChange: (code: string) => void;
   onBuildSubmit: () => void;
+  /** M6 E1 — telemetry-only Run-press announce, threaded to BuildStepView only. */
+  onRun?: () => void;
   /** M6.5 — optional pygame player, threaded to BuildStepView only. */
   pygameRuntime?: ClientPygameRuntime;
 }
 
 export function StepView(props: StepViewProps): React.ReactElement {
-  const { step, disabled, buildCode, onAdvance, onSubmit, onBuildChange, onBuildSubmit, pygameRuntime } = props;
+  const { step, disabled, buildCode, onAdvance, onSubmit, onBuildChange, onBuildSubmit, onRun, pygameRuntime } = props;
   switch (step.kind) {
     case "watch":
       return <WatchStepView step={step} onAdvance={onAdvance} />;
@@ -37,6 +39,7 @@ export function StepView(props: StepViewProps): React.ReactElement {
           disabled={disabled}
           onChange={onBuildChange}
           onSubmit={onBuildSubmit}
+          {...(onRun !== undefined ? { onRun } : {})}
           {...(pygameRuntime !== undefined ? { pygameRuntime } : {})}
         />
       );
