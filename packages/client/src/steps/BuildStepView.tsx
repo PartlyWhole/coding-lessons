@@ -31,7 +31,9 @@ export function BuildStepView({ step, code, disabled, onChange, onSubmit, pygame
   return (
     <section aria-label="build step">
       <div className="prompt">{step.prompt}</div>
-      <EditorPane value={code} onChange={onChange} {...(step.lockedRegions ? { lockedRegions: step.lockedRegions } : {})} readOnly={disabled} />
+      {/* The editor is always typeable (no readOnly — see EditorPane); submission legality
+          lives in the button guard + step machine, mirroring PygameStage. */}
+      <EditorPane value={code} onChange={onChange} {...(step.lockedRegions ? { lockedRegions: step.lockedRegions } : {})} />
       {/* Guard mirrors PredictStepView: no submit may fire while disabled (synthetic events). */}
       <button type="button" disabled={disabled} onClick={() => !disabled && onSubmit()}>
         Run &amp; check

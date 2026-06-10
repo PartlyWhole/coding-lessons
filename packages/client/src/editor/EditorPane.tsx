@@ -11,13 +11,19 @@ export interface EditorPaneProps {
   value: string;
   onChange: (next: string) => void;
   lockedRegions?: LineRange[];
-  readOnly?: boolean;
 }
 
 // CodeMirror 6 mounted in a ref. Created once on mount; an external `value` change is
 // reconciled by dispatching a doc-replacing transaction. The updateListener reports learner
 // edits up via onChange. lockedRegions wires the §3.4 pygame seam.
-export function EditorPane({ value, onChange, lockedRegions = [], readOnly = false }: EditorPaneProps): React.ReactElement {
+//
+// Deliberately NO readOnly prop: the editor stays typeable; submission legality lives in the
+// buttons + step machine (§5.1 — retry preserves the buffer, resubmit cancels in-flight).
+// A mount-frozen readOnly prop once baked the FIRST step's transient PENDING `disabled` into
+// the editor permanently (auto-enter to ACTIVE is a post-mount effect in useCellRunner); see
+// the cellRunner regression test. If a read-only editor is ever genuinely needed, add the
+// prop back reconciled via a CM Compartment, not baked at mount.
+export function EditorPane({ value, onChange, lockedRegions = [] }: EditorPaneProps): React.ReactElement {
   const host = useRef<HTMLDivElement | null>(null);
   const view = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
@@ -34,8 +40,6 @@ export function EditorPane({ value, onChange, lockedRegions = [], readOnly = fal
         keymap.of([...defaultKeymap, ...historyKeymap]),
         python(),
         lockedRegionsExtension(lockedRegions),
-        EditorView.editable.of(!readOnly),
-        EditorState.readOnly.of(readOnly),
         EditorView.updateListener.of((u) => {
           if (u.docChanged) onChangeRef.current(u.state.doc.toString());
         }),
@@ -47,7 +51,7 @@ export function EditorPane({ value, onChange, lockedRegions = [], readOnly = fal
       v.destroy();
       view.current = null;
     };
-    // Mount-once: lockedRegions/readOnly are fixed per step (the step remounts under a new key, §5.2).
+    // Mount-once: lockedRegions are fixed per step (the step remounts under a new key, §5.2).
   }, []);
 
   // Reconcile an external value change without losing focus.

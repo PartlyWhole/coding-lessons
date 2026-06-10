@@ -11,10 +11,10 @@ describe("EditorPane (CodeMirror)", () => {
     expect(content!.textContent).toContain("hello = 1");
   });
 
-  it("renders read-only when readOnly is set (cm-content not editable)", () => {
-    const { container } = render(<EditorPane value={"y"} onChange={() => {}} readOnly />);
+  it("is always editable — there is no readOnly prop; legality lives in the buttons + step machine", () => {
+    const { container } = render(<EditorPane value={"y"} onChange={() => {}} />);
     const content = container.querySelector(".cm-content");
-    expect(content!.getAttribute("contenteditable")).toBe("false");
+    expect(content!.getAttribute("contenteditable")).toBe("true");
   });
 
   it("marks locked lines with cm-lockedLine and their gutter with cm-lockedGutter (styling contract)", () => {

@@ -78,6 +78,32 @@ describe("CellRunner (§5.2 keyed step replacement)", () => {
     expect(chip!.textContent).toBe("m");
   });
 
+  // Regression (M6.5 Task 14 finding): the FIRST step of a cell mounts during PENDING —
+  // the auto-enter to ACTIVE happens in a post-mount effect. EditorPane must not bake that
+  // transient disabled state into the editor, or a first-step build editor is permanently
+  // read-only (contenteditable=false) even though the buttons recover.
+  it("a cell whose FIRST step is a build step has a typeable editor once ACTIVE", async () => {
+    n = 0;
+    const cell: Cell = {
+      id: "c2", nodeId: "n1", title: "BuildFirst", certifies: ["skill.x"],
+      steps: [
+        { id: "b", kind: "build", prompt: "write it", skills: ["skill.x"], language: "python",
+          starterCode: "x = 1", evaluator: {} } as unknown as Cell["steps"][number],
+      ],
+    };
+    const { bundle } = fixture();
+    const { container } = render(
+      <CellRunner cell={cell} bundle={bundle} sandbox={noSandbox} bus={createEventBus()} effects={fx} />,
+    );
+    // ACTIVE reached: the submit button (which reads `disabled` live) is enabled.
+    await waitFor(() => {
+      expect((screen.getByRole("button", { name: /run & check/i }) as HTMLButtonElement).disabled).toBe(false);
+    });
+    const content = container.querySelector(".cm-content");
+    expect(content).toBeTruthy();
+    expect(content!.getAttribute("contenteditable")).toBe("true");
+  });
+
   it("shows attribution feedback + the hint ladder after a wrong answer", async () => {
     n = 0;
     const { bundle, cell } = fixture();
