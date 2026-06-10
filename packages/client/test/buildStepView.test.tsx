@@ -26,3 +26,56 @@ describe("BuildStepView", () => {
     expect(onSubmit).toHaveBeenCalledOnce();
   });
 });
+
+// M6.5 — pygame routing (the single injection point). Absent runtime → frozen behavior.
+describe("BuildStepView pygame routing", () => {
+  const pgStep: BuildStep = {
+    ...step,
+    id: "b.pg",
+    runtime: "pygame",
+  };
+  const fakeRuntime = {
+    boot: async () => {},
+    start: async () => ({ ok: true }),
+    restart: async () => ({ ok: true }),
+    stop: () => {},
+    dispose: () => {},
+    setOnStall: () => {},
+  };
+
+  it("routes runtime:'pygame' + injected runtime to PygameStage (canvas present)", () => {
+    const { container } = render(
+      <BuildStepView
+        step={pgStep}
+        code={pgStep.starterCode}
+        disabled={false}
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+        pygameRuntime={fakeRuntime}
+      />,
+    );
+    expect(container.querySelector("canvas#canvas")).toBeTruthy();
+  });
+
+  it("renders the standard build view when no runtime is injected (frozen default)", () => {
+    const { container } = render(
+      <BuildStepView step={pgStep} code={pgStep.starterCode} disabled={false} onChange={vi.fn()} onSubmit={vi.fn()} />,
+    );
+    expect(container.querySelector("canvas")).toBeNull();
+    expect(container.querySelector(".cm-content")).toBeTruthy();
+  });
+
+  it("renders the standard build view for non-pygame steps even WITH a runtime injected", () => {
+    const { container } = render(
+      <BuildStepView
+        step={step}
+        code={step.starterCode}
+        disabled={false}
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+        pygameRuntime={fakeRuntime}
+      />,
+    );
+    expect(container.querySelector("canvas")).toBeNull();
+  });
+});

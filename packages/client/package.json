@@ -25,6 +25,7 @@
     "@lezer/highlight": "^1.2.0",
     "@trellis/engine": "workspace:*",
     "@trellis/persist": "workspace:*",
+    "@trellis/runtime": "workspace:*",
     "@trellis/sandbox": "workspace:*",
     "@trellis/schema": "workspace:*",
     "react": "^19.0.0",

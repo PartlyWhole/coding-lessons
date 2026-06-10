@@ -2,6 +2,7 @@ import type { Bundle, Cell } from "@trellis/schema";
 import type { BuildSandbox } from "@trellis/engine";
 import type { TrellisDb } from "@trellis/persist";
 import type { EventBus } from "./eventBus.js";
+import type { ClientPygameRuntime } from "./types.js";
 import type { RunnerEffects } from "./runner/grade.js";
 import { useCellRunner } from "./runner/useCellRunner.js";
 import { StepView } from "./steps/StepView.js";
@@ -16,6 +17,8 @@ export interface CellRunnerProps {
   bus: EventBus;
   effects: RunnerEffects;
   db?: TrellisDb;
+  /** M6.5 — optional pygame player; absent → behavior identical to today. */
+  pygameRuntime?: ClientPygameRuntime;
 }
 
 export function CellRunner(props: CellRunnerProps): React.ReactElement {
@@ -58,6 +61,7 @@ export function CellRunner(props: CellRunnerProps): React.ReactElement {
       {/* §5.2 — keyed by StepId: advancing remounts a fresh step component. */}
       <div key={r.step.id} className="active-step">
         <StepView
+          {...(props.pygameRuntime !== undefined ? { pygameRuntime: props.pygameRuntime } : {})}
           step={r.step}
           disabled={disabled}
           buildCode={r.buildCode}

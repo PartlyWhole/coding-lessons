@@ -4,6 +4,7 @@ import type { BuildSandbox } from "@trellis/engine";
 import { openTrellisDb, nativeDriver, type IdbDriver, type TrellisDb } from "@trellis/persist";
 import { createEventBus } from "../eventBus.js";
 import { CellRunner } from "../CellRunner.js";
+import type { ClientPygameRuntime } from "../types.js";
 import { loadCellContent } from "./loadContent.js";
 
 export interface TrellisAppProps {
@@ -18,11 +19,13 @@ export interface TrellisAppProps {
   driver?: IdbDriver;
   /** Test seam; production default is globalThis.fetch (via loadBundle). */
   fetchImpl?: typeof fetch;
+  /** M6.5 — optional pygame player (lazy main-thread Pyodide); absent → unchanged. */
+  pygameRuntime?: ClientPygameRuntime;
 }
 
 const bus = createEventBus(); // single stubbed bus for the app (M6 attaches a subscriber here)
 
-export function TrellisApp({ bundleUrl, contentVersion, cellId, sandbox, warmup, driver, fetchImpl }: TrellisAppProps): React.ReactElement {
+export function TrellisApp({ bundleUrl, contentVersion, cellId, sandbox, warmup, driver, fetchImpl, pygameRuntime }: TrellisAppProps): React.ReactElement {
   const [ready, setReady] = useState<{ bundle: Bundle; cell: Cell; db: TrellisDb } | null>(null);
   const [warm, setWarm] = useState<boolean>(warmup === undefined);
   const [err, setErr] = useState<string | null>(null);
@@ -89,6 +92,7 @@ export function TrellisApp({ bundleUrl, contentVersion, cellId, sandbox, warmup,
   }
   return (
     <CellRunner
+      {...(pygameRuntime !== undefined ? { pygameRuntime } : {})}
       cell={ready.cell}
       bundle={ready.bundle}
       sandbox={sandbox}
