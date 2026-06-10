@@ -3,3 +3,5 @@ export type { UiEvent, EventBus } from "./bus.js";
 export { createEventBus } from "./bus.js";
 export type { Timer, Clock, Ids, ListenerTarget, TelemetryPersist } from "./ports.js";
 export { realClock, realIds } from "./ports.js";
+export type { CapturePolicy } from "./policy.js";
+export { DEFAULT_CAPTURE_POLICY, hashText } from "./policy.js";
