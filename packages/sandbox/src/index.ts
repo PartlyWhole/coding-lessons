@@ -15,3 +15,12 @@ export { parseAndMatch } from "./parse-and-match.js";
 export type { RunFn } from "./parse-and-match.js";
 export { AST_QUERY_INTERPRETER, buildMatchProgram, MATCH_SENTINEL } from "./ast-query.js";
 export { RUN_HARNESS } from "./run-harness.js";
+// M6.5 §17.5 — the graphical (pygame) headless-grading path.
+export {
+  composeHeadlessSource,
+  composeReferenceSource,
+  APPENDIX_MARKER,
+  HEADLESS_PREFIX,
+} from "./graphical/compose.js";
+export { wrapGraphicalSandbox } from "./graphical/wrap-sandbox.js";
+export type { BuildSandboxShape } from "./graphical/wrap-sandbox.js";
