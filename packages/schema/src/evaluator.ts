@@ -117,6 +117,35 @@ export const PropertyConfig = Type.Object({
 });
 export type PropertyConfig = Static<typeof PropertyConfig>;
 
+// §17.4 — graphical build steps (BuildStep.runtime === "pygame"). The harness imports the
+// learner module under SDL_VIDEODRIVER=dummy and drives `update` frame-by-frame with a
+// fixed dt over a scripted input tape; the resulting probe trajectory feeds the normal
+// Run→Test→AST→Property ladder. Additive: meaningful only on pygame steps (content lint
+// enforces the pairing; the schema does not).
+export const ScriptedFrame = Type.Object({
+  keysDown: Type.Optional(Type.Array(Type.String())), // pygame key names, e.g. "K_LEFT"
+  mouse: Type.Optional(
+    Type.Object({
+      x: Type.Number(),
+      y: Type.Number(),
+      buttons: Type.Integer({ minimum: 0 }),
+    }),
+  ),
+});
+export type ScriptedFrame = Static<typeof ScriptedFrame>;
+
+export const GraphicalConfig = Type.Object({
+  entrypoints: Type.Object({
+    init: Type.Optional(Type.String()),  // e.g. "make_state" → returns the game state
+    update: Type.String(),               // update(state, events, dt) -> state (pure step fn)
+    probe: Type.Optional(Type.String()), // probe(state) -> JSON-able scalars
+  }),
+  inputTape: Type.Array(ScriptedFrame), // one entry per simulated frame; short tape = trailing empty frames
+  dt: Type.Number({ exclusiveMinimum: 0 }), // fixed seconds-per-frame (e.g. 1/60)
+  frames: Type.Integer({ minimum: 1 }),     // §17.7: authors keep ≤ ~600 (lint, not schema)
+});
+export type GraphicalConfig = Static<typeof GraphicalConfig>;
+
 export const EvaluatorConfig = Type.Object({
   run: RunConfig,
   tests: Type.Optional(TestConfig),
@@ -125,5 +154,6 @@ export const EvaluatorConfig = Type.Object({
   acceptedVariants: Type.Optional(
     Type.Array(Type.Object({ astQuery: AstQuery })),
   ),
+  graphical: Type.Optional(GraphicalConfig), // §17.4
 });
 export type EvaluatorConfig = Static<typeof EvaluatorConfig>;

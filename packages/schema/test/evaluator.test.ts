@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { validate } from "../src/validate.js";
-import { EvaluatorConfig, AstQuery, GenSpec } from "../src/evaluator.js";
+import { EvaluatorConfig, AstQuery, GenSpec, GraphicalConfig } from "../src/evaluator.js";
 
 describe("AstQuery", () => {
   it("accepts a nested structural query (the §13.1 implicit_coerce example)", () => {
@@ -88,5 +88,52 @@ describe("EvaluatorConfig", () => {
   it("rejects a config missing the required run block", () => {
     const result = validate(EvaluatorConfig, { tests: { cases: [] } });
     expect(result.ok).toBe(false);
+  });
+});
+
+describe("GraphicalConfig (§17.4)", () => {
+  const minimal = {
+    entrypoints: { update: "update" },
+    inputTape: [{}, { keysDown: ["K_LEFT"] }, { mouse: { x: 10, y: 20, buttons: 1 } }],
+    dt: 1 / 60,
+    frames: 120,
+  };
+
+  it("accepts the minimal block (update only; empty + keys + mouse frames)", () => {
+    expect(validate(GraphicalConfig, minimal).ok).toBe(true);
+  });
+
+  it("accepts full entrypoints {init, update, probe} and an empty tape", () => {
+    const g = { ...minimal, entrypoints: { init: "make_state", update: "update", probe: "probe" }, inputTape: [] };
+    expect(validate(GraphicalConfig, g).ok).toBe(true);
+  });
+
+  it("rejects a block without entrypoints.update (the one mandatory entrypoint)", () => {
+    const g = { ...minimal, entrypoints: { init: "make_state" } };
+    expect(validate(GraphicalConfig, g).ok).toBe(false);
+  });
+
+  it("rejects dt: 0 — the fixed timestep must be strictly positive", () => {
+    expect(validate(GraphicalConfig, { ...minimal, dt: 0 }).ok).toBe(false);
+  });
+
+  it("rejects frames: 0 and non-integer frames", () => {
+    expect(validate(GraphicalConfig, { ...minimal, frames: 0 }).ok).toBe(false);
+    expect(validate(GraphicalConfig, { ...minimal, frames: 1.5 }).ok).toBe(false);
+  });
+
+  it("rejects a mouse frame missing buttons (closed mouse shape)", () => {
+    const g = { ...minimal, inputTape: [{ mouse: { x: 1, y: 2 } }] };
+    expect(validate(GraphicalConfig, g).ok).toBe(false);
+  });
+
+  it("EvaluatorConfig accepts an optional graphical block (additive seam)", () => {
+    const cfg = { run: { timeoutMs: 2000, memoryMb: 256, entrypoint: "__trellis_sim" }, graphical: minimal };
+    expect(validate(EvaluatorConfig, cfg).ok).toBe(true);
+  });
+
+  it("EvaluatorConfig without graphical still validates (frozen corpus untouched)", () => {
+    const cfg = { run: { timeoutMs: 2000, memoryMb: 256 } };
+    expect(validate(EvaluatorConfig, cfg).ok).toBe(true);
   });
 });
