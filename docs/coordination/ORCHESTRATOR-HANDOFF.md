@@ -51,8 +51,8 @@ durable decision notes. Cite the principle when you bounce work.
 Every `main` push runs CI (full pnpm gate + Python content gates) AND auto-deploys via
 `.github/workflows/deploy-pages.yml`. **Merging = publishing** — weigh it at every push.
 
-### The platform: **637 tests**, all gates green, pygame-capable, telemetry live
-schema 45 · engine 162 · persist 19 · sandbox 71 · authoring 136 · runtime 23 · telemetry 51 ·
+### The platform: **649 tests** (E-18 landed `c324d52`, 2026-06-10), all gates green, pygame-capable, telemetry live
+schema 45 · engine 162 · persist 19 · sandbox 75 · authoring 144 · runtime 23 · telemetry 51 ·
 client 100 · integration-tests 30. Root turbo scripts work (cycle broken 2026-06-10). The
 canonical verification entrypoint is **`verification/run-all-gates.sh --browser`**
 (exit-code-strict; runs the m6-telemetry 15-check + m65-pygame 9-check + crash-repro 4-check
@@ -175,7 +175,10 @@ will confuse probes).
 - Cross-track: doc lanes per the protocol; capability requests through protocol §6.
 
 ## 2. Work queue (state at handoff — ONE staged integration, nothing else in flight)
-0. **YOUR FIRST §4.1: integrate E-18** — branch `e18-node-vocab` @ `abc970b`, worktree
+0. ✅ **DONE @ `c324d52`** (2026-06-10, the successor's first §4.1 — full runbook walked:
+   rebase `abc970b`→`c324d52`, line-by-line seam re-review, FF-merge, 649-test battery
+   incl. `--browser` green, no-drift, push+CI watched, §6 row 8 flipped LANDED, worktree
+   pruned). ~~integrate E-18~~ — branch `e18-node-vocab` @ `abc970b`, worktree
    `../trellis-e18` (START-HERE inside). Small, LOW-RISK, deliberately left for you as the
    clean-cut choice (predecessor reviewed the diff line-by-line — byte-identical lockstep
    table additions in `content/verify/harness.py` + `packages/sandbox/src/ast-query.ts`,

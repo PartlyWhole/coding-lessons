@@ -1,5 +1,5 @@
 {
-  "url": "http://localhost:8933/verification/m65-pygame.html",
+  "url": "http://localhost:8952/verification/m65-pygame.html",
   "results": [
     {
       "name": "a1-canvas-alive",
@@ -58,10 +58,10 @@
       "name": "c1-headless-grading-playback-stopped",
       "pass": true,
       "evidence": {
-        "preSubmitRate": 57.5,
+        "preSubmitRate": 56.25,
         "tickDuringGrading": [
-          385,
-          385
+          384,
+          384
         ],
         "passClass": "feedback feedback--pass"
       }

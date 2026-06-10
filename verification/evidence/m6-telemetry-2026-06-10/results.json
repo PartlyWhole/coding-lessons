@@ -1,5 +1,5 @@
 {
-  "url": "http://localhost:8936/packages/client/index.html",
+  "url": "http://localhost:8950/packages/client/index.html",
   "pass": true,
   "results": [
     {
@@ -36,12 +36,12 @@
       "pass": true,
       "evidence": {
         "sentinel": {
-          "id": "92d8312d-d3a9-48ed-8e4f-aa47d8312798",
-          "learnerId": "15a9b8ee-6aec-465d-a5e4-3e6f6fbab59f",
-          "sessionId": "5f376e72-d12d-4af6-b9e2-0e5802d093bf",
+          "id": "075048c7-7127-40bb-9187-acfa1e666ae9",
+          "learnerId": "a4df514a-7caf-4acc-9e3d-89131ab69e77",
+          "sessionId": "a13386ea-1de2-4ebb-be32-f8faabe000d3",
           "seq": 0,
           "stepId": "",
-          "ts": "2026-06-10T17:04:05.519Z",
+          "ts": "2026-06-10T17:55:33.882Z",
           "type": "session_start",
           "payload": {}
         }
@@ -86,7 +86,7 @@
       "name": "gap-free seq per session",
       "pass": true,
       "evidence": {
-        "5f376e72-d12d-4af6-b9e2-0e5802d093bf": {
+        "a13386ea-1de2-4ebb-be32-f8faabe000d3": {
           "count": 16,
           "contiguous": true
         }
@@ -96,7 +96,7 @@
       "name": "privacy: no raw editor text in any persisted row",
       "pass": true,
       "evidence": {
-        "scannedChars": 4897
+        "scannedChars": 4898
       }
     },
     {
@@ -111,7 +111,7 @@
           "editLength": 63,
           "editHash": "825b898b",
           "editDistanceProxy": 0,
-          "msSinceLastSubmission": 831
+          "msSinceLastSubmission": 1046
         }
       }
     },
@@ -128,11 +128,11 @@
       "name": "reload started a NEW session (second sessionId, own gap-free seq)",
       "pass": true,
       "evidence": {
-        "5f376e72-d12d-4af6-b9e2-0e5802d093bf": {
+        "a13386ea-1de2-4ebb-be32-f8faabe000d3": {
           "count": 16,
           "contiguous": true
         },
-        "1e2aa71b-1596-4736-99b7-1613c32a510a": {
+        "e5907da3-0d2f-4e0e-bd0d-f010d8cac008": {
           "count": 2,
           "contiguous": true
         }
