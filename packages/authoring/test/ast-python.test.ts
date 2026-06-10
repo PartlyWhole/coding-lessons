@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { parsePython, runCase, runCases } from "../src/ast/python.js";
+import { mkdtempSync, rmSync, readdirSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { parsePython, runCase, runCases, DEFAULT_CACHE_DIR } from "../src/ast/python.js";
 
 describe("python bridge", () => {
   it("parses code to a JSON AST", () => {
@@ -97,5 +102,53 @@ describe("runCases (batched bridge)", () => {
 
   it("empty batch is a no-op (no spawn)", () => {
     expect(runCases([])).toEqual([]);
+  });
+});
+
+describe("runCases disk cache", () => {
+  const specs = [
+    { code: "def sol(a):\n    return a * 3", mode: "entrypoint" as const, entry: "sol", args: [7], expected: 21 },
+    { code: "1/0", mode: "bare" as const },
+  ];
+  it("cold run == warm run == re-cold run (pure memo)", () => {
+    const dir = mkdtempSync(join(tmpdir(), "trellis-cache-"));
+    const cold = runCases(specs, { cacheDir: dir });
+    const warm = runCases(specs, { cacheDir: dir });
+    rmSync(dir, { recursive: true, force: true });
+    const dir2 = mkdtempSync(join(tmpdir(), "trellis-cache-"));
+    const recold = runCases(specs, { cacheDir: dir2 });
+    rmSync(dir2, { recursive: true, force: true });
+    expect(warm).toEqual(cold);
+    expect(recold).toEqual(cold);
+  });
+  it("warm hits skip python entirely (fully-cached batches spawn nothing)", () => {
+    const dir = mkdtempSync(join(tmpdir(), "trellis-cache-"));
+    try {
+      runCases(specs, { cacheDir: dir });
+      const t0 = Date.now();
+      for (let i = 0; i < 10; i++) runCases(specs, { cacheDir: dir });
+      // 10 fully-cached batches: no spawns (a single spawn alone costs ~25-50ms).
+      expect(Date.now() - t0).toBeLessThan(100);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+  it("default cache dir resolves under the repo root's node_modules/.cache", () => {
+    const norm = DEFAULT_CACHE_DIR.split("\\").join("/");
+    expect(norm.endsWith("node_modules/.cache/trellis-gate-exec")).toBe(true);
+    const repoRoot = resolve(DEFAULT_CACHE_DIR, "../../..");
+    expect(existsSync(resolve(repoRoot, "pnpm-workspace.yaml"))).toBe(true);
+  });
+  it("TRELLIS_GATE_CACHE=0 bypasses read AND write", () => {
+    const dir = mkdtempSync(join(tmpdir(), "trellis-cache-"));
+    process.env["TRELLIS_GATE_CACHE"] = "0";
+    try {
+      runCases(specs, { cacheDir: dir });
+      // bypass leaves the cache dir empty
+      expect(readdirSync(dir)).toEqual([]);
+    } finally {
+      delete process.env["TRELLIS_GATE_CACHE"];
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

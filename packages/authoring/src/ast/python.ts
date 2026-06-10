@@ -1,7 +1,8 @@
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { existsSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import type { JsonNode } from "./json-ast.js";
 
 // Locate packages/authoring/py from this module. Under Vitest the module is
@@ -139,8 +140,8 @@ results = json.dumps([_run_one(s) for s in specs]).encode("utf-8")
 _proto_out.write(results)
 `;
 
-/** Run MANY build test cases in ONE python3 invocation (gate 5/6 batching). */
-export function runCases(specs: CaseSpec[]): CaseResult[] {
+/** Execute a batch of specs (no cache): ONE python3 spawn for N cases. */
+function execBatch(specs: CaseSpec[]): CaseResult[] {
   if (specs.length === 0) return [];
   const budgetMs = 30000 + specs.reduce((a, s) => a + (s.timeoutSec ?? 5), 0) * 1000;
   const r = spawnSync("python3", ["-c", BATCH_DRIVER], {
@@ -152,6 +153,68 @@ export function runCases(specs: CaseSpec[]): CaseResult[] {
   if (r.error) throw new Error(`python3 batch not runnable: ${r.error.message}`);
   if (r.status !== 0) throw new Error(`python3 batch failed (${r.status}): ${r.stderr}`);
   return JSON.parse(r.stdout) as CaseResult[];
+}
+
+// --- Disk cache for case results (pure memo; speedup plan Task 5). ---------------
+// Key = sha256(canonicalJson({v, py: `python3 -V`, driver: sha256(BATCH_DRIVER), spec})):
+// any driver edit or interpreter change reissues every key — invalidation is structural,
+// never manual. A result is only pure if the case is deterministic; seeded/property
+// fixtures are, and an unseeded-entropy fixture was never deterministic to begin with —
+// the cache freezes one observation, and the cold-run identity test plus the gate-5
+// differential (harness.py runs UNCACHED) bound the risk. Kill switch:
+// TRELLIS_GATE_CACHE=0 bypasses read AND write.
+let pyVersion: string | null = null;
+function pythonVersion(): string {
+  if (pyVersion === null) {
+    const r = spawnSync("python3", ["-V"], { encoding: "utf8" });
+    pyVersion = (r.stdout + r.stderr).trim();
+  }
+  return pyVersion;
+}
+const DRIVER_HASH = createHash("sha256").update(BATCH_DRIVER).digest("hex");
+function canonicalJson(o: unknown): string {
+  return JSON.stringify(o, (_k, v: unknown) =>
+    v && typeof v === "object" && !Array.isArray(v)
+      ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, (v as Record<string, unknown>)[k]]))
+      : v,
+  );
+}
+function cacheKey(spec: CaseSpec): string {
+  return createHash("sha256")
+    .update(canonicalJson({ v: 1, py: pythonVersion(), driver: DRIVER_HASH, spec }))
+    .digest("hex");
+}
+// PY_DIR = packages/authoring/py -> repo root is 3 up; node_modules/ is git-ignored, so
+// the cache needs no .gitignore entry. Exported for the path-resolution unit test.
+export const DEFAULT_CACHE_DIR = join(PY_DIR, "../../..", "node_modules/.cache/trellis-gate-exec");
+
+/** Run MANY build test cases in ONE python3 invocation (gate 5/6 batching), memoized
+ * on disk per case. A cold run reproduces identical results by construction (the cache
+ * stores exactly what execBatch returned for the same key). */
+export function runCases(specs: CaseSpec[], opts: { cacheDir?: string } = {}): CaseResult[] {
+  if (specs.length === 0) return [];
+  const enabled = process.env["TRELLIS_GATE_CACHE"] !== "0";
+  const dir = opts.cacheDir ?? DEFAULT_CACHE_DIR;
+  const out: (CaseResult | undefined)[] = new Array<CaseResult | undefined>(specs.length);
+  const missIdx: number[] = [];
+  if (enabled) {
+    for (let i = 0; i < specs.length; i++) {
+      const f = join(dir, cacheKey(specs[i]!) + ".json");
+      if (existsSync(f)) out[i] = JSON.parse(readFileSync(f, "utf8")) as CaseResult;
+      else missIdx.push(i);
+    }
+  } else {
+    for (let i = 0; i < specs.length; i++) missIdx.push(i);
+  }
+  if (missIdx.length > 0) {
+    const fresh = execBatch(missIdx.map((i) => specs[i]!));
+    if (enabled) mkdirSync(dir, { recursive: true });
+    missIdx.forEach((i, j) => {
+      out[i] = fresh[j]!;
+      if (enabled) writeFileSync(join(dir, cacheKey(specs[i]!) + ".json"), JSON.stringify(fresh[j]!));
+    });
+  }
+  return out as CaseResult[];
 }
 
 /** Run one build test case. Now delegates to the batch driver (one code path);
