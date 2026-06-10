@@ -7,7 +7,7 @@ import {
   APPENDIX_MARKER,
   HEADLESS_PREFIX,
 } from "../../src/graphical/compose.js";
-import type { GraphicalConfig } from "../../src/graphical/types.js";
+import type { GraphicalConfig } from "@trellis/schema";
 
 const noPygame = spawnSync("python3", ["-c", "import pygame"], { encoding: "utf8" }).status !== 0;
 

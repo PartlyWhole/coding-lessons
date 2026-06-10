@@ -1,4 +1,4 @@
-import type { GraphicalConfig } from "./types.js";
+import type { GraphicalConfig } from "@trellis/schema";
 
 // D3 — everything from this marker down is harness, NEVER learner source. The
 // graphical decorator strips from here before parseAndMatch so AST tags are computed
