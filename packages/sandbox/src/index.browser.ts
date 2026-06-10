@@ -23,3 +23,4 @@ export {
 } from "./graphical/compose.js";
 export { wrapGraphicalSandbox } from "./graphical/wrap-sandbox.js";
 export type { BuildSandboxShape } from "./graphical/wrap-sandbox.js";
+export { toHeadlessStep, composeSubmission } from "./graphical/transform-step.js";
