@@ -36,6 +36,9 @@ importers:
         specifier: ^2.8.3
         version: 2.8.3
     devDependencies:
+      '@trellis/sandbox':
+        specifier: workspace:*
+        version: link:../sandbox
       '@types/js-yaml':
         specifier: ^4.0.0
         version: 4.0.9

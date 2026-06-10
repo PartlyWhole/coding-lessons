@@ -127,4 +127,44 @@ describe("createLocalSandbox.parseAndMatch", () => {
     expect(await sb.parseAndMatch(yielding, q)).not.toContain("awaitless_loop");
     expect(await sb.parseAndMatch(hot, q)).toContain("awaitless_loop");
   });
+
+  // §6.3 E-14 — `Subscript` + `List` as queryable node types (additive NODE_TYPES
+  // entries, lockstep with content/verify/harness.py NODE_TYPES). Field selectors must
+  // work on the real `ast` fields: Subscript.value / Subscript.slice, List.elts.
+  it("matches Subscript with field-scoped value/slice (E-14)", async () => {
+    const q = [
+      {
+        tag: "index_is_one",
+        query: {
+          node: "Subscript",
+          field: {
+            value: { node: "Name", where: { attr: "id", eq: "answers" } },
+            slice: { node: "Constant", where: { attr: "value", eq: 1 } },
+          },
+        },
+      },
+    ] as unknown as Parameters<typeof sb.parseAndMatch>[1];
+    expect(await sb.parseAndMatch("print(answers[1])", q)).toContain("index_is_one");
+    expect(await sb.parseAndMatch("print(answers[0])", q)).not.toContain("index_is_one");
+    expect(await sb.parseAndMatch("print(other[1])", q)).not.toContain("index_is_one");
+  });
+
+  it("matches List with field-scoped elts (E-14)", async () => {
+    const q = [
+      {
+        tag: "list_with_certain",
+        query: {
+          node: "List",
+          field: { elts: { node: "Constant", where: { attr: "value", eq: "It is certain." } } },
+        },
+      },
+    ] as unknown as Parameters<typeof sb.parseAndMatch>[1];
+    expect(await sb.parseAndMatch('answers = ["It is certain.", "Very doubtful."]', q)).toContain(
+      "list_with_certain",
+    );
+    expect(await sb.parseAndMatch("answers = [1, 2]", q)).not.toContain("list_with_certain");
+    expect(await sb.parseAndMatch('answers = ("It is certain.",)', q)).not.toContain(
+      "list_with_certain",
+    );
+  });
 });

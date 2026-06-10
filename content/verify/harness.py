@@ -95,6 +95,10 @@ NODE_TYPES = {  # §6.3 node-type strings -> ast classes used in this bundle
     "While": ast.While, "If": ast.If, "Return": ast.Return, "Constant": ast.Constant,
     "Name": ast.Name, "Assign": ast.Assign, "Expr": ast.Expr, "Break": ast.Break,
     "Import": ast.Import, "ImportFrom": ast.ImportFrom, "Attribute": ast.Attribute,
+    # E-14 additive (lockstep with packages/sandbox/src/ast-query.ts): list indexing and
+    # list literals; field selectors apply to the real ast fields (Subscript.value /
+    # Subscript.slice — py3.9+ plain-expr slice — and List.elts).
+    "Subscript": ast.Subscript, "List": ast.List,
 }
 
 def node_matches(query, node, parmap):

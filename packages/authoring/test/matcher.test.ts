@@ -56,6 +56,35 @@ describe("AstQuery interpreter (§6.3)", () => {
     expect(q("if a: pass", { node: "If", count: { op: ">=", n: 2 } })).toBe(false);
   });
 
+  // §6.3 E-14 — Subscript + List. The authoring matcher carries NO node-type table
+  // (it compares the query's `node` string against the real CPython `_type` directly),
+  // so these prove the per-item lockstep on the authoring side: the same shapes the
+  // harness/sandbox NODE_TYPES additions enable must match here identically.
+  it("E-14: Subscript with field-scoped value/slice", () => {
+    const query = {
+      node: "Subscript",
+      field: {
+        value: { node: "Name", where: { attr: "id", eq: "answers" } },
+        slice: { node: "Constant", where: { attr: "value", eq: 1 } },
+      },
+    };
+    expect(q("print(answers[1])", query)).toBe(true);
+    expect(q("print(answers[0])", query)).toBe(false);
+    expect(q("print(other[1])", query)).toBe(false);
+  });
+
+  it("E-14: List with field-scoped elts (+ count over Subscript)", () => {
+    const listQuery = {
+      node: "List",
+      field: { elts: { node: "Constant", where: { attr: "value", eq: "It is certain." } } },
+    };
+    expect(q('answers = ["It is certain.", "Very doubtful."]', listQuery)).toBe(true);
+    expect(q("answers = [1, 2]", listQuery)).toBe(false);
+    expect(q('answers = ("It is certain.",)', listQuery)).toBe(false);
+    expect(q("a[0]\nb[1]", { node: "Subscript", count: { op: ">=", n: 2 } })).toBe(true);
+    expect(q("a[0]", { node: "Subscript", count: { op: ">=", n: 2 } })).toBe(false);
+  });
+
   it("evalTags returns matched tag names; null on syntax error", () => {
     const queries = [{ tag: "has_print", query: { node: "Call", where: { calls: "print" } } }];
     expect([...evalTags("print('x')", queries)!]).toEqual(["has_print"]);
