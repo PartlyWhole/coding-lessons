@@ -43,6 +43,33 @@ describe("createPygameRuntime lifecycle (§17.3)", () => {
     expect(fake.sources).toEqual(["SRC1", "SRC2"]);
   });
 
+  it("every start/restart runs the source in a FRESH globals namespace — §17.3 stacked-loop fix: a restart's preamble re-binding GEN must not alias the OLD loop's GEN and re-validate its while-condition", async () => {
+    const fake = makeFakePyodide();
+    const { loader } = makeLoader(fake);
+    const rt = createPygameRuntime({
+      loadPyodide: loader,
+      parseAndMatch: okPrecheck,
+      genTarget: {},
+      watchdog: { raf: () => 0, caf: () => {} },
+    });
+    await rt.boot(canvasEl);
+    await rt.start("SRC1");
+    await rt.restart("SRC2");
+    // Each run got an isolated, freshly-minted globals dict (shared module globals are
+    // exactly the race: kill-on-restart then depends on the old loop polling gameGen
+    // inside the ~20ms bump→exec window — measured flaky at main, 2/6 restarts stacked).
+    expect(fake.runGlobals).toHaveLength(2);
+    expect(fake.runGlobals[0]).toBeDefined();
+    expect(fake.runGlobals[1]).toBeDefined();
+    expect(fake.runGlobals[0]).not.toBe(fake.runGlobals[1]);
+    expect(fake.runGlobals[0]).toBe(fake.minted[0]);
+    expect(fake.runGlobals[1]).toBe(fake.minted[1]);
+    // The retired run's namespace handle is destroyed (a JS-side proxy only — the live
+    // loop holds its own Python reference until it exits on its next frame).
+    expect(fake.minted[0]!.destroyed).toBe(true);
+    expect(fake.minted[1]!.destroyed).toBe(false);
+  });
+
   it("stop() bumps and runs nothing", async () => {
     const fake = makeFakePyodide();
     const { loader } = makeLoader(fake);

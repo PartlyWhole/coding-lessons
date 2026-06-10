@@ -130,6 +130,35 @@ describe("PygameStage (§17.3 lifecycle)", () => {
     expect(submit.disabled).toBe(true);
   });
 
+  it("a prop-identity-only re-render (fresh onRun/onChange/onSubmit closures, as a parent re-render during typing produces) never re-fires the runtime lifecycle — no second start, no dispose (§17.3 mount-once; M6 bounce-review pin)", async () => {
+    const rt = makeFakeRuntime();
+    const { rerender } = render(
+      <PygameStage
+        step={step}
+        code={step.starterCode}
+        disabled={false}
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+        onRun={vi.fn()}
+        runtime={rt}
+      />,
+    );
+    await waitFor(() => expect(rt.ops).toEqual(["boot", `start:${step.starterCode}`]));
+    rerender(
+      <PygameStage
+        step={step}
+        code={step.starterCode + "\n# edited"}
+        disabled={false}
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+        onRun={vi.fn()} // new identity every render — must not defeat mount-once
+        runtime={rt}
+      />,
+    );
+    await act(async () => {});
+    expect(rt.ops).toEqual(["boot", `start:${step.starterCode}`]); // no restart, no dispose
+  });
+
   it("unmount → dispose() (generation bump kills the loop)", async () => {
     const rt = makeFakeRuntime();
     const { unmount } = renderStage(rt);

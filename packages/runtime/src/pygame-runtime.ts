@@ -50,6 +50,10 @@ export function createPygameRuntime(opts: PygameRuntimeOpts): PygameRuntime {
   const onStall = (e: StallEvent): void => onStallHandler(e);
   let py: MainThreadPyodide | null = null;
   let watchdogArmed = false;
+  // §17.3 stacked-loop fix — the JS handle of the CURRENT run's globals dict. Each run
+  // gets a fresh namespace; this handle is destroyed when the next run retires it (the
+  // draining loop keeps its own Python reference, so destroy() is JS-side only).
+  let runGlobals: ReturnType<MainThreadPyodide["toPy"]> | null = null;
 
   function armWatchdog(): void {
     if (watchdogArmed) return;
@@ -99,8 +103,18 @@ export function createPygameRuntime(opts: PygameRuntimeOpts): PygameRuntime {
     const pre = await precheckSource(source, opts.parseAndMatch);
     if (!pre.ok) return { ok: false, refusal: pre.refusal };
     armWatchdog();
+    // Per-run namespace isolation (§17.3). With SHARED module globals, the new source's
+    // preamble line `GEN = int(window.gameGen)` re-binds the very global the OLD loop's
+    // `while int(window.gameGen) == GEN` reads — re-validating the old loop and stacking
+    // it unless it happened to poll inside the ~20ms bump→exec window (a measured race:
+    // 2/6 restarts stacked even pre-M6). A fresh globals dict per run means the old loop
+    // keeps ITS GEN binding forever-unequal to the bumped window.gameGen, so it exits on
+    // its next frame unconditionally — kill-on-restart no longer depends on timing.
+    const g = py.toPy({});
+    runGlobals?.destroy?.();
+    runGlobals = g;
     try {
-      await py.runPythonAsync(source);
+      await py.runPythonAsync(source, { globals: g });
       return { ok: true };
     } catch (e) {
       // The SyntaxError path the precheck deliberately passes through lands here.
@@ -119,6 +133,8 @@ export function createPygameRuntime(opts: PygameRuntimeOpts): PygameRuntime {
     dispose() {
       gen.bump();
       disarmWatchdog();
+      runGlobals?.destroy?.();
+      runGlobals = null;
     },
     setOnStall(fn) {
       onStallHandler = fn;

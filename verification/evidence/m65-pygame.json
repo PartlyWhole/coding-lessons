@@ -1,11 +1,11 @@
 {
-  "url": "http://localhost:8907/verification/m65-pygame.html",
+  "url": "http://localhost:8933/verification/m65-pygame.html",
   "results": [
     {
       "name": "a1-canvas-alive",
       "pass": true,
       "evidence": {
-        "tick": 49,
+        "tick": 50,
         "deltas": [
           true,
           true
@@ -34,8 +34,8 @@
       "evidence": {
         "gen0": 1,
         "gen1": 2,
-        "rateBefore": 56.666666666666664,
-        "rateAfter": 56.666666666666664
+        "rateBefore": 56,
+        "rateAfter": 55.333333333333336
       }
     },
     {
@@ -58,10 +58,10 @@
       "name": "c1-headless-grading-playback-stopped",
       "pass": true,
       "evidence": {
-        "preSubmitRate": 56.25,
+        "preSubmitRate": 57.5,
         "tickDuringGrading": [
-          383,
-          383
+          380,
+          380
         ],
         "passClass": "feedback feedback--pass"
       }

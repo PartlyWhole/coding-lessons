@@ -12917,6 +12917,26 @@ async function loadLearnerModel(db, contentVersion) {
   return { learnerId: db.learnerId, skills, contentVersion };
 }
 
+// packages/persist/src/events.ts
+async function appendEvents(db, events) {
+  if (events.length === 0) return;
+  await db.conn.tx([STORES.behavioralEvent], "readwrite", async (tx) => {
+    for (const e of events) await tx.store(STORES.behavioralEvent).put(e);
+  });
+}
+async function recentEvents(db, query) {
+  const limit = query.limit ?? 50;
+  const rows = await db.conn.tx([STORES.behavioralEvent], "readonly", async (tx) => {
+    const store = tx.store(STORES.behavioralEvent);
+    if (query.stepId !== void 0) {
+      return store.index("by_step_ts").getAll({ lower: [query.stepId], upper: [query.stepId, "\uFFFF"] });
+    }
+    return store.getAll();
+  });
+  rows.sort((a, b) => a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : b.seq - a.seq);
+  return rows.slice(0, limit);
+}
+
 // node_modules/.pnpm/@sinclair+typebox@0.34.49/node_modules/@sinclair/typebox/build/esm/type/guard/value.mjs
 var value_exports = {};
 __export(value_exports, {
@@ -19416,7 +19436,7 @@ async function loadBundle(db, opts) {
   return bundle;
 }
 
-// packages/client/src/eventBus.ts
+// packages/telemetry/src/bus.ts
 function createEventBus() {
   const subs = /* @__PURE__ */ new Set();
   return {
@@ -19434,6 +19454,396 @@ function createEventBus() {
         subs.delete(fn);
       };
     }
+  };
+}
+
+// packages/telemetry/src/ports.ts
+var realClock = {
+  now: () => Date.now(),
+  setTimer: (fn, ms) => setTimeout(fn, ms),
+  clearTimer: (t2) => clearTimeout(t2)
+};
+var realIds = {
+  uuid: () => crypto.randomUUID()
+};
+
+// packages/telemetry/src/policy.ts
+var DEFAULT_CAPTURE_POLICY = {
+  enabled: true,
+  captureEditorText: false,
+  idleThresholdMs: 9e4,
+  editorDebounceMs: 400
+};
+function hashText(text) {
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0).toString(16).padStart(8, "0");
+}
+
+// packages/telemetry/src/derive.ts
+function editDistanceProxy(a, b) {
+  if (a.hash === b.hash) return 0;
+  return Math.abs(a.length - b.length);
+}
+function payloadOf(e) {
+  return typeof e.payload === "object" && e.payload !== null && !Array.isArray(e.payload) ? e.payload : {};
+}
+function wrongPredictThenCorrect(rowsNewestFirst) {
+  const outcomes = rowsNewestFirst.filter((e) => e.type === "submission" || e.type === "run");
+  const [latest, prior] = [outcomes[0], outcomes[1]];
+  if (latest === void 0 || prior === void 0) return false;
+  const latestCorrect = latest.type === "run" || payloadOf(latest)["correct"] === true;
+  if (!latestCorrect) return false;
+  const p = payloadOf(prior);
+  return prior.type === "submission" && p["stepKind"] === "predict" && p["correct"] === false;
+}
+
+// packages/telemetry/src/recorder.ts
+var NO_STEP = "";
+function createRecorder(deps) {
+  const { learnerId, sessionId, clock, ids, emitRow } = deps;
+  let seq = 0;
+  const steps = /* @__PURE__ */ new Map();
+  function track(stepId) {
+    let t2 = steps.get(stepId);
+    if (t2 === void 0) {
+      t2 = { failStreak: 0 };
+      steps.set(stepId, t2);
+    }
+    return t2;
+  }
+  function stamp(type, stepId, payload) {
+    emitRow({
+      id: ids.uuid(),
+      learnerId,
+      sessionId,
+      seq: seq++,
+      stepId,
+      ts: new Date(clock.now()).toISOString(),
+      type,
+      payload
+    });
+  }
+  function submissionPayload(stepId, d) {
+    const t2 = track(stepId);
+    t2.failStreak = d.correct ? 0 : t2.failStreak + 1;
+    const p = {
+      correct: d.correct,
+      attribution: d.attribution,
+      stepKind: t2.kind,
+      failStreak: t2.failStreak
+    };
+    if (d.misconceptionId !== void 0) p["misconceptionId"] = d.misconceptionId;
+    if (t2.lastEdit !== void 0) {
+      p["editLength"] = t2.lastEdit.length;
+      p["editHash"] = t2.lastEdit.hash;
+      if (t2.prevSubmissionEdit !== void 0) {
+        p["editDistanceProxy"] = editDistanceProxy(t2.prevSubmissionEdit, t2.lastEdit);
+      }
+      t2.prevSubmissionEdit = t2.lastEdit;
+    }
+    const now = clock.now();
+    if (t2.lastSubmissionAt !== void 0) p["msSinceLastSubmission"] = now - t2.lastSubmissionAt;
+    t2.lastSubmissionAt = now;
+    return p;
+  }
+  return {
+    onUiEvent(e) {
+      switch (e.t) {
+        case "session_start":
+          return stamp("session_start", NO_STEP, {});
+        case "step_enter": {
+          const t2 = track(e.stepId);
+          t2.kind = e.kind;
+          t2.failStreak = 0;
+          return stamp("step_enter", e.stepId, { kind: e.kind });
+        }
+        case "step_release":
+          return stamp("step_release", e.stepId, {});
+        case "submission":
+          return stamp("submission", e.stepId, submissionPayload(e.stepId, e.diagnosis));
+        case "predict_answer":
+          return;
+        // E4 fold: the concurrent submission row already carries stepKind+correct
+        case "run":
+          return stamp("run", e.stepId, {});
+        case "editor_change": {
+          track(e.stepId).lastEdit = { length: e.length, hash: e.hash };
+          return stamp("editor_change", e.stepId, { length: e.length, hash: e.hash });
+        }
+        case "hint_request":
+          return stamp("hint_requested", e.stepId, { level: e.level });
+        case "peek_back":
+          return stamp("peek_back", e.stepId, {});
+        case "focus":
+          return stamp("focus_change", e.stepId, { focused: e.focused });
+      }
+    },
+    emitInternal(type, stepId, payload) {
+      stamp(type, stepId, payload);
+    }
+  };
+}
+
+// packages/telemetry/src/idle.ts
+function createIdleDetector(deps) {
+  const { clock, thresholdMs, onSignal } = deps;
+  let timer = null;
+  let lastActivityAt = 0;
+  let stepId = "";
+  let idleOpen = false;
+  let disposed = false;
+  function clear() {
+    if (timer !== null) {
+      clock.clearTimer(timer);
+      timer = null;
+    }
+  }
+  return {
+    reset(s) {
+      if (disposed) return;
+      const now = clock.now();
+      if (idleOpen) {
+        onSignal({ kind: "dwell", stepId: s, durationMs: now - lastActivityAt });
+        idleOpen = false;
+      }
+      stepId = s;
+      lastActivityAt = now;
+      clear();
+      timer = clock.setTimer(() => {
+        timer = null;
+        idleOpen = true;
+        onSignal({ kind: "idle", stepId, durationMs: thresholdMs });
+      }, thresholdMs);
+    },
+    dispose() {
+      disposed = true;
+      clear();
+    }
+  };
+}
+
+// packages/telemetry/src/buffer.ts
+function createEventBuffer(deps) {
+  const { clock, target, isHidden, sink } = deps;
+  const maxBatch = deps.maxBatch ?? 20;
+  const flushIntervalMs = deps.flushIntervalMs ?? 5e3;
+  let buf = [];
+  let timer = null;
+  let chain = Promise.resolve();
+  function clearTimer() {
+    if (timer !== null) {
+      clock.clearTimer(timer);
+      timer = null;
+    }
+  }
+  async function drain() {
+    if (buf.length === 0) return;
+    const batch = buf;
+    buf = [];
+    clearTimer();
+    try {
+      await sink(batch);
+    } catch (e) {
+      buf = [...batch, ...buf];
+      console.warn("trellis telemetry: flush failed (db closing or unavailable); rows retained", e);
+    }
+  }
+  function flush() {
+    chain = chain.then(drain);
+    return chain;
+  }
+  const onVisibility = () => {
+    if (isHidden()) void flush();
+  };
+  const onPagehide = () => {
+    void flush();
+  };
+  target.addEventListener("visibilitychange", onVisibility);
+  target.addEventListener("pagehide", onPagehide);
+  return {
+    push(row) {
+      buf.push(row);
+      if (buf.length >= maxBatch) {
+        void flush();
+        return;
+      }
+      if (timer === null) {
+        timer = clock.setTimer(() => {
+          timer = null;
+          void flush();
+        }, flushIntervalMs);
+      }
+    },
+    flush,
+    dispose() {
+      target.removeEventListener("visibilitychange", onVisibility);
+      target.removeEventListener("pagehide", onPagehide);
+      clearTimer();
+    }
+  };
+}
+
+// packages/telemetry/src/attach.ts
+function stepIdOf(e) {
+  return e.t === "session_start" ? "" : e.stepId;
+}
+function attachTelemetry(deps) {
+  const { bus: bus2, persist, clock, ids, policy, learnerId, target, isHidden } = deps;
+  if (!policy.enabled) {
+    return () => void 0;
+  }
+  const sessionId = ids.uuid();
+  const buffer = createEventBuffer({
+    clock,
+    target,
+    isHidden,
+    sink: (rows) => persist.appendEvents(rows)
+  });
+  const recorder = createRecorder({
+    learnerId,
+    sessionId,
+    clock,
+    ids,
+    policy,
+    emitRow: (row) => {
+      buffer.push(row);
+      if (row.type === "submission") void buffer.flush();
+    }
+  });
+  const idle = createIdleDetector({
+    clock,
+    thresholdMs: policy.idleThresholdMs,
+    onSignal: (s) => recorder.emitInternal(s.kind, s.stepId, { durationMs: s.durationMs })
+  });
+  const unsubscribe = bus2.subscribe((e) => {
+    recorder.onUiEvent(e);
+    idle.reset(stepIdOf(e));
+  });
+  return function detach() {
+    unsubscribe();
+    idle.dispose();
+    void buffer.flush();
+    buffer.dispose();
+  };
+}
+
+// packages/telemetry/src/scaffolder.ts
+var DEFAULT_SCAFFOLD_CONFIG = {
+  rapidResubmitWindowMs: 2e4,
+  rapidResubmitMaxDistance: 5,
+  failStreak: 3,
+  idleThresholdMs: 9e4
+};
+function payloadOf2(e) {
+  return typeof e.payload === "object" && e.payload !== null && !Array.isArray(e.payload) ? e.payload : {};
+}
+function ruleWrongPredictThenCorrectRun(rowsNewestFirst) {
+  return wrongPredictThenCorrect(rowsNewestFirst);
+}
+function ruleThreeFailStreak(rowsNewestFirst, stepId, config) {
+  let streak = 0;
+  for (const e of rowsNewestFirst) {
+    if (e.type !== "submission" || e.stepId !== stepId) continue;
+    if (payloadOf2(e)["correct"] === false) {
+      streak++;
+      if (streak >= config.failStreak) return true;
+    } else {
+      break;
+    }
+  }
+  return false;
+}
+function ruleRapidResubmit(rowsNewestFirst, stepId, config) {
+  const subs = rowsNewestFirst.filter((e) => e.type === "submission" && e.stepId === stepId);
+  const [latest, prior] = [subs[0], subs[1]];
+  if (latest === void 0 || prior === void 0) return false;
+  const p = payloadOf2(latest);
+  if (p["correct"] !== false) return false;
+  const proxy = p["editDistanceProxy"];
+  if (typeof proxy !== "number" || proxy >= config.rapidResubmitMaxDistance) return false;
+  const gapMs = Date.parse(latest.ts) - Date.parse(prior.ts);
+  return gapMs >= 0 && gapMs < config.rapidResubmitWindowMs;
+}
+function createProactiveScaffolder(deps) {
+  const { bus: bus2, persist, clock, onAction } = deps;
+  const config = deps.config ?? DEFAULT_SCAFFOLD_CONFIG;
+  const fired = /* @__PURE__ */ new Set();
+  let disposed = false;
+  const baselines = /* @__PURE__ */ new Map();
+  const busSubs = /* @__PURE__ */ new Map();
+  async function countStepSubmissions(stepId) {
+    const rows = await persist.recentEvents({ stepId, limit: 50 });
+    return rows.filter((r) => r.type === "submission").length;
+  }
+  const nextTick = () => new Promise((res) => clock.setTimer(res, 0));
+  function propose(a) {
+    const key = `${a.rule}:${a.stepId}`;
+    if (fired.has(key)) return;
+    fired.add(key);
+    try {
+      onAction(a);
+    } catch {
+    }
+  }
+  async function evaluate2(stepId, expectedStepSubmissions) {
+    for (let attempt = 0; ; attempt++) {
+      const visible = await countStepSubmissions(stepId);
+      if (visible >= Math.min(expectedStepSubmissions, 50) || disposed) break;
+      if (attempt >= 20) return;
+      await nextTick();
+    }
+    if (disposed) return;
+    const rows = await persist.recentEvents({ limit: 50 });
+    if (ruleWrongPredictThenCorrectRun(rows)) {
+      return propose({ rule: "wrong_predict_then_correct_run", stepId, action: "offer_hint", level: 1 });
+    }
+    if (ruleThreeFailStreak(rows, stepId, config)) {
+      return propose({ rule: "three_fail_streak", stepId, action: "advance_hint_one_level" });
+    }
+    if (ruleRapidResubmit(rows, stepId, config)) {
+      return propose({ rule: "rapid_resubmit", stepId, action: "suggest_hint" });
+    }
+  }
+  const idle = createIdleDetector({
+    clock,
+    thresholdMs: config.idleThresholdMs,
+    onSignal: (s) => {
+      if (s.kind === "idle") propose({ rule: "idle", stepId: s.stepId, action: "nudge_peek_or_hint" });
+    }
+  });
+  const unsubscribe = bus2.subscribe((e) => {
+    if (e.t === "session_start") {
+      idle.reset("");
+      return;
+    }
+    idle.reset(e.stepId);
+    if (e.t === "step_enter") {
+      for (const rule of ["wrong_predict_then_correct_run", "three_fail_streak", "rapid_resubmit", "idle"]) {
+        fired.delete(`${rule}:${e.stepId}`);
+      }
+      busSubs.set(e.stepId, 0);
+      baselines.set(e.stepId, countStepSubmissions(e.stepId).catch(() => 0));
+      return;
+    }
+    if (e.t === "submission") {
+      const stepId = e.stepId;
+      const witnessed = (busSubs.get(stepId) ?? 0) + 1;
+      busSubs.set(stepId, witnessed);
+      void (async () => {
+        const base2 = await (baselines.get(stepId) ?? Promise.resolve(0));
+        await evaluate2(stepId, base2 + witnessed);
+      })().catch(() => {
+      });
+    }
+  });
+  return function detach() {
+    disposed = true;
+    unsubscribe();
+    idle.dispose();
   };
 }
 
@@ -26528,7 +26938,7 @@ function canonicalDiagnosis(d) {
 }
 
 // packages/sandbox/src/clock.ts
-var realClock = {
+var realClock2 = {
   now: () => typeof performance !== "undefined" ? performance.now() : Date.now(),
   setTimer: (fn, ms) => setTimeout(fn, ms),
   clearTimer: (t2) => clearTimeout(t2)
@@ -26882,7 +27292,7 @@ async function parseAndMatch(run, code, queries) {
 
 // packages/sandbox/src/sandbox.ts
 function createSandbox(config) {
-  const clock = config.clock ?? realClock;
+  const clock = config.clock ?? realClock2;
   const memoryMb = config.memoryMb ?? 256;
   const pyodideUrl = config.pyodideUrl ?? PINNED_PYODIDE_URL;
   const warmupTimeoutMs = config.warmupTimeoutMs ?? 3e4;
@@ -27176,6 +27586,8 @@ function useCellRunner(args) {
   );
   const [state, rawDispatch] = (0, import_react.useReducer)((s, a) => reducer(s, a, cell), init);
   const active = cell.steps[state.activeStepIndex];
+  const activeIdRef = (0, import_react.useRef)(active.id);
+  activeIdRef.current = active.id;
   const machineRef = (0, import_react.useRef)(state.machine);
   machineRef.current = state.machine;
   const claimTransition = (0, import_react.useCallback)((kind, event) => {
@@ -27187,6 +27599,21 @@ function useCellRunner(args) {
       throw e;
     }
   }, []);
+  const pullHintRef = (0, import_react.useRef)(() => void 0);
+  (0, import_react.useEffect)(() => {
+    if (!db) return void 0;
+    const detach = createProactiveScaffolder({
+      bus: bus2,
+      persist: { appendEvents: (ev) => appendEvents(db, ev), recentEvents: (q) => recentEvents(db, q) },
+      clock: realClock,
+      onAction: (a) => {
+        if (a.action === "advance_hint_one_level" && a.stepId === activeIdRef.current) {
+          pullHintRef.current();
+        }
+      }
+    });
+    return detach;
+  }, [bus2, db]);
   (0, import_react.useEffect)(() => {
     if (!claimTransition(active.kind, { type: "enter" })) return;
     bus2.emit({ t: "session_start" });
@@ -27221,7 +27648,37 @@ function useCellRunner(args) {
     [grade]
   );
   const submitBuild = (0, import_react.useCallback)(() => grade({ kind: "build", code: state.buildCode }), [grade, state.buildCode]);
-  const setBuildCode = (0, import_react.useCallback)((code) => rawDispatch({ type: "setBuildCode", code }), []);
+  const editorTimer = (0, import_react.useRef)(null);
+  const setBuildCode = (0, import_react.useCallback)(
+    (code) => {
+      rawDispatch({ type: "setBuildCode", code });
+      const stepId = activeIdRef.current;
+      if (editorTimer.current !== null) clearTimeout(editorTimer.current);
+      editorTimer.current = setTimeout(() => {
+        editorTimer.current = null;
+        bus2.emit({ t: "editor_change", stepId, length: code.length, hash: hashText(code) });
+      }, DEFAULT_CAPTURE_POLICY.editorDebounceMs);
+    },
+    [bus2]
+  );
+  (0, import_react.useEffect)(
+    () => () => {
+      if (editorTimer.current !== null) clearTimeout(editorTimer.current);
+    },
+    []
+  );
+  (0, import_react.useEffect)(() => {
+    if (typeof window === "undefined") return void 0;
+    const onFocus = () => bus2.emit({ t: "focus", stepId: activeIdRef.current, focused: true });
+    const onBlur = () => bus2.emit({ t: "focus", stepId: activeIdRef.current, focused: false });
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("blur", onBlur);
+    };
+  }, [bus2]);
+  const emitRun = (0, import_react.useCallback)(() => bus2.emit({ t: "run", stepId: activeIdRef.current }), [bus2]);
   const retry = (0, import_react.useCallback)(() => {
     if (!claimTransition(active.kind, { type: "retry" })) return;
     rawDispatch({ type: "retry" });
@@ -27248,6 +27705,7 @@ function useCellRunner(args) {
     },
     [state.hintState, ladder, bus2, active.id]
   );
+  pullHintRef.current = pullHint2;
   const openPeekBack = (0, import_react.useCallback)(() => bus2.emit({ t: "peek_back", stepId: active.id }), [bus2, active.id]);
   return {
     step: active,
@@ -27264,7 +27722,8 @@ function useCellRunner(args) {
     advance,
     retry,
     pullHint: pullHint2,
-    openPeekBack
+    openPeekBack,
+    emitRun
   };
 }
 
@@ -47620,7 +48079,7 @@ var trellisEditor = [
 
 // packages/client/src/editor/EditorPane.tsx
 var import_jsx_runtime6 = __toESM(require_jsx_runtime(), 1);
-function EditorPane({ value, onChange, lockedRegions = [], readOnly: readOnly2 = false }) {
+function EditorPane({ value, onChange, lockedRegions = [] }) {
   const host = (0, import_react5.useRef)(null);
   const view = (0, import_react5.useRef)(null);
   const onChangeRef = (0, import_react5.useRef)(onChange);
@@ -47637,8 +48096,6 @@ function EditorPane({ value, onChange, lockedRegions = [], readOnly: readOnly2 =
         keymap.of([...defaultKeymap, ...historyKeymap]),
         python(),
         lockedRegionsExtension(lockedRegions),
-        EditorView.editable.of(!readOnly2),
-        EditorState.readOnly.of(readOnly2),
         EditorView.updateListener.of((u) => {
           if (u.docChanged) onChangeRef.current(u.state.doc.toString());
         })
@@ -47679,7 +48136,7 @@ function attributionStyle(a) {
 
 // packages/client/src/steps/PygameStage.tsx
 var import_jsx_runtime7 = __toESM(require_jsx_runtime(), 1);
-function PygameStage({ step: step2, code, disabled, onChange, onSubmit, runtime }) {
+function PygameStage({ step: step2, code, disabled, onChange, onSubmit, onRun, runtime }) {
   const canvasRef = (0, import_react6.useRef)(null);
   const codeRef = (0, import_react6.useRef)(code);
   codeRef.current = code;
@@ -47709,6 +48166,7 @@ function PygameStage({ step: step2, code, disabled, onChange, onSubmit, runtime 
   }, []);
   async function run() {
     if (disabled) return;
+    onRun?.();
     setStalled(false);
     setNotice(null);
     const r = await runtime.restart(codeRef.current);
@@ -47730,8 +48188,7 @@ function PygameStage({ step: step2, code, disabled, onChange, onSubmit, runtime 
       {
         value: code,
         onChange,
-        ...step2.lockedRegions ? { lockedRegions: step2.lockedRegions } : {},
-        readOnly: false
+        ...step2.lockedRegions ? { lockedRegions: step2.lockedRegions } : {}
       }
     ),
     notice !== null && /* @__PURE__ */ (0, import_jsx_runtime7.jsxs)("div", { "aria-label": "feedback", className: `feedback feedback--${notice.kind}`, children: [
@@ -47758,7 +48215,7 @@ function PygameStage({ step: step2, code, disabled, onChange, onSubmit, runtime 
 
 // packages/client/src/steps/BuildStepView.tsx
 var import_jsx_runtime8 = __toESM(require_jsx_runtime(), 1);
-function BuildStepView({ step: step2, code, disabled, onChange, onSubmit, pygameRuntime: pygameRuntime2 }) {
+function BuildStepView({ step: step2, code, disabled, onChange, onSubmit, onRun, pygameRuntime: pygameRuntime2 }) {
   if (step2.runtime === "pygame" && pygameRuntime2 != null) {
     return /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(
       PygameStage,
@@ -47768,13 +48225,14 @@ function BuildStepView({ step: step2, code, disabled, onChange, onSubmit, pygame
         disabled,
         onChange,
         onSubmit,
+        ...onRun !== void 0 ? { onRun } : {},
         runtime: pygameRuntime2
       }
     );
   }
   return /* @__PURE__ */ (0, import_jsx_runtime8.jsxs)("section", { "aria-label": "build step", children: [
     /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("div", { className: "prompt", children: step2.prompt }),
-    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(EditorPane, { value: code, onChange, ...step2.lockedRegions ? { lockedRegions: step2.lockedRegions } : {}, readOnly: disabled }),
+    /* @__PURE__ */ (0, import_jsx_runtime8.jsx)(EditorPane, { value: code, onChange, ...step2.lockedRegions ? { lockedRegions: step2.lockedRegions } : {} }),
     /* @__PURE__ */ (0, import_jsx_runtime8.jsx)("button", { type: "button", disabled, onClick: () => !disabled && onSubmit(), children: "Run & check" })
   ] });
 }
@@ -47782,7 +48240,7 @@ function BuildStepView({ step: step2, code, disabled, onChange, onSubmit, pygame
 // packages/client/src/steps/StepView.tsx
 var import_jsx_runtime9 = __toESM(require_jsx_runtime(), 1);
 function StepView(props) {
-  const { step: step2, disabled, buildCode, onAdvance, onSubmit, onBuildChange, onBuildSubmit, pygameRuntime: pygameRuntime2 } = props;
+  const { step: step2, disabled, buildCode, onAdvance, onSubmit, onBuildChange, onBuildSubmit, onRun, pygameRuntime: pygameRuntime2 } = props;
   switch (step2.kind) {
     case "watch":
       return /* @__PURE__ */ (0, import_jsx_runtime9.jsx)(WatchStepView, { step: step2, onAdvance });
@@ -47801,6 +48259,7 @@ function StepView(props) {
           disabled,
           onChange: onBuildChange,
           onSubmit: onBuildSubmit,
+          ...onRun !== void 0 ? { onRun } : {},
           ...pygameRuntime2 !== void 0 ? { pygameRuntime: pygameRuntime2 } : {}
         }
       );
@@ -47917,7 +48376,8 @@ function CellRunner(props) {
           if (answer.kind !== "build") void r.submitNonBuild(answer);
         },
         onBuildChange: r.setBuildCode,
-        onBuildSubmit: () => void r.submitBuild()
+        onBuildSubmit: () => void r.submitBuild(),
+        onRun: r.emitRun
       }
     ) }, r.step.id),
     inFeedback && r.lastDiagnosis && /* @__PURE__ */ (0, import_jsx_runtime13.jsxs)(import_jsx_runtime13.Fragment, { children: [
@@ -47953,15 +48413,31 @@ async function loadCellContent(db, opts) {
 // packages/client/src/app/TrellisApp.tsx
 var import_jsx_runtime14 = __toESM(require_jsx_runtime(), 1);
 var bus = createEventBus();
+var domTarget = {
+  addEventListener: (type, fn) => (type === "visibilitychange" ? document : window).addEventListener(type, fn),
+  removeEventListener: (type, fn) => (type === "visibilitychange" ? document : window).removeEventListener(type, fn)
+};
 function TrellisApp({ bundleUrl, contentVersion, cellId, sandbox: sandbox2, warmup, driver, fetchImpl, pygameRuntime: pygameRuntime2 }) {
   const [ready, setReady] = (0, import_react9.useState)(null);
   const [warm, setWarm] = (0, import_react9.useState)(warmup === void 0);
   const [err, setErr] = (0, import_react9.useState)(null);
   (0, import_react9.useEffect)(() => {
     let db = null;
+    let detachTelemetry = null;
     (async () => {
       try {
         db = await openTrellisDb(driver ?? nativeDriver());
+        const tdb = db;
+        detachTelemetry = attachTelemetry({
+          bus,
+          persist: { appendEvents: (ev) => appendEvents(tdb, ev), recentEvents: (q) => recentEvents(tdb, q) },
+          clock: realClock,
+          ids: realIds,
+          policy: DEFAULT_CAPTURE_POLICY,
+          learnerId: db.learnerId,
+          target: domTarget,
+          isHidden: () => document.visibilityState === "hidden"
+        });
         const { bundle, cell } = await loadCellContent(db, {
           url: bundleUrl,
           contentVersion,
@@ -47979,7 +48455,10 @@ function TrellisApp({ bundleUrl, contentVersion, cellId, sandbox: sandbox2, warm
         () => setWarm(true)
       );
     }
-    return () => db?.close();
+    return () => {
+      detachTelemetry?.();
+      db?.close();
+    };
   }, [bundleUrl, contentVersion, cellId]);
   if (err !== null) {
     return /* @__PURE__ */ (0, import_jsx_runtime14.jsx)("div", { className: "app-state", children: /* @__PURE__ */ (0, import_jsx_runtime14.jsxs)("div", { role: "alert", className: "app-error", children: [
@@ -48094,6 +48573,7 @@ function createPygameRuntime(opts) {
   const onStall = (e) => onStallHandler(e);
   let py = null;
   let watchdogArmed = false;
+  let runGlobals = null;
   function armWatchdog() {
     if (watchdogArmed) return;
     watchdogArmed = true;
@@ -48133,8 +48613,11 @@ function createPygameRuntime(opts) {
     const pre = await precheckSource(source, opts.parseAndMatch);
     if (!pre.ok) return { ok: false, refusal: pre.refusal };
     armWatchdog();
+    const g = py.toPy({});
+    runGlobals?.destroy?.();
+    runGlobals = g;
     try {
-      await py.runPythonAsync(source);
+      await py.runPythonAsync(source, { globals: g });
       return { ok: true };
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : String(e) };
@@ -48151,6 +48634,8 @@ function createPygameRuntime(opts) {
     dispose() {
       gen.bump();
       disarmWatchdog();
+      runGlobals?.destroy?.();
+      runGlobals = null;
     },
     setOnStall(fn) {
       onStallHandler = fn;

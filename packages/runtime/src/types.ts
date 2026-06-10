@@ -1,10 +1,18 @@
 // The narrow main-thread Pyodide surface the runtime drives. Mirrors the worker's
 // PyodideLike narrowing (packages/sandbox/src/pyodide-worker.ts); fakes implement
 // this in tests.
+
+/** The slice of a Pyodide PyProxy (of a dict) the runtime touches. */
+export interface PyDictProxy {
+  destroy?(): void;
+}
+
 export interface MainThreadPyodide {
   canvas?: { setCanvas2D(el: HTMLCanvasElement): void };
   loadPackage(name: string): Promise<void>;
-  runPythonAsync(code: string): Promise<unknown>;
+  runPythonAsync(code: string, opts?: { globals?: PyDictProxy }): Promise<unknown>;
+  /** Real Pyodide's toPy — mints the fresh per-run globals dict (§17.3 isolation). */
+  toPy(obj: Record<string, unknown>): PyDictProxy;
   FS: { writeFile(path: string, data: Uint8Array): void; mkdirTree(path: string): void };
   // §17.8 fallback for Pyodide builds where the canvas API surface differs.
   _module?: { keyboardListeningElement?: unknown };
