@@ -10,3 +10,5 @@ export type {
 } from "./types.js";
 export { createGameGen } from "./game-gen.js";
 export type { GameGen } from "./game-gen.js";
+export { createWatchdog } from "./watchdog.js";
+export type { Watchdog, WatchdogOpts } from "./watchdog.js";
