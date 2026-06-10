@@ -142,3 +142,35 @@ describe("createPygameRuntime lifecycle (§17.3)", () => {
     expect(stalls.length).toBe(1);
   });
 });
+
+describe("setOnStall (late subscription — the client component mounts after creation)", () => {
+  it("replaces the stall handler; subsequent stalls reach the new subscriber", async () => {
+    const fake = makeFakePyodide();
+    const { loader } = makeLoader(fake);
+    const early: StallEvent[] = [];
+    const late: StallEvent[] = [];
+    let cb: FrameRequestCallback | null = null;
+    const rt = createPygameRuntime({
+      loadPyodide: loader,
+      parseAndMatch: okPrecheck,
+      genTarget: {},
+      watchdog: {
+        budgetMs: 100,
+        consecutive: 1,
+        raf: (f) => {
+          cb = f;
+          return 1;
+        },
+        caf: () => {},
+      },
+      onStall: (e) => early.push(e),
+    });
+    await rt.boot(canvasEl);
+    rt.setOnStall((e) => late.push(e));
+    await rt.start("SRC");
+    cb!(0);
+    cb!(500);
+    expect(early).toEqual([]);
+    expect(late.length).toBe(1);
+  });
+});

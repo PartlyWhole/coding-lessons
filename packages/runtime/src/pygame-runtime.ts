@@ -39,12 +39,15 @@ export interface PygameRuntime {
   stop(): void;
   /** stop + watchdog off (unmount path). */
   dispose(): void;
+  /** Late subscription: the client component mounts after the runtime is created. */
+  setOnStall(fn: (e: StallEvent) => void): void;
 }
 
 export function createPygameRuntime(opts: PygameRuntimeOpts): PygameRuntime {
   const gen: GameGen = createGameGen(opts.genTarget ?? (globalThis as never));
   const watchdog: Watchdog = createWatchdog(opts.watchdog ?? {});
-  const onStall = opts.onStall ?? (() => {});
+  let onStallHandler: (e: StallEvent) => void = opts.onStall ?? (() => {});
+  const onStall = (e: StallEvent): void => onStallHandler(e);
   let py: MainThreadPyodide | null = null;
   let watchdogArmed = false;
 
@@ -116,6 +119,9 @@ export function createPygameRuntime(opts: PygameRuntimeOpts): PygameRuntime {
     dispose() {
       gen.bump();
       disarmWatchdog();
+    },
+    setOnStall(fn) {
+      onStallHandler = fn;
     },
   };
 }
