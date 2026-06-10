@@ -27202,10 +27202,14 @@ NODE_TYPES = {
     "Name": ast.Name, "Assign": ast.Assign, "Expr": ast.Expr, "Break": ast.Break,
     "Import": ast.Import, "ImportFrom": ast.ImportFrom, "Attribute": ast.Attribute,
     # M6.5 additive: the await-less-loop pre-check (\xA717.5 guard 1) queries for Await.
-    # NOTE: a deliberate superset of content/verify/harness.py's NODE_TYPES (not ours
-    # to edit) \u2014 corpus queries use neither, so the gate-5 differential is unaffected;
-    # the orchestrator-owned validate.py port should mirror this entry.
+    # NOTE: a deliberate superset of content/verify/harness.py's NODE_TYPES (Await is
+    # runtime-internal; no corpus query uses it, so the gate-5 differential is
+    # unaffected); the orchestrator-owned validate.py port should mirror this entry.
     "Await": ast.Await,
+    # E-14 additive (lockstep with harness.py NODE_TYPES): list indexing and list
+    # literals; field selectors apply to the real ast fields (Subscript.value /
+    # Subscript.slice \u2014 py3.9+ plain-expr slice \u2014 and List.elts).
+    "Subscript": ast.Subscript, "List": ast.List,
 }
 
 def node_matches(query, node, parmap):

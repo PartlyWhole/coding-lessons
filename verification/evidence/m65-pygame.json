@@ -5,7 +5,7 @@
       "name": "a1-canvas-alive",
       "pass": true,
       "evidence": {
-        "tick": 50,
+        "tick": 49,
         "deltas": [
           true,
           true
@@ -34,8 +34,8 @@
       "evidence": {
         "gen0": 1,
         "gen1": 2,
-        "rateBefore": 56,
-        "rateAfter": 55.333333333333336
+        "rateBefore": 56.666666666666664,
+        "rateAfter": 56.666666666666664
       }
     },
     {
@@ -60,8 +60,8 @@
       "evidence": {
         "preSubmitRate": 57.5,
         "tickDuringGrading": [
-          380,
-          380
+          385,
+          385
         ],
         "passClass": "feedback feedback--pass"
       }
