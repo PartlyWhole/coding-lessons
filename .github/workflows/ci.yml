@@ -23,6 +23,9 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+      # pyyaml BEFORE tests: authoring's dialect/differential tests spawn python3
+      # (js-yaml vs pyyaml parity; harness.py oracle) and need it at test time.
+      - run: python3 -m pip install pyyaml
       - run: pnpm install --frozen-lockfile
       # pnpm -r, not the root turbo scripts: turbo's ^build graph hard-fails on the
       # dev-only engine<->sandbox test-dependency cycle (benign at runtime; the native-ESM
@@ -34,7 +37,6 @@ jobs:
       - run: pnpm -r test
       # Content gates (the Python reference validators + the TS compiler's gates 1-9) —
       # so content regressions can't reach main unguarded once rebuild handovers arrive.
-      - run: python3 -m pip install pyyaml
       - run: python3 content/validate.py
       - run: python3 content/verify/harness.py
       - run: node packages/authoring/dist/src/cli.js lint content
