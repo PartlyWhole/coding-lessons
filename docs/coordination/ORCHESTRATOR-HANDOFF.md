@@ -174,8 +174,21 @@ will confuse probes).
 - Decisions of record become design notes (`docs/design-notes/` — wallMs, headless-preamble).
 - Cross-track: doc lanes per the protocol; capability requests through protocol §6.
 
-## 2. Work queue (state at handoff — nothing in flight)
-1. **Test-suite speedup stream** — NEXT. The plan of record:
+## 2. Work queue (state at handoff — ONE staged integration, nothing else in flight)
+0. **YOUR FIRST §4.1: integrate E-18** — branch `e18-node-vocab` @ `abc970b`, worktree
+   `../trellis-e18` (START-HERE inside). Small, LOW-RISK, deliberately left for you as the
+   clean-cut choice (predecessor reviewed the diff line-by-line — byte-identical lockstep
+   table additions in `content/verify/harness.py` + `packages/sandbox/src/ast-query.ts`,
+   plus tests only; stream gates ran green foreground at **649** = 637 + 12). Your job is
+   the full §1.2: pre-flight, FF-merge, `run-all-gates.sh` (the START-HERE's own rule says
+   no `--browser` needed for a table-only diff; run it anyway if you want the same
+   belt-and-suspenders the predecessor did), no-drift, push, flip protocol §6 row 8 to
+   LANDED (the content successor's mechanical-upgrade green light waits on you), board row,
+   prune. A perfect first walk through the loop.
+   ⚠️ The branch also carries the pinning test for protocol **§6 row 9** (the
+   `within`/`field` 3-way divergence — pre-existing, found by E-18's differential). Row 9's
+   semantics call is queued, NOT part of this merge.
+1. **Test-suite speedup stream** — then. The plan of record:
    `docs/design-notes/2026-06-10-test-suite-runtime-analysis.md` (rev 2, committed
    @ `e597d90`): (1) concurrency cap (config-only, measured −60s; sweep before pinning, CI
    separately), (2) warm-server CPython twin in `local-cpython.ts` (NOT fork — macOS/pygame
@@ -197,7 +210,12 @@ will confuse probes).
    proactive-scaffold affordance (design ⚑ — M6 ships it headless); persist delete-by-age
    retention API (M7-adjacent); engine `evaluate.test.ts:187` mocks `ran:false` for
    module-level errors — disagrees with the engine's own RUN_HARNESS (frozen; fix the test
-   model when engine next opens, and re-verify Stream H's `!ran` routing claim then).
+   model when engine next opens, and re-verify Stream H's `!ran` routing claim then; the
+   finding of record: `docs/design-notes/2026-06-10-module-fault-ran-true.md`);
+   **`within`/`childMatches` `field`-key semantics divergence** (protocol §6 row 9 — a
+   §6.3 design extension: align harness.py + sandbox `node_matches` with the authoring
+   matcher, or declare the form out-of-vocabulary in all three; coordinate with content,
+   whose `color_tuple_in_fill` recorded form depends on the answer).
 5. **Capability watch** (protocol §6): rich-media `watch` steps — storyboard specs still
    pending from content; design ⚑ + likely additive schema seam when they arrive.
 
