@@ -1,8 +1,13 @@
-// Ports content/verify/harness.py gate-5 loop (lines 274-291): for every misconception,
-// every `triggers` fixture must FIRE its signature and every `notTriggers` fixture must NOT.
+// Ports content/verify/harness.py's gate-5 loop in ATTRIBUTION mode (E-16, matching the
+// harness since the D3 re-key a4fb601): BUILD fixtures assert §7 attribution — the
+// misconception must WIN (trigger) or NOT WIN (notTrigger) the specificity-ranked
+// first-match among all candidate misconceptions of the step's skills (detectWinner
+// mirrors engine detect()). Non-build fixtures stay isolated signature matches
+// (choice ids are step-local).
 import type { Loaded } from "../raw-types.js";
 import { signalsFor } from "../signals.js";
 import { sigMatch } from "../signature.js";
+import { detectWinner } from "../detect.js";
 import type { GateIssue } from "./types.js";
 
 const G = "5-fixtures";
@@ -19,7 +24,8 @@ export function gateFixtures(loaded: Loaded): GateIssue[] {
           issues.push({ gate: G, level: "error", message: `${mid}: ${s._error}` });
           continue;
         }
-        const got = sigMatch(sig, s);
+        const step = s._step;
+        const got = step !== undefined ? detectWinner(loaded, step, s) === mid : sigMatch(sig, s);
         if (got !== want) {
           const what = fix.code ?? fix.choice ?? fix.input;
           issues.push({

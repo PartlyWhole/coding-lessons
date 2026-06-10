@@ -45,7 +45,7 @@ export interface CaseSpec {
   seed?: number;
   stdin?: string | null;
 }
-export interface CaseResult { ran: boolean; errType: "syntax" | "runtime" | null; ok: boolean; }
+export interface CaseResult { ran: boolean; errType: "syntax" | "runtime" | "timeout" | null; ok: boolean; }
 
 /** Run one build test case via py/run_case.py (CPython execution + repr comparison). */
 export function runCase(spec: CaseSpec): CaseResult {

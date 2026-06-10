@@ -1,0 +1,2394 @@
+[
+ {
+  "name": "s1",
+  "loserMid": "mis.loop.no_break",
+  "winnerMid": "mis.loop.input_outside",
+  "code": "import random\nrandom.seed(42)\nsecret = random.randint(1, 100)\nguess = int(input())\nwhile True:\n    if guess == secret:\n        print(\"You win!\")\n    elif guess < secret:\n        print(\"Too low!\")\n    else:\n        print(\"Too high!\")\n",
+  "winnerIsCandidate": true,
+  "step": {
+   "id": "cell.game-loop.again-escape#7",
+   "kind": "build",
+   "language": "python",
+   "runtime": "headless",
+   "skills": [
+    "skill.loop.while_true",
+    "skill.loop.break"
+   ],
+   "prompt": "Loop the showdown so the player can guess until they win \u2014 and the moment they\nDO win, fly through the hatch. A clean victory: the program ends on purpose.\nAsk for a guess EVERY lap, judge it, and break out on the win. Guesses arrive\none per line. Print exactly one verdict per guess \u2014 nothing else.\n",
+   "starterCode": "import random\nrandom.seed(42)                  # the creature's bet: 82\nsecret = random.randint(1, 100)\n\n# loop the round: ask EVERY lap, judge it, and fly the hatch when you win\nguess = int(input())\nif guess == secret:\n    print(\"You win!\")\nelif guess < secret:\n    print(\"Too low!\")\nelse:\n    print(\"Too high!\")\n",
+   "evaluator": {
+    "run": {
+     "timeoutMs": 2000,
+     "memoryMb": 256
+    },
+    "tests": {
+     "comparator": "deep-equal",
+     "cases": [
+      {
+       "input": "50\n90\n82\n99\n",
+       "expected": "Too low!\nToo high!\nYou win!\n"
+      }
+     ]
+    },
+    "ast": {
+     "queries": [
+      {
+       "tag": "input_above_loop_only",
+       "query": {
+        "all": [
+         {
+          "node": "While"
+         },
+         {
+          "node": "Call",
+          "where": {
+           "calls": "input"
+          }
+         },
+         {
+          "not": {
+           "node": "Call",
+           "where": {
+            "calls": "input"
+           },
+           "within": {
+            "node": "While"
+           }
+          }
+         }
+        ]
+       }
+      },
+      {
+       "tag": "while_true_no_break",
+       "query": {
+        "all": [
+         {
+          "node": "While",
+          "field": {
+           "test": {
+            "node": "Constant",
+            "where": {
+             "attr": "value",
+             "eq": true
+            }
+           }
+          }
+         },
+         {
+          "not": {
+           "node": "Break"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "tag": "break_not_in_if",
+       "query": {
+        "all": [
+         {
+          "node": "Break"
+         },
+         {
+          "not": {
+           "node": "Break",
+           "within": {
+            "node": "If"
+           }
+          }
+         }
+        ]
+       }
+      }
+     ]
+    },
+    "acceptedVariants": [
+     {
+      "astQuery": {
+       "node": "Assign",
+       "field": {
+        "targets": {
+         "node": "Name",
+         "where": {
+          "attr": "id",
+          "eq": "guess"
+         }
+        },
+        "value": {
+         "node": "Call",
+         "where": {
+          "calls": "int"
+         }
+        }
+       }
+      }
+     }
+    ],
+    "property": {
+     "referenceImpl": "def sol(guesses):\n    secret = 82\n    out = []\n    for g in guesses:\n        if g == secret:\n            out.append(\"You win!\"); break\n        elif g < secret:\n            out.append(\"Too low!\")\n        else:\n            out.append(\"Too high!\")\n    return \"\".join(line + \"\\n\" for line in out)\n",
+     "generators": [
+      {
+       "param": "guesses",
+       "type": "list",
+       "elem": {
+        "type": "choice",
+        "choices": [
+         1,
+         25,
+         50,
+         75,
+         81,
+         82,
+         83,
+         99,
+         100
+        ]
+       },
+       "min": 1,
+       "max": 8
+      }
+     ],
+     "numCases": 40,
+     "seed": 1234
+    }
+   }
+  },
+  "candidates": {
+   "skill.loop.break": [
+    {
+     "id": "mis.loop.no_break",
+     "signature": {
+      "any": [
+       {
+        "timedOut": true
+       },
+       {
+        "astTag": "while_true_no_break"
+       },
+       {
+        "choice": "stops_on_win"
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.loop.break_unconditional",
+     "signature": {
+      "all": [
+       {
+        "astTag": "break_not_in_if"
+       },
+       {
+        "testFailure": {}
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.loop.break_skips_lap",
+     "signature": {
+      "choice": "skips_one_lap"
+     }
+    },
+    {
+     "id": "mis.loop.break_ends_program",
+     "signature": {
+      "choice": "nothing_after_runs"
+     }
+    }
+   ],
+   "skill.loop.while_true": [
+    {
+     "id": "mis.loop.runs_once",
+     "signature": {
+      "choice": "once_like_if"
+     }
+    },
+    {
+     "id": "mis.loop.input_outside",
+     "signature": {
+      "all": [
+       {
+        "astTag": "input_above_loop_only"
+       },
+       {
+        "any": [
+         {
+          "timedOut": true
+         },
+         {
+          "testFailure": {}
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.loop.indent_membership",
+     "signature": {
+      "choice": "line_below_is_in"
+     }
+    }
+   ]
+  },
+  "note": "pre-migration co-fire fixture from content-authoring@98fcb25^ (winner-trigger migration 98fcb25); loser notTrigger judged by attribution"
+ },
+ {
+  "name": "s2",
+  "loserMid": "mis.var.init_inside_loop",
+  "winnerMid": "mis.loop.break_unconditional",
+  "code": "import random\nrandom.seed(42)\nsecret = random.randint(1, 100)\nwhile True:\n    tries = 0\n    guess = int(input())\n    tries = tries + 1\n    if guess == secret:\n        print(\"You win!\")\n    elif guess < secret:\n        print(\"Too low!\")\n    else:\n        print(\"Too high!\")\n    break\nprint(\"You got it in \" + str(tries) + \" tries!!\")\n",
+  "winnerIsCandidate": true,
+  "step": {
+   "id": "cell.game-loop.keeping-score#3",
+   "kind": "build",
+   "language": "python",
+   "runtime": "headless",
+   "skills": [
+    "skill.var.update_self",
+    "skill.type.int_input",
+    "skill.loop.while_true",
+    "skill.loop.break"
+   ],
+   "prompt": "Bragging rights. Count every guess in a box called `tries`, and when you fly\nthe hatch, say it loud \u2014 exactly: `You got it in N tries!!` where N is the\ncount. Three jobs, marked in the starter: give the counter birth, feed it once\nper lap, and glue the brag together with `str(tries)`.\n",
+   "starterCode": "import random\nrandom.seed(42)\nsecret = random.randint(1, 100)\n\n# 1) give birth to the counter box:  tries = 0   (where does it live?)\nwhile True:\n    guess = int(input())\n    # 2) feed the counter -- one more try just happened\n    if guess == secret:\n        print(\"You win!\")\n        break\n    elif guess < secret:\n        print(\"Too low!\")\n    else:\n        print(\"Too high!\")\n\n# 3) the brag:  \"You got it in \" + str(tries) + \" tries!!\"\n",
+   "evaluator": {
+    "run": {
+     "timeoutMs": 2000,
+     "memoryMb": 256
+    },
+    "tests": {
+     "comparator": "deep-equal",
+     "cases": [
+      {
+       "input": "50\n90\n82\n99\n",
+       "expected": "Too low!\nToo high!\nYou win!\nYou got it in 3 tries!!\n"
+      }
+     ]
+    },
+    "ast": {
+     "queries": [
+      {
+       "tag": "input_not_converted",
+       "query": {
+        "all": [
+         {
+          "node": "Call",
+          "where": {
+           "calls": "input"
+          }
+         },
+         {
+          "not": {
+           "node": "Call",
+           "where": {
+            "calls": "int"
+           }
+          }
+         }
+        ]
+       }
+      },
+      {
+       "tag": "bare_int_call",
+       "query": {
+        "node": "Expr",
+        "field": {
+         "value": {
+          "node": "Call",
+          "where": {
+           "calls": "int"
+          }
+         }
+        }
+       }
+      },
+      {
+       "tag": "secret_stringified",
+       "query": {
+        "any": [
+         {
+          "node": "Call",
+          "where": {
+           "calls": "str"
+          },
+          "within": {
+           "node": "Compare"
+          }
+         },
+         {
+          "node": "Assign",
+          "field": {
+           "targets": {
+            "node": "Name",
+            "where": {
+             "attr": "id",
+             "eq": "secret"
+            }
+           },
+           "value": {
+            "node": "Call",
+            "where": {
+             "calls": "str"
+            }
+           }
+          }
+         }
+        ]
+       }
+      },
+      {
+       "tag": "input_above_loop_only",
+       "query": {
+        "all": [
+         {
+          "node": "While"
+         },
+         {
+          "node": "Call",
+          "where": {
+           "calls": "input"
+          }
+         },
+         {
+          "not": {
+           "node": "Call",
+           "where": {
+            "calls": "input"
+           },
+           "within": {
+            "node": "While"
+           }
+          }
+         }
+        ]
+       }
+      },
+      {
+       "tag": "while_true_no_break",
+       "query": {
+        "all": [
+         {
+          "node": "While",
+          "field": {
+           "test": {
+            "node": "Constant",
+            "where": {
+             "attr": "value",
+             "eq": true
+            }
+           }
+          }
+         },
+         {
+          "not": {
+           "node": "Break"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "tag": "break_not_in_if",
+       "query": {
+        "all": [
+         {
+          "node": "Break"
+         },
+         {
+          "not": {
+           "node": "Break",
+           "within": {
+            "node": "If"
+           }
+          }
+         }
+        ]
+       }
+      },
+      {
+       "tag": "counter_reset_in_loop",
+       "query": {
+        "node": "Assign",
+        "field": {
+         "targets": {
+          "node": "Name",
+          "where": {
+           "attr": "id",
+           "eq": "tries"
+          }
+         },
+         "value": {
+          "node": "Constant",
+          "where": {
+           "attr": "value",
+           "eq": 0
+          }
+         }
+        },
+        "within": {
+         "node": "While"
+        }
+       }
+      },
+      {
+       "tag": "update_without_init",
+       "query": {
+        "all": [
+         {
+          "node": "Assign",
+          "field": {
+           "targets": {
+            "node": "Name",
+            "where": {
+             "attr": "id",
+             "eq": "tries"
+            }
+           },
+           "value": {
+            "node": "BinOp",
+            "where": {
+             "usesName": "tries"
+            }
+           }
+          }
+         },
+         {
+          "not": {
+           "node": "Assign",
+           "field": {
+            "targets": {
+             "node": "Name",
+             "where": {
+              "attr": "id",
+              "eq": "tries"
+             }
+            },
+            "value": {
+             "node": "Constant",
+             "where": {
+              "attr": "value",
+              "eq": 0
+             }
+            }
+           }
+          }
+         }
+        ]
+       }
+      },
+      {
+       "tag": "counter_update_not_in_loop",
+       "query": {
+        "all": [
+         {
+          "node": "Assign",
+          "field": {
+           "targets": {
+            "node": "Name",
+            "where": {
+             "attr": "id",
+             "eq": "tries"
+            }
+           },
+           "value": {
+            "node": "BinOp",
+            "where": {
+             "usesName": "tries"
+            }
+           }
+          }
+         },
+         {
+          "not": {
+           "node": "Assign",
+           "field": {
+            "targets": {
+             "node": "Name",
+             "where": {
+              "attr": "id",
+              "eq": "tries"
+             }
+            },
+            "value": {
+             "node": "BinOp",
+             "where": {
+              "usesName": "tries"
+             }
+            }
+           },
+           "within": {
+            "node": "While"
+           }
+          }
+         }
+        ]
+       }
+      }
+     ]
+    },
+    "acceptedVariants": [
+     {
+      "astQuery": {
+       "node": "Assign",
+       "field": {
+        "targets": {
+         "node": "Name",
+         "where": {
+          "attr": "id",
+          "eq": "guess"
+         }
+        },
+        "value": {
+         "node": "Call",
+         "where": {
+          "calls": "int"
+         }
+        }
+       }
+      }
+     }
+    ],
+    "property": {
+     "referenceImpl": "def sol(guesses):\n    secret = 82\n    out = []\n    tries = 0\n    for g in guesses:\n        tries = tries + 1\n        if g == secret:\n            out.append(\"You win!\")\n            out.append(\"You got it in \" + str(tries) + \" tries!!\")\n            break\n        elif g < secret:\n            out.append(\"Too low!\")\n        else:\n            out.append(\"Too high!\")\n    return \"\".join(line + \"\\n\" for line in out)\n",
+     "generators": [
+      {
+       "param": "guesses",
+       "type": "list",
+       "elem": {
+        "type": "choice",
+        "choices": [
+         1,
+         25,
+         50,
+         75,
+         81,
+         82,
+         83,
+         99,
+         100
+        ]
+       },
+       "min": 1,
+       "max": 8
+      }
+     ],
+     "numCases": 40,
+     "seed": 1234
+    }
+   }
+  },
+  "candidates": {
+   "skill.loop.break": [
+    {
+     "id": "mis.loop.no_break",
+     "signature": {
+      "any": [
+       {
+        "timedOut": true
+       },
+       {
+        "astTag": "while_true_no_break"
+       },
+       {
+        "choice": "stops_on_win"
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.loop.break_unconditional",
+     "signature": {
+      "all": [
+       {
+        "astTag": "break_not_in_if"
+       },
+       {
+        "testFailure": {}
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.loop.break_skips_lap",
+     "signature": {
+      "choice": "skips_one_lap"
+     }
+    },
+    {
+     "id": "mis.loop.break_ends_program",
+     "signature": {
+      "choice": "nothing_after_runs"
+     }
+    }
+   ],
+   "skill.loop.while_true": [
+    {
+     "id": "mis.loop.runs_once",
+     "signature": {
+      "choice": "once_like_if"
+     }
+    },
+    {
+     "id": "mis.loop.input_outside",
+     "signature": {
+      "all": [
+       {
+        "astTag": "input_above_loop_only"
+       },
+       {
+        "any": [
+         {
+          "timedOut": true
+         },
+         {
+          "testFailure": {}
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.loop.indent_membership",
+     "signature": {
+      "choice": "line_below_is_in"
+     }
+    }
+   ],
+   "skill.type.int_input": [
+    {
+     "id": "mis.type.compare_str_int",
+     "signature": {
+      "all": [
+       {
+        "astTag": "input_not_converted"
+       },
+       {
+        "runError": "runtime"
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.type.str_both_sides",
+     "signature": {
+      "any": [
+       {
+        "all": [
+         {
+          "astTag": "secret_stringified"
+         },
+         {
+          "testFailure": {}
+         }
+        ]
+       },
+       {
+        "recallEquals": "str"
+       },
+       {
+        "recallEquals": "str()"
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.type.quoted_equals_num",
+     "signature": {
+      "choice": "same_thing"
+     }
+    },
+    {
+     "id": "mis.type.convert_in_place",
+     "signature": {
+      "all": [
+       {
+        "astTag": "bare_int_call"
+       },
+       {
+        "runError": "runtime"
+       }
+      ]
+     }
+    }
+   ],
+   "skill.var.update_self": [
+    {
+     "id": "mis.var.init_inside_loop",
+     "signature": {
+      "all": [
+       {
+        "astTag": "counter_reset_in_loop"
+       },
+       {
+        "testFailure": {}
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.var.no_init",
+     "signature": {
+      "all": [
+       {
+        "astTag": "update_without_init"
+       },
+       {
+        "runError": "runtime"
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.var.equation_reading",
+     "signature": {
+      "any": [
+       {
+        "choice": "impossible_equation"
+       },
+       {
+        "choice": "equals_six_before"
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.var.update_outside_loop",
+     "signature": {
+      "all": [
+       {
+        "astTag": "counter_update_not_in_loop"
+       },
+       {
+        "testFailure": {}
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "note": "pre-migration co-fire fixture from content-authoring@98fcb25^ (winner-trigger migration 98fcb25); loser notTrigger judged by attribution"
+ },
+ {
+  "name": "s3",
+  "loserMid": "mis.var.update_outside_loop",
+  "winnerMid": "mis.var.init_inside_loop",
+  "code": "import random\nrandom.seed(42)\nsecret = random.randint(1, 100)\nwhile True:\n    tries = 0\n    guess = int(input())\n    if guess == secret:\n        print(\"You win!\")\n        break\n    elif guess < secret:\n        print(\"Too low!\")\n    else:\n        print(\"Too high!\")\ntries = tries + 1\nprint(\"You got it in \" + str(tries) + \" tries!!\")\n",
+  "winnerIsCandidate": true,
+  "step": {
+   "id": "cell.game-loop.keeping-score#3",
+   "kind": "build",
+   "language": "python",
+   "runtime": "headless",
+   "skills": [
+    "skill.var.update_self",
+    "skill.type.int_input",
+    "skill.loop.while_true",
+    "skill.loop.break"
+   ],
+   "prompt": "Bragging rights. Count every guess in a box called `tries`, and when you fly\nthe hatch, say it loud \u2014 exactly: `You got it in N tries!!` where N is the\ncount. Three jobs, marked in the starter: give the counter birth, feed it once\nper lap, and glue the brag together with `str(tries)`.\n",
+   "starterCode": "import random\nrandom.seed(42)\nsecret = random.randint(1, 100)\n\n# 1) give birth to the counter box:  tries = 0   (where does it live?)\nwhile True:\n    guess = int(input())\n    # 2) feed the counter -- one more try just happened\n    if guess == secret:\n        print(\"You win!\")\n        break\n    elif guess < secret:\n        print(\"Too low!\")\n    else:\n        print(\"Too high!\")\n\n# 3) the brag:  \"You got it in \" + str(tries) + \" tries!!\"\n",
+   "evaluator": {
+    "run": {
+     "timeoutMs": 2000,
+     "memoryMb": 256
+    },
+    "tests": {
+     "comparator": "deep-equal",
+     "cases": [
+      {
+       "input": "50\n90\n82\n99\n",
+       "expected": "Too low!\nToo high!\nYou win!\nYou got it in 3 tries!!\n"
+      }
+     ]
+    },
+    "ast": {
+     "queries": [
+      {
+       "tag": "input_not_converted",
+       "query": {
+        "all": [
+         {
+          "node": "Call",
+          "where": {
+           "calls": "input"
+          }
+         },
+         {
+          "not": {
+           "node": "Call",
+           "where": {
+            "calls": "int"
+           }
+          }
+         }
+        ]
+       }
+      },
+      {
+       "tag": "bare_int_call",
+       "query": {
+        "node": "Expr",
+        "field": {
+         "value": {
+          "node": "Call",
+          "where": {
+           "calls": "int"
+          }
+         }
+        }
+       }
+      },
+      {
+       "tag": "secret_stringified",
+       "query": {
+        "any": [
+         {
+          "node": "Call",
+          "where": {
+           "calls": "str"
+          },
+          "within": {
+           "node": "Compare"
+          }
+         },
+         {
+          "node": "Assign",
+          "field": {
+           "targets": {
+            "node": "Name",
+            "where": {
+             "attr": "id",
+             "eq": "secret"
+            }
+           },
+           "value": {
+            "node": "Call",
+            "where": {
+             "calls": "str"
+            }
+           }
+          }
+         }
+        ]
+       }
+      },
+      {
+       "tag": "input_above_loop_only",
+       "query": {
+        "all": [
+         {
+          "node": "While"
+         },
+         {
+          "node": "Call",
+          "where": {
+           "calls": "input"
+          }
+         },
+         {
+          "not": {
+           "node": "Call",
+           "where": {
+            "calls": "input"
+           },
+           "within": {
+            "node": "While"
+           }
+          }
+         }
+        ]
+       }
+      },
+      {
+       "tag": "while_true_no_break",
+       "query": {
+        "all": [
+         {
+          "node": "While",
+          "field": {
+           "test": {
+            "node": "Constant",
+            "where": {
+             "attr": "value",
+             "eq": true
+            }
+           }
+          }
+         },
+         {
+          "not": {
+           "node": "Break"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "tag": "break_not_in_if",
+       "query": {
+        "all": [
+         {
+          "node": "Break"
+         },
+         {
+          "not": {
+           "node": "Break",
+           "within": {
+            "node": "If"
+           }
+          }
+         }
+        ]
+       }
+      },
+      {
+       "tag": "counter_reset_in_loop",
+       "query": {
+        "node": "Assign",
+        "field": {
+         "targets": {
+          "node": "Name",
+          "where": {
+           "attr": "id",
+           "eq": "tries"
+          }
+         },
+         "value": {
+          "node": "Constant",
+          "where": {
+           "attr": "value",
+           "eq": 0
+          }
+         }
+        },
+        "within": {
+         "node": "While"
+        }
+       }
+      },
+      {
+       "tag": "update_without_init",
+       "query": {
+        "all": [
+         {
+          "node": "Assign",
+          "field": {
+           "targets": {
+            "node": "Name",
+            "where": {
+             "attr": "id",
+             "eq": "tries"
+            }
+           },
+           "value": {
+            "node": "BinOp",
+            "where": {
+             "usesName": "tries"
+            }
+           }
+          }
+         },
+         {
+          "not": {
+           "node": "Assign",
+           "field": {
+            "targets": {
+             "node": "Name",
+             "where": {
+              "attr": "id",
+              "eq": "tries"
+             }
+            },
+            "value": {
+             "node": "Constant",
+             "where": {
+              "attr": "value",
+              "eq": 0
+             }
+            }
+           }
+          }
+         }
+        ]
+       }
+      },
+      {
+       "tag": "counter_update_not_in_loop",
+       "query": {
+        "all": [
+         {
+          "node": "Assign",
+          "field": {
+           "targets": {
+            "node": "Name",
+            "where": {
+             "attr": "id",
+             "eq": "tries"
+            }
+           },
+           "value": {
+            "node": "BinOp",
+            "where": {
+             "usesName": "tries"
+            }
+           }
+          }
+         },
+         {
+          "not": {
+           "node": "Assign",
+           "field": {
+            "targets": {
+             "node": "Name",
+             "where": {
+              "attr": "id",
+              "eq": "tries"
+             }
+            },
+            "value": {
+             "node": "BinOp",
+             "where": {
+              "usesName": "tries"
+             }
+            }
+           },
+           "within": {
+            "node": "While"
+           }
+          }
+         }
+        ]
+       }
+      }
+     ]
+    },
+    "acceptedVariants": [
+     {
+      "astQuery": {
+       "node": "Assign",
+       "field": {
+        "targets": {
+         "node": "Name",
+         "where": {
+          "attr": "id",
+          "eq": "guess"
+         }
+        },
+        "value": {
+         "node": "Call",
+         "where": {
+          "calls": "int"
+         }
+        }
+       }
+      }
+     }
+    ],
+    "property": {
+     "referenceImpl": "def sol(guesses):\n    secret = 82\n    out = []\n    tries = 0\n    for g in guesses:\n        tries = tries + 1\n        if g == secret:\n            out.append(\"You win!\")\n            out.append(\"You got it in \" + str(tries) + \" tries!!\")\n            break\n        elif g < secret:\n            out.append(\"Too low!\")\n        else:\n            out.append(\"Too high!\")\n    return \"\".join(line + \"\\n\" for line in out)\n",
+     "generators": [
+      {
+       "param": "guesses",
+       "type": "list",
+       "elem": {
+        "type": "choice",
+        "choices": [
+         1,
+         25,
+         50,
+         75,
+         81,
+         82,
+         83,
+         99,
+         100
+        ]
+       },
+       "min": 1,
+       "max": 8
+      }
+     ],
+     "numCases": 40,
+     "seed": 1234
+    }
+   }
+  },
+  "candidates": {
+   "skill.loop.break": [
+    {
+     "id": "mis.loop.no_break",
+     "signature": {
+      "any": [
+       {
+        "timedOut": true
+       },
+       {
+        "astTag": "while_true_no_break"
+       },
+       {
+        "choice": "stops_on_win"
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.loop.break_unconditional",
+     "signature": {
+      "all": [
+       {
+        "astTag": "break_not_in_if"
+       },
+       {
+        "testFailure": {}
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.loop.break_skips_lap",
+     "signature": {
+      "choice": "skips_one_lap"
+     }
+    },
+    {
+     "id": "mis.loop.break_ends_program",
+     "signature": {
+      "choice": "nothing_after_runs"
+     }
+    }
+   ],
+   "skill.loop.while_true": [
+    {
+     "id": "mis.loop.runs_once",
+     "signature": {
+      "choice": "once_like_if"
+     }
+    },
+    {
+     "id": "mis.loop.input_outside",
+     "signature": {
+      "all": [
+       {
+        "astTag": "input_above_loop_only"
+       },
+       {
+        "any": [
+         {
+          "timedOut": true
+         },
+         {
+          "testFailure": {}
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.loop.indent_membership",
+     "signature": {
+      "choice": "line_below_is_in"
+     }
+    }
+   ],
+   "skill.type.int_input": [
+    {
+     "id": "mis.type.compare_str_int",
+     "signature": {
+      "all": [
+       {
+        "astTag": "input_not_converted"
+       },
+       {
+        "runError": "runtime"
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.type.str_both_sides",
+     "signature": {
+      "any": [
+       {
+        "all": [
+         {
+          "astTag": "secret_stringified"
+         },
+         {
+          "testFailure": {}
+         }
+        ]
+       },
+       {
+        "recallEquals": "str"
+       },
+       {
+        "recallEquals": "str()"
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.type.quoted_equals_num",
+     "signature": {
+      "choice": "same_thing"
+     }
+    },
+    {
+     "id": "mis.type.convert_in_place",
+     "signature": {
+      "all": [
+       {
+        "astTag": "bare_int_call"
+       },
+       {
+        "runError": "runtime"
+       }
+      ]
+     }
+    }
+   ],
+   "skill.var.update_self": [
+    {
+     "id": "mis.var.init_inside_loop",
+     "signature": {
+      "all": [
+       {
+        "astTag": "counter_reset_in_loop"
+       },
+       {
+        "testFailure": {}
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.var.no_init",
+     "signature": {
+      "all": [
+       {
+        "astTag": "update_without_init"
+       },
+       {
+        "runError": "runtime"
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.var.equation_reading",
+     "signature": {
+      "any": [
+       {
+        "choice": "impossible_equation"
+       },
+       {
+        "choice": "equals_six_before"
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.var.update_outside_loop",
+     "signature": {
+      "all": [
+       {
+        "astTag": "counter_update_not_in_loop"
+       },
+       {
+        "testFailure": {}
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "note": "pre-migration co-fire fixture from content-authoring@98fcb25^ (winner-trigger migration 98fcb25); loser notTrigger judged by attribution"
+ },
+ {
+  "name": "t1",
+  "loserMid": "mis.func.return_unused",
+  "winnerMid": "mis.func.print_instead_of_return",
+  "code": "def pick_taunt():\n    print(\"You snooze!\")   # <- it SHOUTS. teach it to hand the line BACK.\n\n# make the creature say it in ONE breath:  You lose! You snooze!\npick_taunt()\n",
+  "winnerIsCandidate": true,
+  "step": {
+   "id": "cell.functions.hand_back#5",
+   "kind": "build",
+   "language": "python",
+   "runtime": "headless",
+   "skills": [
+    "skill.func.return"
+   ],
+   "prompt": "One more trick for your creature: `pick_taunt`. Teach it to HAND BACK the\nline `You snooze!` \u2014 then make the creature say it in ONE breath:\n`You lose! You snooze!` The checker listens for exactly that one line.\n",
+   "starterCode": "def pick_taunt():\n    print(\"You snooze!\")   # <- it SHOUTS. teach it to hand the line BACK.\n\n# make the creature say it in ONE breath:  You lose! You snooze!\npick_taunt()\n",
+   "evaluator": {
+    "run": {
+     "timeoutMs": 2000,
+     "memoryMb": 256
+    },
+    "tests": {
+     "comparator": "deep-equal",
+     "cases": [
+      {
+       "input": "",
+       "expected": "You lose! You snooze!\n"
+      }
+     ]
+    },
+    "ast": {
+     "queries": [
+      {
+       "tag": "prints_no_return",
+       "query": {
+        "all": [
+         {
+          "node": "Call",
+          "where": {
+           "calls": "print"
+          }
+         },
+         {
+          "not": {
+           "node": "Return"
+          }
+         }
+        ]
+       }
+      },
+      {
+       "tag": "bare_call_pick_taunt",
+       "query": {
+        "all": [
+         {
+          "node": "Call",
+          "where": {
+           "calls": "pick_taunt"
+          }
+         },
+         {
+          "not": {
+           "node": "Call",
+           "where": {
+            "calls": "pick_taunt"
+           },
+           "within": {
+            "node": "Call"
+           }
+          }
+         },
+         {
+          "not": {
+           "node": "Call",
+           "where": {
+            "calls": "pick_taunt"
+           },
+           "within": {
+            "node": "Assign"
+           }
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  },
+  "candidates": {
+   "skill.func.return": [
+    {
+     "id": "mis.func.print_instead_of_return",
+     "signature": {
+      "all": [
+       {
+        "astTag": "prints_no_return"
+       },
+       {
+        "any": [
+         {
+          "runError": "runtime"
+         },
+         {
+          "testFailure": {}
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.func.return_unused",
+     "signature": {
+      "all": [
+       {
+        "astTag": "bare_call_pick_taunt"
+       },
+       {
+        "testFailure": {}
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.func.return_displays",
+     "signature": {
+      "choice": "b"
+     }
+    },
+    {
+     "id": "mis.func.code_after_return",
+     "signature": {
+      "choice": "c"
+     }
+    }
+   ]
+  },
+  "note": "pre-migration co-fire fixture from content-authoring@98fcb25^ (winner-trigger migration 98fcb25); loser notTrigger judged by attribution"
+ },
+ {
+  "name": "v1",
+  "loserMid": "mis.var.undefined",
+  "winnerMid": "mis.string.unquoted",
+  "code": "pet = \"Blorbo\"\nprint(Blorbo)\n",
+  "winnerIsCandidate": true,
+  "step": {
+   "id": "cell.memory.open_box#4",
+   "kind": "build",
+   "language": "python",
+   "runtime": "headless",
+   "skills": [
+    "skill.var.use",
+    "skill.var.assign",
+    "skill.string.literal",
+    "skill.output.print_literal"
+   ],
+   "prompt": "Name the creature in a box called `pet`, then make the machine announce the\nname in the box.\n",
+   "starterCode": "# 1. put the name Blorbo in a box called pet\n# 2. announce what's in the box\n",
+   "evaluator": {
+    "run": {
+     "timeoutMs": 2000,
+     "memoryMb": 256
+    },
+    "tests": {
+     "comparator": "deep-equal",
+     "cases": [
+      {
+       "input": null,
+       "expected": "Blorbo\n"
+      }
+     ]
+    },
+    "ast": {
+     "queries": [
+      {
+       "tag": "quoted_var_name",
+       "query": {
+        "node": "Constant",
+        "where": {
+         "attr": "value",
+         "eq": "pet"
+        }
+       }
+      },
+      {
+       "tag": "literal_word_as_name",
+       "query": {
+        "node": "Name",
+        "where": {
+         "attr": "id",
+         "eq": "Blorbo"
+        }
+       }
+      },
+      {
+       "tag": "no_print_call",
+       "query": {
+        "not": {
+         "node": "Call",
+         "where": {
+          "calls": "print"
+         }
+        }
+       }
+      }
+     ]
+    }
+   }
+  },
+  "candidates": {
+   "skill.output.print_literal": [
+    {
+     "id": "mis.print.no_call",
+     "signature": {
+      "any": [
+       {
+        "all": [
+         {
+          "astTag": "no_print_call"
+         },
+         {
+          "testFailure": {}
+         }
+        ]
+       },
+       {
+        "choice": "c-no-call"
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.print.missing_parens",
+     "signature": {
+      "choice": "c-no-parens"
+     }
+    }
+   ],
+   "skill.string.literal": [
+    {
+     "id": "mis.string.unquoted",
+     "signature": {
+      "any": [
+       {
+        "choice": "c-unquoted"
+       },
+       {
+        "all": [
+         {
+          "runError": "runtime"
+         },
+         {
+          "astTag": "literal_word_as_name"
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.string.unclosed_quote",
+     "signature": {
+      "choice": "c-unclosed"
+     }
+    },
+    {
+     "id": "mis.string.space_blind",
+     "signature": {
+      "any": [
+       {
+        "choice": "c-space-blind"
+       },
+       {
+        "all": [
+         {
+          "astTag": "squished_literal"
+         },
+         {
+          "testFailure": {}
+         }
+        ]
+       }
+      ]
+     }
+    }
+   ],
+   "skill.var.assign": [
+    {
+     "id": "mis.var.assign_reversed",
+     "signature": {
+      "any": [
+       {
+        "choice": "c-reversed"
+       },
+       {
+        "recallEquals": "\"blorbo\" = pet"
+       },
+       {
+        "recallEquals": "\"blorbo\"=pet"
+       },
+       {
+        "recallEquals": "'blorbo' = pet"
+       },
+       {
+        "recallEquals": "'blorbo'=pet"
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.var.assign_prints",
+     "signature": {
+      "choice": "c-assign-prints"
+     }
+    }
+   ],
+   "skill.var.use": [
+    {
+     "id": "mis.var.use_quoted",
+     "signature": {
+      "any": [
+       {
+        "all": [
+         {
+          "astTag": "quoted_var_name"
+         },
+         {
+          "testFailure": {}
+         }
+        ]
+       },
+       {
+        "choice": "c-use-quoted"
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.var.undefined",
+     "signature": {
+      "runError": "runtime"
+     }
+    }
+   ]
+  },
+  "note": "pre-migration co-fire fixture from content-authoring@98fcb25^ (winner-trigger migration 98fcb25); loser notTrigger judged by attribution"
+ },
+ {
+  "name": "v2",
+  "loserMid": "mis.input.hardcoded",
+  "winnerMid": "mis.concat.missing_space",
+  "code": "name = \"???\"\nprint(\"Hi\" + name)\n",
+  "winnerIsCandidate": true,
+  "step": {
+   "id": "cell.ears.remember_me#5",
+   "kind": "build",
+   "language": "python",
+   "runtime": "headless",
+   "skills": [
+    "skill.input.store",
+    "skill.input.read",
+    "skill.string.concat",
+    "skill.var.use"
+   ],
+   "prompt": "Ask for a name, CATCH it, and greet them warmly \u2014 the checker wants exactly\n`Hi Alan` when Alan answers, with the breath in it. The greeting line is\nalready written. Replace the placeholder line so the box gets filled by ASKING.\n",
+   "starterCode": "name = \"???\"\n# 1. replace the line above \u2014 ask \"What's your name? \" and catch the answer in a box called name\nprint(\"Hi\" + name)\n",
+   "evaluator": {
+    "run": {
+     "timeoutMs": 2000,
+     "memoryMb": 256
+    },
+    "tests": {
+     "comparator": "deep-equal",
+     "cases": [
+      {
+       "input": "Alan\nAlan\nAlan\n",
+       "expected": "What's your name? Hi Alan\n"
+      }
+     ]
+    },
+    "ast": {
+     "queries": [
+      {
+       "tag": "input_not_stored",
+       "query": {
+        "node": "Expr",
+        "field": {
+         "value": {
+          "node": "Call",
+          "where": {
+           "calls": "input"
+          }
+         }
+        }
+       }
+      },
+      {
+       "tag": "no_input_call",
+       "query": {
+        "not": {
+         "node": "Call",
+         "where": {
+          "calls": "input"
+         }
+        }
+       }
+      },
+      {
+       "tag": "missing_space_literal",
+       "query": {
+        "node": "Constant",
+        "where": {
+         "attr": "value",
+         "eq": "Hi"
+        }
+       }
+      },
+      {
+       "tag": "quoted_var_name",
+       "query": {
+        "node": "Constant",
+        "where": {
+         "attr": "value",
+         "eq": "name"
+        }
+       }
+      }
+     ]
+    }
+   }
+  },
+  "candidates": {
+   "skill.input.read": [
+    {
+     "id": "mis.input.no_pause",
+     "signature": {
+      "choice": "c-no-pause"
+     }
+    },
+    {
+     "id": "mis.input.auto_kept",
+     "signature": {
+      "choice": "c-auto-kept"
+     }
+    },
+    {
+     "id": "mis.input.hardcoded",
+     "signature": {
+      "any": [
+       {
+        "all": [
+         {
+          "astTag": "no_input_call"
+         },
+         {
+          "testFailure": {}
+         }
+        ]
+       },
+       {
+        "choice": "c-hardcoded"
+       }
+      ]
+     }
+    }
+   ],
+   "skill.input.store": [
+    {
+     "id": "mis.input.not_stored",
+     "signature": {
+      "any": [
+       {
+        "all": [
+         {
+          "astTag": "input_not_stored"
+         },
+         {
+          "testFailure": {}
+         }
+        ]
+       },
+       {
+        "choice": "c-not-stored"
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.assign.literal_only",
+     "signature": {
+      "any": [
+       {
+        "choice": "c-literal-only"
+       },
+       {
+        "choice": "c-prompt-lands"
+       }
+      ]
+     }
+    }
+   ],
+   "skill.string.concat": [
+    {
+     "id": "mis.concat.missing_space",
+     "signature": {
+      "any": [
+       {
+        "all": [
+         {
+          "astTag": "missing_space_literal"
+         },
+         {
+          "testFailure": {}
+         }
+        ]
+       },
+       {
+        "choice": "c-missing-space"
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.concat.plus_in_quotes",
+     "signature": {
+      "any": [
+       {
+        "all": [
+         {
+          "astTag": "plus_as_text"
+         },
+         {
+          "testFailure": {}
+         }
+        ]
+       },
+       {
+        "choice": "c-plus-in-quotes"
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.concat.no_plus",
+     "signature": {
+      "choice": "c-no-plus"
+     }
+    }
+   ],
+   "skill.var.use": [
+    {
+     "id": "mis.var.use_quoted",
+     "signature": {
+      "any": [
+       {
+        "all": [
+         {
+          "astTag": "quoted_var_name"
+         },
+         {
+          "testFailure": {}
+         }
+        ]
+       },
+       {
+        "choice": "c-use-quoted"
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.var.undefined",
+     "signature": {
+      "runError": "runtime"
+     }
+    }
+   ]
+  },
+  "note": "pre-migration co-fire fixture from content-authoring@98fcb25^ (winner-trigger migration 98fcb25); loser notTrigger judged by attribution"
+ },
+ {
+  "name": "w1",
+  "loserMid": "mis.convert.quoted_call",
+  "winnerMid": "mis.convert.missing_call",
+  "code": "import random\nrandom.seed(42)\nnumber = random.randint(1, 100)\nprint(\"Your random number is: \" + number)\n",
+  "winnerIsCandidate": true,
+  "step": {
+   "id": "cell.dice-announcer#15",
+   "kind": "build",
+   "language": "python",
+   "runtime": "headless",
+   "skills": [
+    "skill.type.str_convert"
+   ],
+   "prompt": "Fix the announcer. The drama line must print exactly: `Your random number is: `\nthen the roll.\n",
+   "starterCode": "import random\nrandom.seed(42)   # pins the dice so the checker knows the roll\nnumber = random.randint(1, 100)\nprint(\"Your random number is: \" + number)\n",
+   "lockedRegions": [
+    {
+     "startLine": 1,
+     "endLine": 3
+    }
+   ],
+   "evaluator": {
+    "run": {
+     "timeoutMs": 2000,
+     "memoryMb": 256
+    },
+    "tests": {
+     "cases": [
+      {
+       "input": null,
+       "expected": "Your random number is: 82\n"
+      }
+     ]
+    },
+    "ast": {
+     "queries": [
+      {
+       "tag": "concat_str_plus_number_no_str",
+       "query": {
+        "all": [
+         {
+          "node": "BinOp",
+          "where": {
+           "childMatches": {
+            "node": "Constant",
+            "where": {
+             "attr": "value",
+             "eq": "Your random number is: "
+            }
+           }
+          }
+         },
+         {
+          "not": {
+           "node": "Name",
+           "where": {
+            "attr": "id",
+            "eq": "str"
+           }
+          }
+         }
+        ]
+       }
+      },
+      {
+       "tag": "str_call_quoted",
+       "query": {
+        "node": "Constant",
+        "where": {
+         "attr": "value",
+         "eq": "str(number)"
+        }
+       }
+      },
+      {
+       "tag": "str_named_never_called",
+       "query": {
+        "all": [
+         {
+          "node": "Name",
+          "where": {
+           "attr": "id",
+           "eq": "str"
+          }
+         },
+         {
+          "not": {
+           "node": "Call",
+           "where": {
+            "calls": "str"
+           }
+          }
+         }
+        ]
+       }
+      },
+      {
+       "tag": "str_call_never_glued",
+       "query": {
+        "all": [
+         {
+          "node": "Call",
+          "where": {
+           "calls": "str"
+          }
+         },
+         {
+          "not": {
+           "node": "BinOp",
+           "where": {
+            "childMatches": {
+             "node": "Call",
+             "where": {
+              "calls": "str"
+             }
+            }
+           }
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  },
+  "candidates": {
+   "skill.type.str_convert": [
+    {
+     "id": "mis.convert.missing_call",
+     "signature": {
+      "all": [
+       {
+        "astTag": "concat_str_plus_number_no_str"
+       },
+       {
+        "runError": "runtime"
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.convert.quoted_call",
+     "signature": {
+      "any": [
+       {
+        "all": [
+         {
+          "astTag": "str_call_quoted"
+         },
+         {
+          "testFailure": {
+           "gotEquals": "Your random number is: str(number)\n"
+          }
+         }
+        ]
+       },
+       {
+        "testFailure": {
+         "gotEquals": "Your random number is: str(number)\n"
+        }
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.convert.name_not_call",
+     "signature": {
+      "any": [
+       {
+        "choice": "d"
+       },
+       {
+        "all": [
+         {
+          "astTag": "str_named_never_called"
+         },
+         {
+          "runError": "runtime"
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.convert.still_unglued",
+     "signature": {
+      "all": [
+       {
+        "astTag": "str_call_never_glued"
+       },
+       {
+        "testFailure": {}
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "note": "pre-migration co-fire fixture from content-authoring@98fcb25^ (winner-trigger migration 98fcb25); loser notTrigger judged by attribution"
+ },
+ {
+  "name": "w2",
+  "loserMid": "mis.block.indent_decorative",
+  "winnerMid": "mis.block.dedent_always_runs",
+  "code": "number = 28\nif number > 50:\n    print(\"The 8-Ball has spoken.\")\nelse:\n    print(\"Ask again later.\")\nprint(\"Signs point to yes.\")\n",
+  "winnerIsCandidate": true,
+  "step": {
+   "id": "cell.the-fork#5",
+   "kind": "build",
+   "language": "python",
+   "runtime": "headless",
+   "skills": [
+    "skill.block.indent"
+   ],
+   "prompt": "The creature rolled 28 \u2014 shy day. Build the door so the yes-line\n`Signs point to yes.` only fires above 50, but the sign-off\n`The 8-Ball has spoken.` ALWAYS happens, door open or shut.\n",
+   "starterCode": "number = 28\n# door: above 50, print exactly: Signs point to yes.\n# always (door open or shut), print exactly: The 8-Ball has spoken.\n",
+   "lockedRegions": [
+    {
+     "startLine": 1,
+     "endLine": 1
+    }
+   ],
+   "evaluator": {
+    "run": {
+     "timeoutMs": 2000,
+     "memoryMb": 256
+    },
+    "tests": {
+     "cases": [
+      {
+       "input": null,
+       "expected": "The 8-Ball has spoken.\n"
+      }
+     ]
+    },
+    "ast": {
+     "queries": [
+      {
+       "tag": "always_line_inside_branch",
+       "query": {
+        "node": "Constant",
+        "where": {
+         "attr": "value",
+         "eq": "The 8-Ball has spoken."
+        },
+        "within": {
+         "node": "If"
+        }
+       }
+      },
+      {
+       "tag": "branch_line_outside_if",
+       "query": {
+        "all": [
+         {
+          "node": "Constant",
+          "where": {
+           "attr": "value",
+           "eq": "Signs point to yes."
+          }
+         },
+         {
+          "not": {
+           "node": "Constant",
+           "where": {
+            "attr": "value",
+            "eq": "Signs point to yes."
+           },
+           "within": {
+            "node": "If"
+           }
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  },
+  "candidates": {
+   "skill.block.indent": [
+    {
+     "id": "mis.block.dedent_always_runs",
+     "signature": {
+      "any": [
+       {
+        "choice": "b"
+       },
+       {
+        "all": [
+         {
+          "astTag": "always_line_inside_branch"
+         },
+         {
+          "testFailure": {}
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.block.no_colon",
+     "signature": {
+      "choice": "c"
+     }
+    },
+    {
+     "id": "mis.block.indent_decorative",
+     "signature": {
+      "all": [
+       {
+        "astTag": "branch_line_outside_if"
+       },
+       {
+        "testFailure": {}
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "note": "pre-migration co-fire fixture from content-authoring@98fcb25^ (winner-trigger migration 98fcb25); loser notTrigger judged by attribution"
+ },
+ {
+  "name": "w3",
+  "loserMid": "mis.cond.sequential_ifs_as_fork",
+  "winnerMid": "mis.block.indent_decorative",
+  "code": "number = 50\nprint(\"Signs point to yes.\")\nif number < 50:\n    print(\"Ask again later.\")\nprint(\"The 8-Ball has spoken.\")\n",
+  "winnerIsCandidate": true,
+  "step": {
+   "id": "cell.the-fork#6",
+   "kind": "build",
+   "language": "python",
+   "runtime": "headless",
+   "skills": [
+    "skill.cond.if_else",
+    "skill.block.indent"
+   ],
+   "prompt": "Shut doors shouldn't mean silence. Add the other door: below 50 (or exactly 50)\nthe creature says `Ask again later.` \u2014 and the sign-off still always fires.\n",
+   "starterCode": "number = 28\n# above 50 -> print exactly: Signs point to yes.\n# otherwise -> print exactly: Ask again later.\n# always -> print exactly: The 8-Ball has spoken.\n",
+   "lockedRegions": [
+    {
+     "startLine": 1,
+     "endLine": 1
+    }
+   ],
+   "evaluator": {
+    "run": {
+     "timeoutMs": 2000,
+     "memoryMb": 256
+    },
+    "tests": {
+     "cases": [
+      {
+       "input": null,
+       "expected": "Ask again later.\nThe 8-Ball has spoken.\n"
+      }
+     ]
+    },
+    "ast": {
+     "queries": [
+      {
+       "tag": "always_line_inside_branch",
+       "query": {
+        "node": "Constant",
+        "where": {
+         "attr": "value",
+         "eq": "The 8-Ball has spoken."
+        },
+        "within": {
+         "node": "If"
+        }
+       }
+      },
+      {
+       "tag": "branch_line_outside_if",
+       "query": {
+        "all": [
+         {
+          "node": "Constant",
+          "where": {
+           "attr": "value",
+           "eq": "Signs point to yes."
+          }
+         },
+         {
+          "not": {
+           "node": "Constant",
+           "where": {
+            "attr": "value",
+            "eq": "Signs point to yes."
+           },
+           "within": {
+            "node": "If"
+           }
+          }
+         }
+        ]
+       }
+      },
+      {
+       "tag": "ifs_without_orelse",
+       "query": {
+        "all": [
+         {
+          "node": "If"
+         },
+         {
+          "not": {
+           "node": "If",
+           "field": {
+            "orelse": {
+             "node": "Expr"
+            }
+           }
+          }
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  },
+  "candidates": {
+   "skill.block.indent": [
+    {
+     "id": "mis.block.dedent_always_runs",
+     "signature": {
+      "any": [
+       {
+        "choice": "b"
+       },
+       {
+        "all": [
+         {
+          "astTag": "always_line_inside_branch"
+         },
+         {
+          "testFailure": {}
+         }
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "id": "mis.block.no_colon",
+     "signature": {
+      "choice": "c"
+     }
+    },
+    {
+     "id": "mis.block.indent_decorative",
+     "signature": {
+      "all": [
+       {
+        "astTag": "branch_line_outside_if"
+       },
+       {
+        "testFailure": {}
+       }
+      ]
+     }
+    }
+   ],
+   "skill.cond.if_else": [
+    {
+     "id": "mis.cond.both_branches",
+     "signature": {
+      "choice": "b"
+     }
+    },
+    {
+     "id": "mis.cond.else_condition",
+     "signature": {
+      "choice": "d"
+     }
+    },
+    {
+     "id": "mis.cond.sequential_ifs_as_fork",
+     "signature": {
+      "all": [
+       {
+        "astTag": "ifs_without_orelse"
+       },
+       {
+        "testFailure": {}
+       }
+      ]
+     }
+    }
+   ]
+  },
+  "note": "pre-migration co-fire fixture from content-authoring@98fcb25^ (winner-trigger migration 98fcb25); loser notTrigger judged by attribution"
+ }
+]

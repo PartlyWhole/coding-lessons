@@ -69,7 +69,9 @@ export function buildSignals(code: string, step: RawStep, needs: Set<string>): S
     signals.runError = { type: "syntax" };
     return signals;
   }
-  const needsExec = ["runError", "testFailure", "propertyFailed"].some((k) => needs.has(k));
+  // `timedOut` is a run-dependent signal too (harness.py lockstep: the watchdog can
+  // only fire on a run).
+  const needsExec = ["runError", "testFailure", "propertyFailed", "timedOut"].some((k) => needs.has(k));
   if (!needsExec) return signals;
 
   const cases = ev.tests?.cases ?? [];
@@ -77,6 +79,7 @@ export function buildSignals(code: string, step: RawStep, needs: Set<string>): S
   const seed = ev.property?.seed;
   const failures: number[] = [];
   let runtimeErr: { type: "runtime" } | null = null;
+  let timedOut = false;
 
   cases.forEach((c, i) => {
     const expected = c.expected;
@@ -92,16 +95,28 @@ export function buildSignals(code: string, step: RawStep, needs: Set<string>): S
     }
     const r = runCase(spec);
     if (r.errType === "runtime") runtimeErr = { type: "runtime" };
+    // §6.1/§7 (harness.py lockstep): the watchdog kill is the dedicated timedOut
+    // signal, never a runError.
+    if (r.errType === "timeout") timedOut = true;
     if (!r.ok) failures.push(i);
   });
 
   if (runtimeErr) signals.runError = runtimeErr;
+  if (timedOut) signals.timedOut = true;
   signals.tests = { failed: failures.length, failures };
   return signals;
 }
 
-/** harness.signals_for: compute signals for one fixture. */
-export function signalsFor(fix: RawFixture, mis: RawMiscon, loaded: Loaded): Signals & { _error?: string } {
+/** harness.signals_for: compute signals for one fixture. For build fixtures the
+ * returned signals carry `_step` (the picked step) so gate 5 can judge §7 ATTRIBUTION
+ * (E-16); the signal-needs set is unioned across ALL candidate misconceptions of the
+ * step's skills, because the live engine always assembles the full RawSignals and
+ * detect-winner must see what every candidate would see (harness.py lockstep). */
+export function signalsFor(
+  fix: RawFixture,
+  mis: RawMiscon,
+  loaded: Loaded,
+): Signals & { _error?: string; _step?: RawStep } {
   if (fix.stepKind === "recognize" || fix.stepKind === "predict") {
     return fix.choice !== undefined ? { chosenChoiceId: fix.choice } : {};
   }
@@ -111,7 +126,15 @@ export function signalsFor(fix: RawFixture, mis: RawMiscon, loaded: Loaded): Sig
   if (fix.stepKind === "build") {
     const step = pickStep(loaded, mis, sigTags(mis.signature as Record<string, unknown>));
     if (step === null) return { _error: `no build step certifies ${mis._skill ?? mis.skill}` };
-    return buildSignals(fix.code ?? "", step, sigKinds(mis.signature as Record<string, unknown>));
+    const needs = sigKinds(mis.signature as Record<string, unknown>);
+    for (const sk of (step["skills"] as string[] | undefined) ?? []) {
+      for (const m of loaded.skills[sk]?.misconceptions ?? []) {
+        for (const k of sigKinds(m.signature as Record<string, unknown>)) needs.add(k);
+      }
+    }
+    const signals: Signals & { _step?: RawStep } = buildSignals(fix.code ?? "", step, needs);
+    signals._step = step;
+    return signals;
   }
   return { _error: `unknown stepKind ${fix.stepKind}` };
 }

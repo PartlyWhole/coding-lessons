@@ -15,7 +15,9 @@ def run(code, stdin):
         p = subprocess.run([sys.executable, "-c", code], input=stdin,
                            capture_output=True, text=True, timeout=5)
     except subprocess.TimeoutExpired:
-        return "", {"type": "runtime"}
+        # harness.py lockstep: the watchdog kill is a distinct "timeout" sentinel that
+        # build_signals maps to signals["timedOut"], never a runError.
+        return "", {"type": "timeout"}
     err = None
     if p.returncode != 0:
         kind = "syntax" if ("SyntaxError" in p.stderr or "IndentationError" in p.stderr) else "runtime"
