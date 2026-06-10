@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run one build test case, mirroring content/verify/harness.py's per-case logic.
-stdin: JSON {code, mode:"entrypoint"|"stdin", entry?, args?, expected, seed?, stdin?}
-stdout: JSON {ran: bool, errType: "syntax"|"runtime"|null, ok: bool}
+stdin: JSON {code, mode:"entrypoint"|"stdin"|"bare", entry?, args?, expected?, seed?, stdin?}
+stdout: JSON {ran: bool, errType: "syntax"|"runtime"|"timeout"|null, ok: bool}
 - entrypoint mode: seed PRNG as the grader does (import random as _sd; _sd.seed(seed)) WITHOUT
   binding `random` in the learner namespace; compare repr(entry(*args)) == repr(expected).
 - stdin mode: feed stdin, compare stdout == expected.
@@ -25,7 +25,12 @@ def run(code, stdin):
     return p.stdout, err
 
 code = spec["code"]
-if spec["mode"] == "entrypoint":
+if spec["mode"] == "bare":
+    # E-15: the engine's input-free bare run (assembleBuildSignals step 2) — only the
+    # error class matters; there is nothing to compare.
+    out, err = run(code, "")
+    ok = err is None
+elif spec["mode"] == "entrypoint":
     seed = spec.get("seed")
     seeding = f"\nimport random as _sd\n_sd.seed({seed})" if seed is not None else ""
     args = spec.get("args") or []

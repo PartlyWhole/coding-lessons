@@ -38,10 +38,10 @@ export function parsePython(code: string): Parsed {
 
 export interface CaseSpec {
   code: string;
-  mode: "entrypoint" | "stdin";
+  mode: "entrypoint" | "stdin" | "bare"; // "bare" = E-15 input-free engine bare run
   entry?: string;
   args?: unknown[];
-  expected: unknown;
+  expected?: unknown;
   seed?: number;
   stdin?: string | null;
 }

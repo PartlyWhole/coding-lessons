@@ -74,12 +74,23 @@ export function buildSignals(code: string, step: RawStep, needs: Set<string>): S
   const needsExec = ["runError", "testFailure", "propertyFailed", "timedOut"].some((k) => needs.has(k));
   if (!needsExec) return signals;
 
+  // E-15 (harness.py lockstep): mirror engine assembleBuildSignals step 2 — a bare
+  // input-free run the watchdog kills carries timedOut and NO test results (the engine
+  // short-circuits before the test runner). A module-level runtime fault keeps ran=true
+  // in the worker harness and falls through to the per-case runs, exactly as the engine
+  // proceeds to runTests.
+  const bare = runCase({ code, mode: "bare" });
+  if (bare.errType === "timeout") {
+    signals.ran = false;
+    signals.timedOut = true;
+    return signals;
+  }
+
   const cases = ev.tests?.cases ?? [];
   const entry = ev.run?.entrypoint;
   const seed = ev.property?.seed;
   const failures: number[] = [];
   let runtimeErr: { type: "runtime" } | null = null;
-  let timedOut = false;
 
   cases.forEach((c, i) => {
     const expected = c.expected;
@@ -95,14 +106,14 @@ export function buildSignals(code: string, step: RawStep, needs: Set<string>): S
     }
     const r = runCase(spec);
     if (r.errType === "runtime") runtimeErr = { type: "runtime" };
-    // §6.1/§7 (harness.py lockstep): the watchdog kill is the dedicated timedOut
-    // signal, never a runError.
-    if (r.errType === "timeout") timedOut = true;
+    // E-15: a PER-CASE watchdog kill maps to a runtime runError + a failed case (engine
+    // testRunner.ts: res.timedOut -> runError ??= {type:"runtime"}); the timedOut signal
+    // is bare-run-only, exactly as in assembleBuildSignals.
+    if (r.errType === "timeout") runtimeErr = runtimeErr ?? { type: "runtime" };
     if (!r.ok) failures.push(i);
   });
 
   if (runtimeErr) signals.runError = runtimeErr;
-  if (timedOut) signals.timedOut = true;
   signals.tests = { failed: failures.length, failures };
   return signals;
 }

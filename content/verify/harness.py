@@ -167,11 +167,11 @@ def run(code, stdin):
         p = subprocess.run([sys.executable, "-c", code], input=stdin,
                            capture_output=True, text=True, timeout=5)
     except subprocess.TimeoutExpired:
-        # non-terminating: the product's worker watchdog kills the run (§6.1) and the
-        # engine surfaces it as the dedicated `timedOut` signal — NOT a runtime error
-        # (assembleBuildSignals sets timedOut, never runError, on a watchdog kill).
-        # Mirror that: a distinct "timeout" sentinel that build_signals maps to
-        # signals["timedOut"] and that never satisfies a `runError: runtime` leaf.
+        # non-terminating: the product's worker watchdog kills the run (§6.1). A distinct
+        # "timeout" sentinel; build_signals maps it the way the engine does (E-15): on the
+        # BARE run it becomes the dedicated `timedOut` signal and short-circuits the test
+        # runner; on a per-case run it becomes a runtime runError + a failed case
+        # (engine testRunner.ts semantics).
         return "", {"type": "timeout", "msg": "timeout (non-terminating)"}
     err = None
     if p.returncode != 0:
@@ -241,7 +241,20 @@ def build_signals(code, step, needs):
     # `timedOut` is a run-dependent signal too (the watchdog can only fire on a run).
     if not ({"runError", "testFailure", "propertyFailed", "timedOut"} & needs):
         return sig
-    failures, runtime_err, timed_out = [], None, False
+    # E-15: mirror engine assembleBuildSignals step 2 (evaluate.ts `if (!bare.ran) { ...
+    # signals.timedOut/runError ...; return signals; }` — the short-circuit BEFORE the
+    # test runner): a bare input-free run the watchdog kills carries timedOut and NO test
+    # results. A module-level runtime fault is NOT short-circuited — the worker harness
+    # (run-harness.py __trellis_run) reports ran=true for it, so the engine proceeds to
+    # the test runner and per-case faults produce runError + tests; this harness keeps
+    # doing the same (engine parity verified empirically against the local-CPython twin).
+    _, bare_err = run(code, "")
+    if bare_err and bare_err["type"] == "timeout":
+        sig["ran"] = False
+        # §6.1/§7: the watchdog kill is the dedicated timedOut signal, never a runError.
+        sig["timedOut"] = True
+        return sig
+    failures, runtime_err = [], None
     for i, c in enumerate(cases):
         exp = c.get("expected")
         if entry:  # call entrypoint(input) and compare its RETURN value (§6.2)
@@ -263,14 +276,14 @@ def build_signals(code, step, needs):
         if err and err["type"] == "runtime":
             runtime_err = err
         if err and err["type"] == "timeout":
-            timed_out = True
+            # E-15: a PER-CASE watchdog kill maps to a runtime runError + a failed case
+            # (engine testRunner.ts: `res.timedOut -> runError ??= {type:"runtime"}`);
+            # the timedOut signal is bare-run-only, exactly as in assembleBuildSignals.
+            runtime_err = {"type": "runtime"}
         if not got_ok:
             failures.append(i)
     if runtime_err:
         sig["runError"] = {"type": "runtime"}
-    if timed_out:
-        # §6.1/§7: the watchdog kill is the dedicated timedOut signal, never a runError.
-        sig["timedOut"] = True
     sig["tests"] = {"failed": len(failures), "failures": failures}
     return sig
 
