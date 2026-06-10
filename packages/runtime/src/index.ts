@@ -8,3 +8,5 @@ export type {
   RunOutcome,
   StallEvent,
 } from "./types.js";
+export { createGameGen } from "./game-gen.js";
+export type { GameGen } from "./game-gen.js";
