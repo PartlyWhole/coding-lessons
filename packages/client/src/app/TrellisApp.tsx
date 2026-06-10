@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import type { Bundle, Cell } from "@trellis/schema";
 import type { BuildSandbox } from "@trellis/engine";
-import { openTrellisDb, nativeDriver, type IdbDriver, type TrellisDb } from "@trellis/persist";
+import { openTrellisDb, nativeDriver, appendEvents, recentEvents, type IdbDriver, type TrellisDb } from "@trellis/persist";
+import { attachTelemetry, realClock, realIds, DEFAULT_CAPTURE_POLICY, type ListenerTarget } from "@trellis/telemetry";
 import { createEventBus } from "../eventBus.js";
 import { CellRunner } from "../CellRunner.js";
 import type { ClientPygameRuntime } from "../types.js";
@@ -23,7 +24,14 @@ export interface TrellisAppProps {
   pygameRuntime?: ClientPygameRuntime;
 }
 
-const bus = createEventBus(); // single stubbed bus for the app (M6 attaches a subscriber here)
+const bus = createEventBus(); // single bus for the app; M6 telemetry subscribes below
+
+// M6 §11.1 — visibilitychange is a document event, pagehide a window event; route each to
+// its real target so the EventBuffer's close-flush triggers actually fire.
+const domTarget: ListenerTarget = {
+  addEventListener: (type, fn) => (type === "visibilitychange" ? document : window).addEventListener(type, fn),
+  removeEventListener: (type, fn) => (type === "visibilitychange" ? document : window).removeEventListener(type, fn),
+};
 
 export function TrellisApp({ bundleUrl, contentVersion, cellId, sandbox, warmup, driver, fetchImpl, pygameRuntime }: TrellisAppProps): React.ReactElement {
   const [ready, setReady] = useState<{ bundle: Bundle; cell: Cell; db: TrellisDb } | null>(null);
@@ -32,9 +40,24 @@ export function TrellisApp({ bundleUrl, contentVersion, cellId, sandbox, warmup,
 
   useEffect(() => {
     let db: TrellisDb | null = null;
+    let detachTelemetry: (() => void) | null = null;
     (async () => {
       try {
         db = await openTrellisDb(driver ?? nativeDriver());
+        // M6 §11.1 — THE one-line telemetry seam: subscribe the recorder to the existing
+        // bus. Zero emit-site involvement; a telemetry failure can never break the lesson
+        // (bus swallows; buffer flush warn-and-drops on a closing db).
+        const tdb = db;
+        detachTelemetry = attachTelemetry({
+          bus,
+          persist: { appendEvents: (ev) => appendEvents(tdb, ev), recentEvents: (q) => recentEvents(tdb, q) },
+          clock: realClock,
+          ids: realIds,
+          policy: DEFAULT_CAPTURE_POLICY,
+          learnerId: db.learnerId,
+          target: domTarget,
+          isHidden: () => document.visibilityState === "hidden",
+        });
         const { bundle, cell } = await loadCellContent(db, {
           url: bundleUrl,
           contentVersion,
@@ -54,7 +77,10 @@ export function TrellisApp({ bundleUrl, contentVersion, cellId, sandbox, warmup,
         () => setWarm(true),
       );
     }
-    return () => db?.close();
+    return () => {
+      detachTelemetry?.(); // flush precedes close (M5 teardown lesson: never unhandled-reject)
+      db?.close();
+    };
     // injectables (warmup/driver/fetchImpl) are mount-stable by contract — deps unchanged
   }, [bundleUrl, contentVersion, cellId]);
 
