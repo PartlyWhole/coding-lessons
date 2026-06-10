@@ -1,7 +1,8 @@
 # Trellis — Build Orchestrator Handoff
 
 **Purpose:** onboard a fresh agent into the **build-orchestrator** role.
-**As of:** `main` @ `8b114c0` (2026-06-09, evening — end of the escalations/design/deploy session).
+**As of:** `main` @ `78e45a1` (2026-06-09, night — originally written @ `8b114c0` end of the
+escalations/design/deploy session; snapshot additions below are marked with their SHAs).
 Re-verify on arrival.
 **Previous handoffs — TWO, both in `docs/coordination/archive/`, both still load-bearing context
 (this file supersedes them as "current state", not as history):**
