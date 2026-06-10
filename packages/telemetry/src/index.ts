@@ -15,3 +15,11 @@ export type { EventBuffer, EventBufferDeps } from "./buffer.js";
 export { createEventBuffer } from "./buffer.js";
 export type { AttachTelemetryDeps } from "./attach.js";
 export { attachTelemetry } from "./attach.js";
+export type { ScaffoldAction, ScaffoldConfig, ProactiveScaffolderDeps } from "./scaffolder.js";
+export {
+  DEFAULT_SCAFFOLD_CONFIG,
+  createProactiveScaffolder,
+  ruleWrongPredictThenCorrectRun,
+  ruleThreeFailStreak,
+  ruleRapidResubmit,
+} from "./scaffolder.js";
