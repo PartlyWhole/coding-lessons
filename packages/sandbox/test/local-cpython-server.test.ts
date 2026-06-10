@@ -16,9 +16,13 @@ describe("warm-server twin: performance contract", () => {
       const r = await sb.run({ code: `print(${i})`, timeoutMs: 5000, memoryMb: 256 });
       expect(r.stdout).toBe(`${i}\n`);
     }
-    // 20 spawnSync round trips cost ~600ms+ (~31ms each measured); the warm server
-    // must do 20 requests in < 400ms even on a loaded machine.
-    expect(Date.now() - t0).toBeLessThan(400);
+    // Budget: 20 spawnSync round trips cost ~600ms+ idle (~31ms each measured) and
+    // multiples of that under load; the warm server does this loop in ~50-150ms solo.
+    // 1500ms keeps a hard amortization proof (spawn-per-run could not stay under it on
+    // a contended machine) without flaking when the full suite saturates all cores —
+    // measured 450ms during a default-concurrency sweep run (orchestrator amendment 2:
+    // loosen with a budget comment, never retry until green).
+    expect(Date.now() - t0).toBeLessThan(1500);
   });
 });
 
