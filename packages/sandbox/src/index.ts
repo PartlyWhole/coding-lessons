@@ -5,7 +5,7 @@ export type { SandboxConfig, ManagedSandbox } from "./sandbox.js";
 export type { PoolStatus } from "./warm-pool.js";
 export { realClock } from "./clock.js";
 export type { Clock, Timer } from "./clock.js";
-export type { WorkerLike, WorkerFactory } from "./protocol.js";
+export type { WorkerLike, WorkerFactory, SandboxRunRequest } from "./protocol.js";
 export { PYODIDE_VERSION, PINNED_PYODIDE_URL } from "./pinned.js";
 // Production worker factory + entry. Real-Pyodide behavior is DEFERRED (needs network).
 export { browserWorkerFactory } from "./browser-worker.js";

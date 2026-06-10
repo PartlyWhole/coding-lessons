@@ -63,7 +63,7 @@ export class WorkerHost {
     return this.readyPromise;
   }
 
-  run(req: RunRequest): Promise<RunResult> {
+  run(req: RunRequest & { packages?: string[] }): Promise<RunResult> {
     if (this.state_ === "dead") return Promise.reject(new Error("worker is dead"));
     if (this.state_ !== "ready") return Promise.reject(new Error(`cannot run while ${this.state_}`));
     const id = this.nextId++;
@@ -79,6 +79,7 @@ export class WorkerHost {
           ...(req.stdin !== undefined ? { stdin: req.stdin } : {}),
           timeoutMs: req.timeoutMs,
           memoryMb: req.memoryMb,
+          ...(req.packages !== undefined ? { packages: req.packages } : {}),
         },
       });
     });

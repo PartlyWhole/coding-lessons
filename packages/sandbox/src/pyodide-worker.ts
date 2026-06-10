@@ -52,6 +52,7 @@ import { RUN_HARNESS } from "./run-harness.js";
 interface PyodideLike {
   runPythonAsync(code: string): Promise<unknown>;
   globals: { set(name: string, value: unknown): void };
+  loadPackage(name: string): Promise<void>;
   _module?: {
     HEAPU8?: { length: number };
   };
@@ -72,6 +73,8 @@ const MB = 1024 * 1024;
 const WASM_PAGE_BYTES = 65536;
 
 let pyodide: PyodideLike | null = null;
+// M6.5: packages already loaded into THIS worker (warm-pool reuse never re-downloads).
+const loadedPackages = new Set<string>();
 let runCapBytes = 0; // effective cap for the CURRENT run; 0 = no run in flight
 let capHit = false; // set by the grow-guard when it refuses growth
 let growGuardInstalled = false;
@@ -161,6 +164,33 @@ async function runOne(id: number, req: WireRunRequest): Promise<void> {
     return;
   }
   const t0 = now();
+  // M6.5 §17.5 — lazy per-run package loads (e.g. pygame-ce on graphical grading
+  // runs; absent on every non-graphical run). BEFORE the cap is armed: the wheel
+  // load is host machinery, not learner allocation. Cached per worker, so warm-pool
+  // reuse never re-downloads; a load failure is a structured runtime error.
+  for (const name of req.packages ?? []) {
+    if (loadedPackages.has(name)) continue;
+    try {
+      await pyodide.loadPackage(name);
+      loadedPackages.add(name);
+    } catch (e: unknown) {
+      ctx.postMessage({
+        kind: "result",
+        id,
+        result: {
+          ran: false,
+          stdout: "",
+          wallMs: now() - t0,
+          timedOut: false,
+          error: {
+            type: "runtime",
+            message: `failed to load package ${name}: ${e instanceof Error ? e.message : String(e)}`,
+          },
+        },
+      });
+      return;
+    }
+  }
   capHit = false;
   // Effective cap for this run. The cap binds heap GROWTH: the wasm heap cannot
   // shrink, so a req cap below the already-grown baseline cannot be enforced

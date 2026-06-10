@@ -111,3 +111,43 @@ describe("WorkerHost", () => {
     expect(workers[0]?.terminated).toBe(true);
   });
 });
+
+// M6.5 §17.5 — the additive `packages` wire field (host→worker mirror of the `recycle`
+// precedent). The frozen schema RunRequest is untouched; callers pass the structurally
+// wider SandboxRunRequest.
+describe("WorkerHost packages wire field (M6.5)", () => {
+  it("forwards packages on the RunMessage when supplied", async () => {
+    const clock = new FakeClock();
+    const seen: unknown[] = [];
+    const { factory } = makeMockFactory({
+      onRun: (req) => {
+        seen.push(req);
+        return { ran: true, stdout: "", returnValue: null, wallMs: 1, timedOut: false };
+      },
+    });
+    const host = new WorkerHost(factory, cfg(clock));
+    await host.ready();
+    await host.run({
+      code: "import pygame",
+      timeoutMs: 1000,
+      memoryMb: 256,
+      packages: ["pygame-ce"],
+    });
+    expect((seen[0] as { packages?: string[] }).packages).toEqual(["pygame-ce"]);
+  });
+
+  it("the default path stays byte-identical: no packages key on the wire when absent", async () => {
+    const clock = new FakeClock();
+    const seen: unknown[] = [];
+    const { factory } = makeMockFactory({
+      onRun: (req) => {
+        seen.push(req);
+        return { ran: true, stdout: "", returnValue: null, wallMs: 1, timedOut: false };
+      },
+    });
+    const host = new WorkerHost(factory, cfg(clock));
+    await host.ready();
+    await host.run({ code: "x = 1", timeoutMs: 1000, memoryMb: 256 });
+    expect("packages" in (seen[0] as object)).toBe(false);
+  });
+});

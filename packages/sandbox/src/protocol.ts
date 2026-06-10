@@ -10,7 +10,16 @@ export interface WireRunRequest {
   stdin?: string;
   timeoutMs: number;
   memoryMb: number;
+  // M6.5 §17.5 additive wire field (host→worker mirror of the `recycle` precedent):
+  // Pyodide package names to lazy-load before this run (e.g. ["pygame-ce"]). The
+  // worker caches loaded names, so warm-pool reuse never re-downloads. Absent on
+  // every non-graphical run — the frozen default path is byte-identical.
+  packages?: string[];
 }
+
+// The structurally wider request callers may pass to a sandbox `run`. The frozen
+// schema RunRequest is untouched; `packages` is sandbox-internal.
+export type SandboxRunRequest = RunRequest & { packages?: string[] };
 
 // ---- host → worker ----
 export interface InitMessage {
