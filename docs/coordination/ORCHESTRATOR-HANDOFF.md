@@ -176,7 +176,11 @@ the held M4 re-key (archived 2026-06-09 handoff, "Decisions" section).
    bar is unchanged when branches do arrive.
 2. **Polish queue** (small, design-adjacent): backtick rendering in feedback/hint bodies (needs a
    design ⚑ sign-off — could go back to the design session); hint-button-persists-after-syntax-
-   error (frozen-behavior UX question for the user, eventually).
+   error (frozen-behavior UX question for the user, eventually); **EditorPane readOnly-at-mount**
+   (latent: a cell whose FIRST step is a build step gets a permanently read-only editor — found
+   by M6.5's browser gate, no corpus trigger today, chip spawned; fix needs the semantics call
+   "legality lives in buttons+machine, editor stays typeable" — recommended — vs. reactive
+   readOnly that would newly lock editors in FEEDBACK).
 3. ~~**Port gates 8/9 into `validate.py`**~~ **DONE @ `b4671cc`** (2026-06-09 night) —
    mutation-tested against a 4-bug corpus (historical goldens + synthetic recognize/map
    mutations); findings byte-equivalent in substance to the TS CLI's on the same mutations;
