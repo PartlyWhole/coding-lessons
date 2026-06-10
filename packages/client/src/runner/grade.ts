@@ -13,6 +13,7 @@ import {
   type TrellisDb,
   type StoredSkillState,
 } from "@trellis/persist";
+import { toHeadlessStep, composeSubmission, wrapGraphicalSandbox } from "@trellis/sandbox";
 
 export interface RunnerEffects {
   newId: () => string;
@@ -31,6 +32,21 @@ export async function gradeStep(
 ): Promise<Diagnosis> {
   const effects: DiagnoseEffects = { id: fx.newId(), learnerId: fx.learnerId, now: fx.now() };
   if (step.kind === "build") {
+    // M6.5 §17.5 — pygame submissions grade HEADLESSLY through the frozen ladder:
+    // the step is rewritten to the synthesized __trellis_sim entrypoint, the learner
+    // code is composed with the deterministic simulation driver, and the sandbox is
+    // wrapped so every run carries dummy SDL drivers + TRELLIS_HEADLESS + the lazy
+    // pygame-ce wheel (and AST queries see learner source only). Non-pygame steps
+    // take EXACTLY the call below — unchanged.
+    if (step.runtime === "pygame" && step.evaluator.graphical && submission.kind === "build") {
+      return evaluate(
+        toHeadlessStep(step),
+        { kind: "build", code: composeSubmission(step, submission.code) },
+        wrapGraphicalSandbox(sandbox),
+        bundle,
+        effects,
+      );
+    }
     return evaluate(step, submission, sandbox, bundle, effects);
   }
   if (submission.kind === "build") throw new Error("build submission on a non-build step");
