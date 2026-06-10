@@ -12,14 +12,17 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v6
         with:
           version: 9.12.0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
       - run: pnpm install --frozen-lockfile
       # pnpm -r, not the root turbo scripts: turbo's ^build graph hard-fails on the
       # dev-only engine<->sandbox test-dependency cycle (benign at runtime; the native-ESM
@@ -29,3 +32,9 @@ jobs:
       - run: pnpm -r typecheck
       - run: pnpm -r lint
       - run: pnpm -r test
+      # Content gates (the Python reference validators + the TS compiler's gates 1-9) —
+      # so content regressions can't reach main unguarded once rebuild handovers arrive.
+      - run: python3 -m pip install pyyaml
+      - run: python3 content/validate.py
+      - run: python3 content/verify/harness.py
+      - run: node packages/authoring/dist/src/cli.js lint content
