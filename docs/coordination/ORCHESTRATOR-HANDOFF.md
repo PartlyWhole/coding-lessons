@@ -39,8 +39,11 @@ Pages works because of two frozen design facts: static-only M5 contract, and the
 `worker.terminate()` (NO SharedArrayBuffer → no COOP/COEP headers, which Pages can't set).
 
 ### The slice: integrated, real-Pyodide-verified, hardened, designed. **458 tests.**
-schema 37 · persist 19 · authoring 97 · engine 168 · sandbox 65 · client 72. All gates green
-(typecheck/lint/test/build, native-ESM probes, `validate.py`, `harness.py`, authoring CLI lint).
+schema 37 · persist 19 · authoring 97 · engine 162 · sandbox 44 · client 72 ·
+integration-tests 27 (redistribution since the cycle-break @ `1600fc9`, 2026-06-10 — same 458
+total; the 3 cross-package suites live in `packages/integration-tests`). All gates green
+(typecheck/lint/test/build — including root TURBO scripts, restored by the cycle-break —
+native-ESM probes, `validate.py`, `harness.py`, authoring CLI lint).
 
 **CI workflow fixed @ `83cc9ab` (2026-06-09 night, on-arrival finding):** the CI workflow had
 NEVER passed — its root scripts routed through turbo, whose `^build` graph hard-fails on the
@@ -178,13 +181,11 @@ the held M4 re-key (archived 2026-06-09 handoff, "Decisions" section).
    mutation-tested against a 4-bug corpus (historical goldens + synthetic recognize/map
    mutations); findings byte-equivalent in substance to the TS CLI's on the same mutations;
    pristine corpus + harness + CLI lint green. Python coverage now matches TS gates 1–9.
-4. **Break the engine↔sandbox test-dep cycle properly** — move the 3 cross-package test files
-   (`engine/test/m4-concat-e2e.test.ts`, `sandbox/test/differential.test.ts`,
-   `sandbox/test/acceptance.test.ts`) into an integration-test package depending on both;
-   restores turbo's task graph (root `pnpm typecheck/lint/test/build` scripts work again).
-   Small, parallel-safe, low priority.
-5. **Bump CI actions off Node 20 runtime** — GitHub forces Node 24 from 2026-06-16 (annotation
-   on every run); non-breaking, but bump `actions/*`+`pnpm/action-setup` majors when convenient.
+4. ~~**Break the engine↔sandbox test-dep cycle**~~ **DONE @ `1600fc9`** (2026-06-10, stream;
+   §7 board row) — `@trellis/integration-tests`; turbo restored; 458 redistributed.
+5. ~~**Bump CI actions off Node 20 runtime**~~ **DONE @ `e9ba1e8`+`85d5b7c`** — v6/v5 majors;
+   plus the Python content gates added to CI (pyyaml installed BEFORE tests — authoring's
+   dialect/differential suites spawn python3).
 6. **§7 downstream chain:** **M6 telemetry** (seams ready: client EventBus emit sites + persist
    `behavioral_event`/`appendEvents`; a Recorder subscriber attaches with zero emit-site changes;
    define the ownership seam before launching parallel to anything client-side) → **M6.5 pygame**
