@@ -180,7 +180,11 @@ the held M4 re-key (archived 2026-06-09 handoff, "Decisions" section).
    (latent: a cell whose FIRST step is a build step gets a permanently read-only editor — found
    by M6.5's browser gate, no corpus trigger today, chip spawned; fix needs the semantics call
    "legality lives in buttons+machine, editor stays typeable" — recommended — vs. reactive
-   readOnly that would newly lock editors in FEEDBACK).
+   readOnly that would newly lock editors in FEEDBACK); **proactive-scaffold affordance**
+   (M6 ships the §11.3 rules engine HEADLESS — no Greenhouse pattern exists for a non-modal
+   nudge; needs a design ⚑ before any visual ships; the three_fail_streak hint auto-advance
+   is live via the existing HintLadder); **persist delete-by-age API** (the §11.4 retention
+   sweep is deferred — additive persist API when wanted, M7-adjacent).
 3. ~~**Port gates 8/9 into `validate.py`**~~ **DONE @ `b4671cc`** (2026-06-09 night) —
    mutation-tested against a 4-bug corpus (historical goldens + synthetic recognize/map
    mutations); findings byte-equivalent in substance to the TS CLI's on the same mutations;
