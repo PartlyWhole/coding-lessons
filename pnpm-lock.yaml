@@ -175,6 +175,22 @@ importers:
         specifier: ^2.1.0
         version: 2.1.9(@types/node@24.13.1)(happy-dom@15.11.7)
 
+  packages/runtime:
+    dependencies:
+      '@trellis/sandbox':
+        specifier: workspace:*
+        version: link:../sandbox
+      '@trellis/schema':
+        specifier: workspace:*
+        version: link:../schema
+    devDependencies:
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.13.1
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@24.13.1)(happy-dom@15.11.7)
+
   packages/sandbox:
     dependencies:
       '@sinclair/typebox':
