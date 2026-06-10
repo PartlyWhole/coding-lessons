@@ -28,6 +28,7 @@
     "@trellis/runtime": "workspace:*",
     "@trellis/sandbox": "workspace:*",
     "@trellis/schema": "workspace:*",
+    "@trellis/telemetry": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

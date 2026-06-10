@@ -93,6 +93,9 @@ importers:
       '@trellis/schema':
         specifier: workspace:*
         version: link:../schema
+      '@trellis/telemetry':
+        specifier: workspace:*
+        version: link:../telemetry
       react:
         specifier: ^19.0.0
         version: 19.2.7
