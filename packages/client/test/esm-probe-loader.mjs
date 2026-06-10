@@ -12,6 +12,7 @@ const REDIRECTS = {
   "@trellis/engine": "engine/dist/src/index.js",
   "@trellis/persist": "persist/dist/src/index.js",
   "@trellis/sandbox": "sandbox/dist/src/index.js",
+  "@trellis/telemetry": "telemetry/dist/src/index.js", // M6: client imports the bus contract + attach
 };
 
 export async function resolve(specifier, context, nextResolve) {
