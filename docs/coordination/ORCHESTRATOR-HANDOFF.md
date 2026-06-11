@@ -51,9 +51,11 @@ durable decision notes. Cite the principle when you bounce work.
 Every `main` push runs CI (full pnpm gate + Python content gates) AND auto-deploys via
 `.github/workflows/deploy-pages.yml`. **Merging = publishing** — weigh it at every push.
 
-### The platform: **649 tests** (E-18 landed `c324d52`, 2026-06-10), all gates green, pygame-capable, telemetry live
-schema 45 · engine 162 · persist 19 · sandbox 75 · authoring 144 · runtime 23 · telemetry 51 ·
-client 100 · integration-tests 30. Root turbo scripts work (cycle broken 2026-06-10). The
+### The platform: **672 tests** (E-18 `c324d52` + speedup-suite `442e7c9`, 2026-06-10), all gates green, pygame-capable, telemetry live, FAST suite
+schema 45 · engine 162 · persist 19 · sandbox 83 · authoring 159 · runtime 23 · telemetry 51 ·
+client 100 · integration-tests 30. Suite runtime fixed by the speedup stream (warm-server
+twin + batched/cached exec gates): forced suite ~71s median (was 2–3m), cli gate run ~2s
+(was ~69s). Gate cache kill switch: `TRELLIS_GATE_CACHE=0`. Root turbo scripts work (cycle broken 2026-06-10). The
 canonical verification entrypoint is **`verification/run-all-gates.sh --browser`**
 (exit-code-strict; runs the m6-telemetry 15-check + m65-pygame 9-check + crash-repro 4-check
 Playwright harnesses).
@@ -191,15 +193,14 @@ will confuse probes).
    ⚠️ The branch also carries the pinning test for protocol **§6 row 9** (the
    `within`/`field` 3-way divergence — pre-existing, found by E-18's differential). Row 9's
    semantics call is queued, NOT part of this merge.
-1. **Test-suite speedup stream** — then. The plan of record:
-   `docs/design-notes/2026-06-10-test-suite-runtime-analysis.md` (rev 2, committed
-   @ `e597d90`): (1) concurrency cap (config-only, measured −60s; sweep before pinning, CI
-   separately), (2) warm-server CPython twin in `local-cpython.ts` (NOT fork — macOS/pygame
-   unsafe; more production-faithful than process-per-run), (3) batch the authoring gate
-   bridge (163 spawns → ~2), (4) follow-on fixture-level gate cache (the lever that compounds
-   with the content corpus). Acceptance = the differential suites stay green + before/after
-   wall times. Sequenced BEFORE the corpus handover (gate latency relief is what the handover
-   review leans on). The user's session chip for this was superseded by this queue item.
+1. ✅ **DONE @ `442e7c9`** (2026-06-10, two-phase: plan reviewed → implemented across 3
+   continuation agents; §7 board row has the full record). Items 2/3/4 landed (warm-server
+   twin, batched bridge + two-phase gates, disk cache); item 1 resolved as **NO PIN** (the
+   measured win sat inside the noise band; decision rule held). Small follow-ups queued in
+   item 4 below: CI actions-cache for `node_modules/.cache/trellis-gate-exec` (keyed on
+   driver hash + `python3 -V`; .github = orchestrator-applied), harness.py's 5s subprocess
+   budget (sweep-load flake headroom — build-owned seam), `ast_dump.py` batching (the next
+   parse-side lever).
 2. **Full-corpus handover review** (the rebuild swap; biggest review of the project). Their
    branch hands over 15/27/86 gate-green; YOUR half = re-pin the **24 build-owned tests**
    per `content/rebuild/HANDOVER-NOTES.md`'s map (counts, marquee str/num equivalents,

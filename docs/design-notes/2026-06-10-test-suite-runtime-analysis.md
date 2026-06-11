@@ -1,6 +1,9 @@
 # Test-suite runtime analysis (2026-06-10, rev 2)
 
-**Status:** analysis only — queued, not implemented. Measured against `main` @ `750a0c9`
+**Status:** IMPLEMENTED @ `442e7c9` (2026-06-10, speedup-suite stream; plan + outcomes:
+`docs/superpowers/plans/2026-06-10-trellis-speedup-suite.md`; fix 1 resolved as NO-PIN —
+the rev-2 c2 win had reversed by integration HEAD and the sweep's noise band swallowed
+every candidate). Original analysis below, measured against `main` @ `750a0c9`
 (workspace 534) on the local dev machine (Darwin arm64, 8 logical / 4 performance cores,
 `/usr/bin/python3`). Rev 2 supersedes rev 1 after a critical re-measure: rev 1
 misattributed the dominant cost and proposed an unsafe fix (details in "Corrections").
